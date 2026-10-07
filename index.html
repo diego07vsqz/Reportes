@@ -28,6 +28,7 @@
   --chat:#005c4b; --chat-fg:#e9edef; --wall:#0b141a; color-scheme:dark }
 
 /* ══ BASE ══ */
+:root[data-theme="light"]{color-scheme:light}
 *{box-sizing:border-box}
 html{color-scheme:light dark}
 body{margin:0}
@@ -35,6 +36,9 @@ body{margin:0}
 body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.4;padding-inline:16px;padding-block:16px 40px}
 .wrap{max-width:1120px;margin:0 auto;display:grid;gap:16px}
 header.top{background:var(--navy);color:var(--on-navy);border-bottom:4px solid var(--gold);border-radius:16px;padding:16px;text-align:center}
+header.top{position:relative;padding-inline:16px}
+.tema{position:absolute;top:10px;right:10px;background:transparent;color:var(--on-navy);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:6px 12px;font-size:13px}
+@media (max-width:640px){ header.top{padding-top:48px} }
 header.top p{margin:4px 0 0;font-size:14px;opacity:.85}
 header.top h1{margin:0;font-family:var(--f-display);font-size:21px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;text-wrap:balance}
 .cols{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
@@ -115,7 +119,7 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
 <body>
 
 <div class="wrap">
-  <header class="top"><h1>Unidad Planeamiento Semafórico</h1><p>Llena los pasos. Copia el reporte. Pégalo en WhatsApp.</p></header>
+  <header class="top"><button type="button" class="tema" id="btnTema">🌙 Oscuro</button><h1>Unidad Planeamiento Semafórico</h1><p>Llena los pasos. Copia el reporte. Pégalo en WhatsApp.</p></header>
 
   <div class="cols">
     <div class="form">
@@ -199,6 +203,7 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
 <script>
 /* ══ CONFIG ══ */
 var LS_KEY = 'ups_semaforos_nuevos';
+var LS_TEMA = 'ups_tema';
 var MAX_LISTA = 60;
 var BASES = {                                                        // mapas base (gratis, sin clave)
   calle: { url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attr:'© OpenStreetMap' },
@@ -243,6 +248,25 @@ function cargarCustom(){
   try { var raw = localStorage.getItem(LS_KEY); var a = raw ? JSON.parse(raw) : []; if (Array.isArray(a)) S.custom = a.filter(function(x){ return x && x.k && x.d; }); } catch(e){ S.custom = []; }
 }
 function guardarCustom(){ try { localStorage.setItem(LS_KEY, JSON.stringify(S.custom)); } catch(e){} }
+
+/* ══ TEMA CLARO / OSCURO ══ */
+function temaActual(){
+  var t = document.documentElement.getAttribute('data-theme');
+  if (t === 'dark' || t === 'light') return t;
+  return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+}
+function pintarTema(){ $('btnTema').textContent = (temaActual() === 'dark' ? '☀️ Claro' : '🌙 Oscuro'); }
+function cambiarTema(){
+  var t = (temaActual() === 'dark' ? 'light' : 'dark');
+  document.documentElement.setAttribute('data-theme', t);
+  try { localStorage.setItem(LS_TEMA, t); } catch(e){}
+  pintarTema();
+}
+function cargarTema(){
+  var t = null; try { t = localStorage.getItem(LS_TEMA); } catch(e){}
+  if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+  pintarTema();
+}
 
 /* ══ UBICACIÓN ══ */
 function toggleSel(k){
@@ -525,6 +549,7 @@ function eventos(){
       S[c] = (S[c] === i ? -1 : i); renderOpts(); generar();
     });
   });
+  $('btnTema').addEventListener('click', cambiarTema);
   $('btnNuevo').addEventListener('click', agregarNuevo);
   $('nuevoDir').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); agregarNuevo(); } });
   ['tAct','tNue'].forEach(function(id){
@@ -545,6 +570,7 @@ function eventos(){
 }
 
 /* ══ INIT ══ */
+cargarTema();
 cargarCustom();
 iniciarMapa();
 eventos();
