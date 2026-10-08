@@ -46,6 +46,8 @@ header.top h1{margin:0;font-family:var(--f-display);font-size:21px;font-weight:8
 @media (min-width:900px){ .cols{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);align-items:start} .side{position:sticky;top:16px} }
 .form{display:grid;gap:16px;min-width:0}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:12px;min-width:0}
+
+.opciones{display:grid;gap:6px}
 span.f{font-size:13px;font-weight:600;color:var(--muted)}
 .card h2{margin:0;font-family:var(--f-display);font-size:19px;display:flex;align-items:center;gap:10px}
 .num{flex:none;width:28px;height:28px;border-radius:50%;background:var(--gold);color:var(--on-gold);display:grid;place-items:center;font-size:15px}
@@ -113,6 +115,7 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
 .btn-copy{background:var(--ok);color:var(--on-ok);border-color:var(--ok);font-size:16px;padding:14px;border-radius:999px}
 .btn-ghost{background:transparent;color:var(--muted);border-color:transparent}
 .bar{display:none}
+#toast .toast-btn{background:transparent;border:0;color:var(--gold);font-weight:800;padding:0 0 0 12px;text-decoration:underline;cursor:pointer}
 #toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:600;font-size:14px;max-width:calc(100% - 32px);text-align:center;z-index:20}
 @media (max-width:899px){
   body{padding-bottom:110px}
@@ -154,11 +157,9 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
           <label class="f">Ciudad (opcional)<input type="text" id="nuevoCiudad" placeholder="San Salvador" autocomplete="off"></label>
         </div>
         <label class="f">Coordenadas *<input type="text" id="nuevoCoord" placeholder="13.697066, -89.249963" autocomplete="off" inputmode="decimal"></label>
-        <p class="hint" id="pinTxt">Pega coordenadas de Google Maps o toca el lugar en el mapa.</p>
+        <p class="hint" id="pinTxt">Escribe el nombre; luego pega coordenadas de Google Maps o toca el lugar en el mapa.</p>
         <button type="button" class="btn-add" id="btnNuevo">+ Agregar a la lista</button>
         <button type="button" class="btn-ghost" id="btnCancelEd" hidden>Cancelar edición</button>
-        <label class="f" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="conId" style="width:auto"> Mostrar código del semáforo (ej. SS1301)</label>
-        <label class="f" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="conLink" style="width:auto"> Agregar enlace de Google Maps (tráfico en vivo)</label>
       </section>
 
       <section class="card" id="cardTiempos">
@@ -193,6 +194,10 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
       <section class="card">
         <h2><span class="num">5</span>Así se verá en WhatsApp</h2>
         <div class="phone"><div class="bubble" id="burbuja"></div></div>
+        <div class="opciones"><span class="f">Opciones del texto</span>
+          <label class="f" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="conId" style="width:auto"> Mostrar código del semáforo (ej. SS1301)</label>
+        <label class="f" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="conLink" style="width:auto"> Agregar enlace de Google Maps (tráfico en vivo)</label>
+        </div>
         <textarea id="out" readonly tabindex="-1" aria-hidden="true"></textarea>
         <div class="aviso" id="faltan" hidden><strong>Copiado, pero faltan datos</strong><ul id="faltanLista"></ul></div>
         <button type="button" class="btn-copy" id="btnCopy">Copiar reporte</button>
@@ -200,7 +205,7 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
           <button type="button" class="btn-blue" id="btnMapaCopiar">Copiar mapa</button>
           <button type="button" id="btnMapaBajar">Descargar mapa</button>
         </div>
-        <p class="hint">Mapa va aparte: pega primero el texto, luego la imagen.</p>
+        <p class="hint"><b>Copiar:</b> para pegar en WhatsApp Web. <b>Descargar:</b> si copiar no funciona. Pega primero el texto y luego la imagen.</p>
         <button type="button" class="btn-ghost" id="btnReset">Empezar otro reporte</button>
       </section>
     </aside>
@@ -335,10 +340,9 @@ function renderChips(){
 }
 function renderLista(){
   var q = norm($('buscar').value).split(/\s+/).filter(Boolean);
-  var a = todos().filter(function(s){
-    var t = norm(s.id + ' ' + s.d + ' ' + s.c);
-    return q.every(function(w){ return t.indexOf(w) >= 0; });
-  });
+  var a = q.length
+    ? todos().filter(function(s){ var t = norm(s.id + ' ' + s.d + ' ' + s.c); return q.every(function(w){ return t.indexOf(w) >= 0; }); })
+    : S.sel.map(porKey).filter(Boolean);              // sin búsqueda: solo los elegidos
   var h = '';
   a.slice(0, MAX_LISTA).forEach(function(s){
     var on = S.sel.indexOf(s.k) >= 0;
@@ -347,10 +351,10 @@ function renderLista(){
          '<small>' + esc(s.id) + (s.c ? ' · ' + esc(s.c) : '') +
          (s.n ? ' · <span class="edit" data-edit="' + esc(s.k) + '">Editar</span> · <span class="del" data-del="' + esc(s.k) + '">Eliminar</span>' : '') + '</small></span></button>';
   });
-  if (!a.length) h = '<div class="empty">No aparece. Agrégalo abajo.</div>';
+  if (!a.length) h = q.length ? '<div class="empty">No aparece. Agrégalo abajo.</div>' : '<div class="empty">Escribe en el buscador: calle, ciudad o código. Escribe "nuevo" para ver los semáforos que agregaste.</div>';
   $('lista').innerHTML = h;
-  $('cuenta').textContent = S.sel.length + ' seleccionados · ' + Math.min(a.length, MAX_LISTA) + ' de ' + a.length + ' mostrados';
-  if (!a.length && !$('nuevoDir').value) $('nuevoDir').value = $('buscar').value.trim();
+  $('cuenta').textContent = S.sel.length + ' seleccionados' + (q.length ? ' · ' + Math.min(a.length, MAX_LISTA) + ' de ' + a.length + ' resultados' : '');
+  if (q.length && !a.length && !$('nuevoDir').value) $('nuevoDir').value = $('buscar').value.trim();
 }
 
 /* ══ MAPA ══ */
@@ -360,7 +364,10 @@ function iniciarMapa(){
   MAPA = L.map('mapa', { preferCanvas:true }).setView(MAPA_CENTRO, MAPA_ZOOM);
   TILES = L.tileLayer(BASES[S.base].url, { maxZoom:19, attribution:BASES[S.base].attr, crossOrigin:'anonymous' }).addTo(MAPA);
   CAPA = L.layerGroup().addTo(MAPA);
-  MAPA.on('click', function(e){ ponerPin(e.latlng.lat, e.latlng.lng); $('nuevoCoord').value = S.pin[0] + ', ' + S.pin[1]; });
+  MAPA.on('click', function(e){
+    if (!S.editK && !$('nuevoDir').value.trim()) return;   // solo marca si se está agregando o editando un semáforo nuevo
+    ponerPin(e.latlng.lat, e.latlng.lng); $('nuevoCoord').value = S.pin[0] + ', ' + S.pin[1];
+  });
 }
 function cambiarBase(){
   if (!MAPA || !TILES) return;
@@ -412,7 +419,7 @@ function quitarPin(){
   if (PIN && MAPA) MAPA.removeLayer(PIN);
   PIN = null;
   $('nuevoCoord').value = '';
-  $('pinTxt').textContent = 'Pega coordenadas de Google Maps o toca el lugar en el mapa.';
+  $('pinTxt').textContent = 'Escribe el nombre; luego pega coordenadas de Google Maps o toca el lugar en el mapa.';
 }
 function svgSemaforo(num){   // círculo con semáforo dentro, centrado en la ubicación; número en pastilla azul
   return '<svg xmlns="http://www.w3.org/2000/svg" width="36" height="32" viewBox="0 0 36 32">' +
@@ -654,7 +661,12 @@ function ahora(){
   $('hora2').value = $('hora').value;
 }
 var avisoT = 0;
-function aviso(t){ var e = $('toast'); e.textContent = t; e.hidden = false; clearTimeout(avisoT); avisoT = setTimeout(function(){ e.hidden = true; }, 3500); }
+function aviso(t, accion){   // accion opcional: { txt:'Deshacer', fn:function(){} }
+  var e = $('toast');
+  e.innerHTML = esc(t) + (accion ? '<button type="button" class="toast-btn" id="toastBtn">' + esc(accion.txt) + '</button>' : '');
+  if (accion) $('toastBtn').addEventListener('click', function(){ e.hidden = true; accion.fn(); });
+  e.hidden = false; clearTimeout(avisoT); avisoT = setTimeout(function(){ e.hidden = true; }, accion ? 7000 : 3500);
+}
 function copiar(){
   var falta = faltantes().length > 0;
   S.aviso = falta; pintarFaltantes();
@@ -674,6 +686,23 @@ function reset(){
   quitarPin();
   ahora(); renderOpts(); renderChips(); renderLista(); renderTiempos('act'); renderTiempos('nue'); generar();
   if (MAPA){ MAPA.setView(MAPA_CENTRO, MAPA_ZOOM); renderMapa(false); }
+}
+
+function foto(){
+  return { sel:S.sel.slice(), act:JSON.parse(JSON.stringify(S.act)), nue:JSON.parse(JSON.stringify(S.nue)),
+           motivo:S.motivo, sentido:S.sentido, campos:['fecha','hora','hora2','notas'].map(function(id){ return $(id).value; }) };
+}
+function restaurar(f){
+  S.sel = f.sel.filter(function(k){ return porKey(k); }); S.act = f.act; S.nue = f.nue; S.motivo = f.motivo; S.sentido = f.sentido;
+  ['fecha','hora','hora2','notas'].forEach(function(id, i){ $(id).value = f.campos[i]; });
+  renderOpts(); renderChips(); renderLista(); renderTiempos('act'); renderTiempos('nue'); generar();
+  if (typeof renderMapa === 'function') renderMapa(true);
+  aviso('✓ Reporte recuperado.');
+}
+function borrarReporte(){
+  var f = foto();
+  reset();
+  aviso('Reporte borrado.', { txt:'Deshacer', fn:function(){ restaurar(f); } });
 }
 
 /* ══ EVENTOS ══ */
@@ -718,7 +747,7 @@ function eventos(){
   $('addNue').addEventListener('click', function(){ S.nue.push({s:'',d:''}); renderTiempos('nue'); });
   $('btnCopy').addEventListener('click', copiar);
   $('btnCopy2').addEventListener('click', copiar);
-  $('btnReset').addEventListener('click', reset);
+  $('btnReset').addEventListener('click', borrarReporte);
 }
 
 /* ══ INIT ══ */
