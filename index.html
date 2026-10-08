@@ -359,13 +359,13 @@ function quitarPin(){
   PIN = null;
   $('pinTxt').textContent = 'Para ubicarlo en el mapa: toca el lugar en el mapa antes de agregar (opcional).';
 }
-function svgSemaforo(num){   // compacto; punta inferior = ubicación exacta
-  return '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="34" viewBox="0 0 28 34">' +
-    '<path d="M7 26 L10 33 L13 26Z" fill="#0b1120" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round"/>' +
-    '<rect x="3" y="1" width="14" height="26" rx="5" fill="#0b1120" stroke="#ffffff" stroke-width="1.5"/>' +
-    '<circle cx="10" cy="7.5" r="2.8" fill="#ef4444"/><circle cx="10" cy="14" r="2.8" fill="#f59e0b"/><circle cx="10" cy="20.5" r="2.8" fill="#10b981"/>' +
-    '<circle cx="20" cy="8" r="7" fill="#ef4444" stroke="#ffffff" stroke-width="1.5"/>' +
-    '<text x="20" y="11.6" text-anchor="middle" font-family="sans-serif" font-size="' + (num > 9 ? 8 : 10) + '" font-weight="800" fill="#ffffff">' + num + '</text></svg>';
+function svgSemaforo(num){   // círculo con semáforo dentro, centrado en la ubicación; número en pastilla azul
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="36" height="32" viewBox="0 0 36 32">' +
+    '<circle cx="15" cy="17" r="12" fill="#c27c0e" stroke="#ffffff" stroke-width="2.5"/>' +
+    '<rect x="11" y="8" width="8" height="18" rx="3" fill="#1f2937"/>' +
+    '<circle cx="15" cy="11.6" r="2.1" fill="#ef4444"/><circle cx="15" cy="17" r="2.1" fill="#fbbf24"/><circle cx="15" cy="22.4" r="2.1" fill="#22c55e"/>' +
+    '<circle cx="27" cy="8" r="7" fill="#0033a0" stroke="#ffffff" stroke-width="1.5"/>' +
+    '<text x="27" y="11.6" text-anchor="middle" font-family="sans-serif" font-size="' + (num > 9 ? 8 : 10) + '" font-weight="800" fill="#ffffff">' + num + '</text></svg>';
 }
 function dibujarSemaforo(g, x, y, m, num){   // mismo ícono, en la imagen
   var k = m * MAPA_IMG_ICONO;
@@ -373,16 +373,16 @@ function dibujarSemaforo(g, x, y, m, num){   // mismo ícono, en la imagen
     g.beginPath(); g.moveTo(px + r, py); g.arcTo(px + w, py, px + w, py + h, r); g.arcTo(px + w, py + h, px, py + h, r);
     g.arcTo(px, py + h, px, py, r); g.arcTo(px, py, px + w, py, r); g.closePath();
   }
-  function luz(cy, color){ g.beginPath(); g.arc(10, cy, 2.8, 0, Math.PI * 2); g.fillStyle = color; g.fill(); }
-  g.save(); g.translate(x - 10 * k, y - 33 * k); g.scale(k, k);
+  function luz(cy, color){ g.beginPath(); g.arc(15, cy, 2.1, 0, Math.PI * 2); g.fillStyle = color; g.fill(); }
+  g.save(); g.translate(x - 15 * k, y - 17 * k); g.scale(k, k);
   g.shadowColor = 'rgba(0,0,0,.4)'; g.shadowBlur = 3 * k; g.shadowOffsetY = 1.5 * k;
-  g.lineJoin = 'round'; g.lineWidth = 1.5; g.strokeStyle = '#ffffff'; g.fillStyle = '#0b1120';
-  g.beginPath(); g.moveTo(7, 26); g.lineTo(10, 33); g.lineTo(13, 26); g.closePath(); g.fill(); g.stroke();
-  caja(3, 1, 14, 26, 5); g.fill(); g.shadowColor = 'transparent'; g.stroke();
-  luz(7.5, '#ef4444'); luz(14, '#f59e0b'); luz(20.5, '#10b981');
-  g.beginPath(); g.arc(20, 8, 7, 0, Math.PI * 2); g.fillStyle = '#ef4444'; g.fill(); g.stroke();
+  g.strokeStyle = '#ffffff'; g.lineWidth = 2.5;
+  g.beginPath(); g.arc(15, 17, 12, 0, Math.PI * 2); g.fillStyle = '#c27c0e'; g.fill(); g.shadowColor = 'transparent'; g.stroke();
+  caja(11, 8, 8, 18, 3); g.fillStyle = '#1f2937'; g.fill();
+  luz(11.6, '#ef4444'); luz(17, '#fbbf24'); luz(22.4, '#22c55e');
+  g.lineWidth = 1.5; g.beginPath(); g.arc(27, 8, 7, 0, Math.PI * 2); g.fillStyle = '#0033a0'; g.fill(); g.stroke();
   g.fillStyle = '#ffffff'; g.font = '800 ' + (num > 9 ? 8 : 10) + 'px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'alphabetic';
-  g.fillText(String(num), 20, 11.6);
+  g.fillText(String(num), 27, 11.6);
   g.restore();
 }
 function renderMapa(encuadrar){
@@ -394,13 +394,13 @@ function renderMapa(encuadrar){
     var on = S.sel.indexOf(s.k) >= 0;
     if (on) pts.push([s.la, s.lo]);
     var m = on
-      ? L.marker([s.la, s.lo], { icon:L.divIcon({ className:'sempin', html:svgSemaforo(S.sel.indexOf(s.k) + 1), iconSize:[28,34], iconAnchor:[10,33], tooltipAnchor:[10,-20] }), zIndexOffset:1000 })
+      ? L.marker([s.la, s.lo], { icon:L.divIcon({ className:'sempin', html:svgSemaforo(S.sel.indexOf(s.k) + 1), iconSize:[36,32], iconAnchor:[15,17], tooltipAnchor:[14,0] }), zIndexOffset:1000 })
       : L.circleMarker([s.la, s.lo], { radius:5, color:'#ffffff', weight:1, fillColor:'#3b82f6', fillOpacity:.85 });
     m.bindTooltip((s.d || '') + (s.c ? ' · ' + s.c : ''));
     m.on('click', function(e){ L.DomEvent.stopPropagation(e); toggleSel(s.k); });
     m.addTo(CAPA);
   });
-  if (encuadrar && pts.length) MAPA.fitBounds(pts, { paddingTopLeft:[40,55], paddingBottomRight:[50,30], maxZoom:MAPA_ZOOM_MAX_AJUSTE, animate:false });
+  if (encuadrar && pts.length) MAPA.fitBounds(pts, { paddingTopLeft:[40,45], paddingBottomRight:[50,35], maxZoom:MAPA_ZOOM_MAX_AJUSTE, animate:false });
 }
 function cargarTile(url){
   return new Promise(function(res){
