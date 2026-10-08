@@ -86,9 +86,6 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
 .sempin{background:none;border:0}
 .sempin svg{display:block;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}
 #mapa{height:300px;border:1px solid var(--line);border-radius:12px;z-index:0;background:var(--bg)}
-.mini{display:grid;gap:6px}
-.mini img{width:100%;height:auto;border:1px solid var(--line);border-radius:10px;background:var(--bg);display:block}
-.mini.cargando img{opacity:.5}
 .mapbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .btn-blue{background:var(--sel-line);color:#fff;border-color:var(--sel-line)}
 
@@ -199,12 +196,10 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
         <textarea id="out" readonly tabindex="-1" aria-hidden="true"></textarea>
         <div class="aviso" id="faltan" hidden><strong>Copiado, pero faltan datos</strong><ul id="faltanLista"></ul></div>
         <button type="button" class="btn-copy" id="btnCopy">Copiar reporte</button>
-        <div class="mini" id="miniWrap" hidden><span class="f">Imagen del mapa que se va a copiar</span><img id="miniMapa" alt="Vista previa del mapa"></div>
         <div class="mapbtns">
           <button type="button" class="btn-blue" id="btnMapaCopiar">Copiar mapa</button>
           <button type="button" id="btnMapaBajar">Descargar mapa</button>
         </div>
-        <button type="button" id="btnTodo">Copiar texto + descargar mapa</button>
         <p class="hint">Mapa va aparte: pega primero el texto, luego la imagen.</p>
         <button type="button" class="btn-ghost" id="btnReset">Empezar otro reporte</button>
       </section>
@@ -365,7 +360,6 @@ function iniciarMapa(){
   MAPA = L.map('mapa', { preferCanvas:true }).setView(MAPA_CENTRO, MAPA_ZOOM);
   TILES = L.tileLayer(BASES[S.base].url, { maxZoom:19, attribution:BASES[S.base].attr, crossOrigin:'anonymous' }).addTo(MAPA);
   CAPA = L.layerGroup().addTo(MAPA);
-  MAPA.on('moveend', pedirMini);
   MAPA.on('click', function(e){ ponerPin(e.latlng.lat, e.latlng.lng); $('nuevoCoord').value = S.pin[0] + ', ' + S.pin[1]; });
 }
 function cambiarBase(){
@@ -375,7 +369,6 @@ function cambiarBase(){
   TILES.setUrl(BASES[S.base].url);
   if (MAPA.attributionControl){ MAPA.attributionControl.removeAttribution(antes); MAPA.attributionControl.addAttribution(BASES[S.base].attr); }
   $('btnBase').textContent = (S.base === 'calle' ? 'Satélite' : 'Calles');
-  pedirMini();
 }
 function leerCoord(t){   // acepta 13.697066, -89.249963 · 13.697066 -89.249963 · 13°41'49.4"N 89°14'59.9"O
   t = String(t || '').trim();
@@ -463,13 +456,13 @@ function renderMapa(encuadrar){
     m.on('contextmenu', function(e){ if (e.originalEvent) L.DomEvent.preventDefault(e.originalEvent); abrirGoogle(s.la, s.lo); });
     m.addTo(CAPA);
   });
-  pedirMini();
   if (encuadrar && pts.length) MAPA.fitBounds(pts, { paddingTopLeft:[40,45], paddingBottomRight:[50,35], maxZoom:MAPA_ZOOM_MAX_AJUSTE, animate:false });
 }
 function abrirGoogle(la, lo){
   var u = 'https://www.google.com/maps/@?api=1&map_action=map&center=' + la + ',' + lo + '&zoom=18&layer=traffic';
-  var w = window.open(u, '_blank', 'noopener');
-  if (!w) aviso('El navegador bloqueó la ventana. Permite ventanas emergentes para esta página.');
+  var w = window.open(u, '_blank');   // sin 'noopener': con él, window.open siempre devuelve null
+  if (w){ try { w.opener = null; } catch(e){} }
+  else aviso('El navegador bloqueó la ventana. Permite ventanas emergentes para esta página.');
 }
 function cargarTile(url){
   return new Promise(function(res){
@@ -526,26 +519,6 @@ function bajarBlob(b){
   var u = URL.createObjectURL(b), a = document.createElement('a');
   a.href = u; a.download = 'mapa-semaforos.png'; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(function(){ URL.revokeObjectURL(u); }, 4000);
-}
-var miniT = 0, miniURL = null, miniN = 0;
-function pedirMini(){ clearTimeout(miniT); if ($('miniWrap')) $('miniWrap').classList.add('cargando'); miniT = setTimeout(pintarMini, 700); }
-function pintarMini(){
-  if (!MAPA) return;
-  var n = ++miniN;
-  imagenMapa().then(function(b){
-    if (n !== miniN) return;                       // llegó una más nueva
-    if (miniURL) URL.revokeObjectURL(miniURL);
-    miniURL = URL.createObjectURL(b);
-    $('miniMapa').src = miniURL; $('miniWrap').hidden = false; $('miniWrap').classList.remove('cargando');
-  }).catch(function(){ $('miniWrap').classList.remove('cargando'); });
-}
-function copiarTodo(){
-  var falta = faltantes().length > 0;
-  copiar();
-  imagenMapa().then(function(b){
-    bajarBlob(b);
-    aviso(falta ? '⚠️ Texto copiado y mapa descargado, pero faltan datos.' : '✓ Texto copiado y mapa descargado. Pega el texto y adjunta la imagen.');
-  }).catch(function(){ aviso('Texto copiado. No se pudo crear el mapa.'); });
 }
 function bajarMapa(){
   imagenMapa().then(function(b){ bajarBlob(b); aviso('✓ Mapa descargado.'); })
@@ -712,7 +685,6 @@ function eventos(){
   $('nuevoCoord').addEventListener('input', coordEscrita);
   $('nuevoCoord').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); agregarNuevo(); } });
   $('btnCancelEd').addEventListener('click', salirEdicion);
-  $('btnTodo').addEventListener('click', copiarTodo);
   $('btnMapaCopiar').addEventListener('click', copiarMapa);
   $('btnMapaBajar').addEventListener('click', bajarMapa);
   $('buscar').addEventListener('input', renderLista);
