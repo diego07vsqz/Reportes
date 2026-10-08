@@ -151,11 +151,11 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
         <div class="list" id="lista"></div>
         <p class="hint" id="cuenta"></p>
         <div class="row">
-          <label class="f">¿No está en la lista? Escríbelo<input type="text" id="nuevoDir" placeholder="Av. Almendro - C. Mascota" autocomplete="off"></label>
+          <label class="f">¿No está en la lista? Nombre *<input type="text" id="nuevoDir" placeholder="Av. Almendro - C. Mascota" autocomplete="off"></label>
           <label class="f">Ciudad (opcional)<input type="text" id="nuevoCiudad" placeholder="San Salvador" autocomplete="off"></label>
         </div>
-        <label class="f">Coordenadas (opcional)<input type="text" id="nuevoCoord" placeholder="13.697066, -89.249963" autocomplete="off" inputmode="decimal"></label>
-        <p class="hint" id="pinTxt">Pega coordenadas de Google Maps o toca el lugar en el mapa (opcional).</p>
+        <label class="f">Coordenadas *<input type="text" id="nuevoCoord" placeholder="13.697066, -89.249963" autocomplete="off" inputmode="decimal"></label>
+        <p class="hint" id="pinTxt">Pega coordenadas de Google Maps o toca el lugar en el mapa.</p>
         <button type="button" class="btn-add" id="btnNuevo">+ Agregar a la lista</button>
         <label class="f" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="conId" style="width:auto"> Mostrar código del semáforo (ej. SS1301)</label>
         <label class="f" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="conLink" style="width:auto"> Agregar enlace de Google Maps (tráfico en vivo)</label>
@@ -287,8 +287,8 @@ function toggleSel(k){
 }
 function agregarNuevo(){
   var d = $('nuevoDir').value.trim(); var c = $('nuevoCiudad').value.trim().toUpperCase();
-  if (!d){ $('nuevoDir').focus(); return; }
-  if ($('nuevoCoord').value.trim() && !S.pin){ aviso('Coordenada no válida. Corrígela o bórrala.'); $('nuevoCoord').focus(); return; }
+  if (!d){ aviso('Falta el nombre del semáforo.'); $('nuevoDir').focus(); return; }
+  if (!S.pin){ aviso($('nuevoCoord').value.trim() ? 'Coordenada no válida. Corrígela.' : 'Falta la coordenada. Pégala o toca el mapa.'); $('nuevoCoord').focus(); return; }
   var k = 'N' + Date.now();
   var nuevo = { k:k, id:'NUEVO', d:d, c:c, n:1 };
   if (S.pin){ nuevo.la = S.pin[0]; nuevo.lo = S.pin[1]; }
@@ -389,7 +389,7 @@ function quitarPin(){
   if (PIN && MAPA) MAPA.removeLayer(PIN);
   PIN = null;
   $('nuevoCoord').value = '';
-  $('pinTxt').textContent = 'Pega coordenadas de Google Maps o toca el lugar en el mapa (opcional).';
+  $('pinTxt').textContent = 'Pega coordenadas de Google Maps o toca el lugar en el mapa.';
 }
 function svgSemaforo(num){   // círculo con semáforo dentro, centrado en la ubicación; número en pastilla azul
   return '<svg xmlns="http://www.w3.org/2000/svg" width="36" height="32" viewBox="0 0 36 32">' +
