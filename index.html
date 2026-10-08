@@ -217,6 +217,7 @@ var BASES = {                                                        // mapas ba
 };
 var MAPA_CENTRO = [13.6989, -89.1914];                              // San Salvador
 var MAPA_ZOOM = 12;
+var MAPA_IMG_ANCHO = 1200;                                           // ancho en px de la imagen copiada/descargada
 var MAPA_ZOOM_MAX_AJUSTE = 16;                                      // acercamiento máximo al encuadrar selección
 var MOTIVOS = [                                   // botón → texto en la nota
   { b:'Accidente',   t:'por accidente' },
@@ -381,36 +382,44 @@ function cargarTile(url){
 }
 function imagenMapa(){
   if (!MAPA) return Promise.reject(new Error('sin mapa'));
-  var z = Math.round(MAPA.getZoom()), tam = MAPA.getSize(), c = MAPA.project(MAPA.getCenter(), z);
-  var ox = Math.round(c.x - tam.x / 2), oy = Math.round(c.y - tam.y / 2), n = Math.pow(2, z);
-  var cv = document.createElement('canvas'); cv.width = tam.x; cv.height = tam.y;
-  var g = cv.getContext('2d'); g.fillStyle = '#e5e7eb'; g.fillRect(0, 0, cv.width, cv.height);
+  var tam = MAPA.getSize(), z = Math.round(MAPA.getZoom());
+  var W = MAPA_IMG_ANCHO, H = Math.round(tam.y * W / tam.x), m = W / tam.x;      // m = aumento respecto a pantalla
+  var zMax = (S.base === 'sat' ? 18 : 19);
+  var dz = Math.max(0, Math.min(2, Math.round(Math.log(m) / Math.LN2), zMax - z)); // niveles extra de detalle
+  var zz = z + dz, e = W / (tam.x * Math.pow(2, dz));                             // e = escala de dibujo de cada mosaico
+  var c = MAPA.project(MAPA.getCenter(), zz), ox = c.x - (W / e) / 2, oy = c.y - (H / e) / 2, n = Math.pow(2, zz);
+  var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  var g = cv.getContext('2d'); g.fillStyle = '#e5e7eb'; g.fillRect(0, 0, W, H);
+  g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
   var tareas = [];
-  for (var tx = Math.floor(ox / 256); tx <= Math.floor((ox + tam.x) / 256); tx++){
-    for (var ty = Math.floor(oy / 256); ty <= Math.floor((oy + tam.y) / 256); ty++){
+  for (var tx = Math.floor(ox / 256); tx <= Math.floor((ox + W / e) / 256); tx++){
+    for (var ty = Math.floor(oy / 256); ty <= Math.floor((oy + H / e) / 256); ty++){
       if (ty < 0 || ty >= n) continue;
       (function(tx, ty){
-        var url = BASES[S.base].url.replace('{z}', z).replace('{x}', ((tx % n) + n) % n).replace('{y}', ty);
-        tareas.push(cargarTile(url).then(function(im){ if (im) g.drawImage(im, tx * 256 - ox, ty * 256 - oy); }));
+        var url = BASES[S.base].url.replace('{z}', zz).replace('{x}', ((tx % n) + n) % n).replace('{y}', ty);
+        tareas.push(cargarTile(url).then(function(im){
+          if (im) g.drawImage(im, Math.floor((tx * 256 - ox) * e), Math.floor((ty * 256 - oy) * e), Math.ceil(256 * e) + 1, Math.ceil(256 * e) + 1);
+        }));
       })(tx, ty);
     }
   }
   return Promise.all(tareas).then(function(){
     S.sel.forEach(function(k, i){
       var s = porKey(k); if (!tieneCoord(s)) return;
-      var p = MAPA.project([s.la, s.lo], z), x = p.x - ox, y = p.y - oy;
-      g.beginPath(); g.arc(x, y, 16, 0, Math.PI * 2); g.fillStyle = 'rgba(239,68,68,.25)'; g.fill();
-      g.beginPath(); g.arc(x, y, 12, 0, Math.PI * 2); g.fillStyle = '#ef4444'; g.fill();
-      g.lineWidth = 3; g.strokeStyle = '#ffffff'; g.stroke();
-      g.fillStyle = '#ffffff'; g.font = 'bold 13px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-      g.fillText(String(i + 1), x, y + 1);
+      var p = MAPA.project([s.la, s.lo], zz), x = (p.x - ox) * e, y = (p.y - oy) * e;
+      g.beginPath(); g.arc(x, y, 16 * m, 0, Math.PI * 2); g.fillStyle = 'rgba(239,68,68,.25)'; g.fill();
+      g.beginPath(); g.arc(x, y, 12 * m, 0, Math.PI * 2); g.fillStyle = '#ef4444'; g.fill();
+      g.lineWidth = 3 * m; g.strokeStyle = '#ffffff'; g.stroke();
+      g.fillStyle = '#ffffff'; g.font = 'bold ' + Math.round(13 * m) + 'px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillText(String(i + 1), x, y + m);
     });
-    g.textAlign = 'left'; g.textBaseline = 'alphabetic';
-    g.font = '11px sans-serif'; var w = g.measureText(BASES[S.base].attr).width + 10;
-    g.fillStyle = 'rgba(255,255,255,.8)'; g.fillRect(cv.width - w, cv.height - 18, w, 18);
-    g.fillStyle = '#111827'; g.fillText(BASES[S.base].attr, cv.width - w + 5, cv.height - 5);
+    var fa = Math.round(11 * Math.min(m, 1.5)), at = BASES[S.base].attr;
+    g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.font = fa + 'px sans-serif';
+    var w = g.measureText(at).width + fa;
+    g.fillStyle = 'rgba(255,255,255,.8)'; g.fillRect(W - w, H - fa * 1.7, w, fa * 1.7);
+    g.fillStyle = '#111827'; g.fillText(at, W - w + fa / 2, H - fa * 0.5);
     return new Promise(function(res, rej){
-      try { cv.toBlob(function(b){ if (b) res(b); else rej(new Error('sin imagen')); }, 'image/png'); } catch(e){ rej(e); }
+      try { cv.toBlob(function(b){ if (b) res(b); else rej(new Error('sin imagen')); }, 'image/png'); } catch(err){ rej(err); }
     });
   });
 }
