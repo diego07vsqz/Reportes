@@ -86,6 +86,8 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
 .mapwrap{position:relative}
 .mapsw{position:absolute;top:10px;right:10px;z-index:500;padding:6px 14px;border-radius:999px;font-size:13px;box-shadow:0 1px 4px rgba(0,0,0,.3)}
 .numpin{background:#ef4444;color:#fff;border:3px solid #fff;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:13px;line-height:1;box-shadow:0 0 0 4px rgba(239,68,68,.3);box-sizing:border-box}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) #mapa:not(.sat) .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.92) contrast(.88)} }
+:root[data-theme="dark"] #mapa:not(.sat) .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.92) contrast(.88)}
 #mapa{height:300px;border:1px solid var(--line);border-radius:12px;z-index:0;background:var(--bg)}
 .mapbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .btn-blue{background:var(--sel-line);color:#fff;border-color:var(--sel-line)}
@@ -213,11 +215,11 @@ var MAPA_CENTRO = [13.6989, -89.1914];                              // San Salva
 var MAPA_ZOOM = 12;
 var MAPA_ZOOM_MAX_AJUSTE = 16;                                      // acercamiento máximo al encuadrar selección
 var MOTIVOS = [                                   // botón → texto en la nota
-  { b:'Accidente',   t:'por accidente' },
-  { b:'Evento',      t:'por evento' },
-  { b:'Apoyo vial',  t:'por apoyo vial' },
-  { b:'Congestión',  t:'por congestión vehicular' },
-  { b:'Obra',        t:'por obra en la vía' }
+  { b:'🚗 Accidente',   t:'por accidente' },
+  { b:'🎉 Evento',      t:'por evento' },
+  { b:'🚓 Apoyo vial',  t:'por apoyo vial' },
+  { b:'🚦 Congestión',  t:'por congestión vehicular' },
+  { b:'🚧 Obra',        t:'por obra en la vía' }
 ];
 var SENTIDOS = [
   { b:'Norte → Sur',        t:'de Norte a Sur' },
@@ -335,6 +337,7 @@ function cambiarBase(){
   TILES.setUrl(BASES[S.base].url);
   if (MAPA.attributionControl){ MAPA.attributionControl.removeAttribution(antes); MAPA.attributionControl.addAttribution(BASES[S.base].attr); }
   $('btnBase').textContent = (S.base === 'calle' ? 'Satélite' : 'Calles');
+  $('mapa').classList.toggle('sat', S.base === 'sat');
 }
 function ponerPin(la, lo){
   if (!MAPA) return;
@@ -377,8 +380,21 @@ function imagenMapa(){
   if (!MAPA) return Promise.reject(new Error('sin mapa'));
   var z = Math.round(MAPA.getZoom()), tam = MAPA.getSize(), c = MAPA.project(MAPA.getCenter(), z);
   var ox = Math.round(c.x - tam.x / 2), oy = Math.round(c.y - tam.y / 2), n = Math.pow(2, z);
-  var cv = document.createElement('canvas'); cv.width = tam.x; cv.height = tam.y;
-  var g = cv.getContext('2d'); g.fillStyle = '#e5e7eb'; g.fillRect(0, 0, cv.width, cv.height);
+  var cv = document.createElement('canvas'); cv.width = tam.x;
+  var g = cv.getContext('2d'), FUENTE = '600 14px sans-serif', filas = [];
+  g.font = FUENTE;
+  S.sel.forEach(function(k, i){
+    var s = porKey(k); if (!s) return;
+    var lin = '';
+    ((i + 1) + '. ' + (s.d || '')).split(' ').forEach(function(p){
+      var t = lin ? lin + ' ' + p : p;
+      if (lin && g.measureText(t).width > tam.x - 24){ filas.push(lin); lin = '    ' + p; } else lin = t;
+    });
+    filas.push(lin);
+  });
+  var altoLista = filas.length ? filas.length * 20 + 18 : 0;
+  cv.height = tam.y + altoLista;
+  g = cv.getContext('2d'); g.fillStyle = '#e5e7eb'; g.fillRect(0, 0, cv.width, tam.y);
   var tareas = [];
   for (var tx = Math.floor(ox / 256); tx <= Math.floor((ox + tam.x) / 256); tx++){
     for (var ty = Math.floor(oy / 256); ty <= Math.floor((oy + tam.y) / 256); ty++){
@@ -401,8 +417,13 @@ function imagenMapa(){
     });
     g.textAlign = 'left'; g.textBaseline = 'alphabetic';
     g.font = '11px sans-serif'; var w = g.measureText(BASES[S.base].attr).width + 10;
-    g.fillStyle = 'rgba(255,255,255,.8)'; g.fillRect(cv.width - w, cv.height - 18, w, 18);
-    g.fillStyle = '#111827'; g.fillText(BASES[S.base].attr, cv.width - w + 5, cv.height - 5);
+    g.fillStyle = 'rgba(255,255,255,.8)'; g.fillRect(cv.width - w, tam.y - 18, w, 18);
+    g.fillStyle = '#111827'; g.fillText(BASES[S.base].attr, cv.width - w + 5, tam.y - 5);
+    if (altoLista){
+      g.fillStyle = '#ffffff'; g.fillRect(0, tam.y, cv.width, altoLista);
+      g.fillStyle = '#111827'; g.font = FUENTE;
+      filas.forEach(function(f, n){ g.fillText(f, 12, tam.y + 24 + n * 20); });
+    }
     return new Promise(function(res, rej){
       try { cv.toBlob(function(b){ if (b) res(b); else rej(new Error('sin imagen')); }, 'image/png'); } catch(e){ rej(e); }
     });
