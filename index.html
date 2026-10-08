@@ -85,6 +85,8 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
 /* ══ MAPA ══ */
 .mapwrap{position:relative}
 .mapsw{position:absolute;top:10px;right:10px;z-index:500;padding:6px 14px;border-radius:999px;font-size:13px;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.sempin{background:none;border:0}
+.sempin svg{display:block;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}
 .numpin{background:#ef4444;color:#fff;border:3px solid #fff;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:13px;line-height:1;box-shadow:0 0 0 4px rgba(239,68,68,.3);box-sizing:border-box}
 #mapa{height:300px;border:1px solid var(--line);border-radius:12px;z-index:0;background:var(--bg)}
 .mapbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -144,7 +146,7 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
         <p class="hint">Toca los semáforos del reporte. Puedes elegir varios.</p>
         <div class="chips" id="chips"></div>
         <div class="mapwrap"><div id="mapa"></div><button type="button" class="mapsw" id="btnBase">Satélite</button></div>
-        <p class="hint">Toca un punto del mapa para elegirlo o quitarlo. Rojo con número = elegido, mismo orden que el reporte.</p>
+        <p class="hint">Toca un punto del mapa para elegirlo o quitarlo. Semáforo con número = elegido, mismo orden que el reporte.</p>
         <input type="search" id="buscar" placeholder="Buscar semáforo: calle, ciudad o ID…" autocomplete="off">
         <div class="list" id="lista"></div>
         <p class="hint" id="cuenta"></p>
@@ -356,6 +358,31 @@ function quitarPin(){
   PIN = null;
   $('pinTxt').textContent = 'Para ubicarlo en el mapa: toca el lugar en el mapa antes de agregar (opcional).';
 }
+function svgSemaforo(num){   // punta inferior = ubicación exacta
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="36" height="48" viewBox="0 0 36 48">' +
+    '<path d="M8.5 37 L13 47 L17.5 37Z" fill="#0b1120" stroke="#ffffff" stroke-width="2" stroke-linejoin="round"/>' +
+    '<rect x="4" y="1" width="18" height="38" rx="6" fill="#0b1120" stroke="#ffffff" stroke-width="2"/>' +
+    '<circle cx="13" cy="9" r="4" fill="#ef4444"/><circle cx="13" cy="20" r="4" fill="#f59e0b"/><circle cx="13" cy="31" r="4" fill="#10b981"/>' +
+    '<circle cx="27" cy="9" r="8" fill="#ef4444" stroke="#ffffff" stroke-width="2"/>' +
+    '<text x="27" y="13" text-anchor="middle" font-family="sans-serif" font-size="' + (num > 9 ? 9 : 11) + '" font-weight="800" fill="#ffffff">' + num + '</text></svg>';
+}
+function dibujarSemaforo(g, x, y, m, num){   // mismo ícono, en la imagen
+  function caja(px, py, w, h, r){
+    g.beginPath(); g.moveTo(px + r, py); g.arcTo(px + w, py, px + w, py + h, r); g.arcTo(px + w, py + h, px, py + h, r);
+    g.arcTo(px, py + h, px, py, r); g.arcTo(px, py, px + w, py, r); g.closePath();
+  }
+  function luz(cy, color){ g.beginPath(); g.arc(13, cy, 4, 0, Math.PI * 2); g.fillStyle = color; g.fill(); }
+  g.save(); g.translate(x - 13 * m, y - 47 * m); g.scale(m, m);
+  g.shadowColor = 'rgba(0,0,0,.4)'; g.shadowBlur = 4 * m; g.shadowOffsetY = 2 * m;
+  g.lineJoin = 'round'; g.lineWidth = 2; g.strokeStyle = '#ffffff'; g.fillStyle = '#0b1120';
+  g.beginPath(); g.moveTo(8.5, 37); g.lineTo(13, 47); g.lineTo(17.5, 37); g.closePath(); g.fill(); g.stroke();
+  caja(4, 1, 18, 38, 6); g.fill(); g.shadowColor = 'transparent'; g.stroke();
+  luz(9, '#ef4444'); luz(20, '#f59e0b'); luz(31, '#10b981');
+  g.beginPath(); g.arc(27, 9, 8, 0, Math.PI * 2); g.fillStyle = '#ef4444'; g.fill(); g.stroke();
+  g.fillStyle = '#ffffff'; g.font = '800 ' + (num > 9 ? 9 : 11) + 'px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+  g.fillText(String(num), 27, 13);
+  g.restore();
+}
 function renderMapa(encuadrar){
   if (!MAPA) return;
   CAPA.clearLayers();
@@ -365,13 +392,13 @@ function renderMapa(encuadrar){
     var on = S.sel.indexOf(s.k) >= 0;
     if (on) pts.push([s.la, s.lo]);
     var m = on
-      ? L.marker([s.la, s.lo], { icon:L.divIcon({ className:'numpin', html:String(S.sel.indexOf(s.k) + 1), iconSize:[26,26] }), zIndexOffset:1000 })
+      ? L.marker([s.la, s.lo], { icon:L.divIcon({ className:'sempin', html:svgSemaforo(S.sel.indexOf(s.k) + 1), iconSize:[36,48], iconAnchor:[13,47], tooltipAnchor:[10,-28] }), zIndexOffset:1000 })
       : L.circleMarker([s.la, s.lo], { radius:5, color:'#ffffff', weight:1, fillColor:'#3b82f6', fillOpacity:.85 });
     m.bindTooltip((s.d || '') + (s.c ? ' · ' + s.c : ''));
     m.on('click', function(e){ L.DomEvent.stopPropagation(e); toggleSel(s.k); });
     m.addTo(CAPA);
   });
-  if (encuadrar && pts.length) MAPA.fitBounds(pts, { padding:[50,50], maxZoom:MAPA_ZOOM_MAX_AJUSTE, animate:false });
+  if (encuadrar && pts.length) MAPA.fitBounds(pts, { paddingTopLeft:[40,70], paddingBottomRight:[60,30], maxZoom:MAPA_ZOOM_MAX_AJUSTE, animate:false });
 }
 function cargarTile(url){
   return new Promise(function(res){
@@ -407,11 +434,7 @@ function imagenMapa(){
     S.sel.forEach(function(k, i){
       var s = porKey(k); if (!tieneCoord(s)) return;
       var p = MAPA.project([s.la, s.lo], zz), x = (p.x - ox) * e, y = (p.y - oy) * e;
-      g.beginPath(); g.arc(x, y, 16 * m, 0, Math.PI * 2); g.fillStyle = 'rgba(239,68,68,.25)'; g.fill();
-      g.beginPath(); g.arc(x, y, 12 * m, 0, Math.PI * 2); g.fillStyle = '#ef4444'; g.fill();
-      g.lineWidth = 3 * m; g.strokeStyle = '#ffffff'; g.stroke();
-      g.fillStyle = '#ffffff'; g.font = 'bold ' + Math.round(13 * m) + 'px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-      g.fillText(String(i + 1), x, y + m);
+      dibujarSemaforo(g, x, y, m, i + 1);
     });
     var fa = Math.round(11 * Math.min(m, 1.5)), at = BASES[S.base].attr;
     g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.font = fa + 'px sans-serif';
