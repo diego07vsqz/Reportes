@@ -14,6 +14,7 @@
   --navy:#0b1120; --on-navy:#ffffff; --gold:#f59e0b; --on-gold:#0b1120;
   --sel:#eff6ff; --sel-line:#3b82f6; --ok:#10b981; --on-ok:#06281c; --danger:#dc2626;
   --chat:#d9fdd3; --chat-fg:#111b21; --wall:#efe7dd;
+  --field:#f8fafc; --field-line:#94a3b8;
   --f-display:"Figtree",system-ui,"Segoe UI",sans-serif;
   --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
@@ -21,12 +22,14 @@
   --bg:#0f172a; --card:#1e293b; --fg:#f1f5f9; --muted:#94a3b8; --line:#334155;
   --navy:#020617; --on-navy:#ffffff; --gold:#f59e0b; --on-gold:#0b1120;
   --sel:#172554; --sel-line:#60a5fa; --ok:#10b981; --on-ok:#06281c; --danger:#f87171;
-  --chat:#005c4b; --chat-fg:#e9edef; --wall:#0b141a; color-scheme:dark } }
+  --chat:#005c4b; --chat-fg:#e9edef; --wall:#0b141a;
+  --field:#0f172a; --field-line:#64748b; color-scheme:dark } }
 :root[data-theme="dark"]{
   --bg:#0f172a; --card:#1e293b; --fg:#f1f5f9; --muted:#94a3b8; --line:#334155;
   --navy:#020617; --on-navy:#ffffff; --gold:#f59e0b; --on-gold:#0b1120;
   --sel:#172554; --sel-line:#60a5fa; --ok:#10b981; --on-ok:#06281c; --danger:#f87171;
-  --chat:#005c4b; --chat-fg:#e9edef; --wall:#0b141a; color-scheme:dark }
+  --chat:#005c4b; --chat-fg:#e9edef; --wall:#0b141a;
+  --field:#0f172a; --field-line:#64748b; color-scheme:dark }
 
 /* ══ BASE ══ */
 :root[data-theme="light"]{color-scheme:light}
@@ -52,7 +55,13 @@ span.f{font-size:13px;font-weight:600;color:var(--muted)}
 .card h2{margin:0;font-family:var(--f-display);font-size:19px;display:flex;align-items:center;gap:10px}
 .num{flex:none;width:28px;height:28px;border-radius:50%;background:var(--gold);color:var(--on-gold);display:grid;place-items:center;font-size:15px}
 label.f{display:grid;gap:4px;font-size:13px;font-weight:600;color:var(--muted);min-width:0}
-input,textarea{font:inherit;font-size:16px;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 12px;width:100%;min-width:0}
+input,textarea{font:inherit;font-size:16px;color:var(--fg);background:var(--field);border:2px solid var(--field-line);border-radius:10px;padding:10px 12px;width:100%;min-width:0;transition:border-color .15s,box-shadow .15s}
+input:hover,textarea:hover{border-color:var(--sel-line)}
+input:focus,textarea:focus{outline:none;border-color:var(--sel-line);box-shadow:0 0 0 4px color-mix(in srgb, var(--sel-line) 25%, transparent)}
+::placeholder{color:var(--muted);opacity:.7;font-style:italic;font-weight:400}
+input[type=checkbox]{accent-color:var(--sel-line);width:18px;height:18px}
+#buscar{font-size:17px;font-weight:500;padding:13px 14px 13px 44px;border-color:var(--sel-line);background-repeat:no-repeat;background-position:14px 50%;background-size:20px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E")}
 textarea{resize:vertical}
 :focus-visible{outline:3px solid var(--sel-line);outline-offset:1px}
 .row{display:flex;flex-wrap:wrap;gap:8px}
@@ -74,6 +83,8 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
 .item small{display:block;color:var(--muted);font-size:12px;font-weight:500}
 .item .del{color:var(--danger)}
 .empty{padding:12px;color:var(--muted);font-size:13px}
+.list:has(> .empty){border:0;background:transparent}
+.list:has(> .empty) .empty{padding:2px 0}
 .btn-add{border-style:dashed}
 
 /* ══ OPCIONES RÁPIDAS ══ */
@@ -153,10 +164,10 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
         <div class="list" id="lista"></div>
         <p class="hint" id="cuenta"></p>
         <div class="row">
-          <label class="f">¿No está en la lista? Nombre *<input type="text" id="nuevoDir" placeholder="Av. Almendro - C. Mascota" autocomplete="off"></label>
-          <label class="f">Ciudad (opcional)<input type="text" id="nuevoCiudad" placeholder="San Salvador" autocomplete="off"></label>
+          <label class="f">¿No está en la lista? Nombre *<input type="text" id="nuevoDir" placeholder="Ej. Av. Almendro - C. Mascota" autocomplete="off"></label>
+          <label class="f">Ciudad (opcional)<input type="text" id="nuevoCiudad" placeholder="Ej. San Salvador" autocomplete="off"></label>
         </div>
-        <label class="f">Coordenadas *<input type="text" id="nuevoCoord" placeholder="13.697066, -89.249963" autocomplete="off" inputmode="decimal"></label>
+        <label class="f">Coordenadas *<input type="text" id="nuevoCoord" placeholder="Ej. 13.697066, -89.249963" autocomplete="off" inputmode="decimal"></label>
         <p class="hint" id="pinTxt">Escribe el nombre; luego pega coordenadas de Google Maps o toca el lugar en el mapa.</p>
         <button type="button" class="btn-add" id="btnNuevo">+ Agregar a la lista</button>
         <button type="button" class="btn-ghost" id="btnCancelEd" hidden>Cancelar edición</button>
