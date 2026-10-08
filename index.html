@@ -85,7 +85,6 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
 /* ══ MAPA ══ */
 .mapwrap{position:relative}
 .item .edit{color:var(--sel-line)}
-.nuevos-acc{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .mapsw{position:absolute;top:10px;right:10px;z-index:500;padding:6px 14px;border-radius:999px;font-size:13px;box-shadow:0 1px 4px rgba(0,0,0,.3)}
 .sempin{background:none;border:0}
 .sempin svg{display:block;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}
@@ -160,9 +159,6 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
         <p class="hint" id="pinTxt">Pega coordenadas de Google Maps o toca el lugar en el mapa.</p>
         <button type="button" class="btn-add" id="btnNuevo">+ Agregar a la lista</button>
         <button type="button" class="btn-ghost" id="btnCancelEd" hidden>Cancelar edición</button>
-        <div class="nuevos-acc"><button type="button" id="btnExportar">Exportar nuevos</button><button type="button" id="btnImportar">Importar</button></div>
-        <input type="file" id="archivoImp" accept=".json,application/json" hidden>
-        <p class="hint" id="nuevosTxt"></p>
         <label class="f" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="conId" style="width:auto"> Mostrar código del semáforo (ej. SS1301)</label>
         <label class="f" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="conLink" style="width:auto"> Agregar enlace de Google Maps (tráfico en vivo)</label>
       </section>
@@ -307,7 +303,7 @@ function agregarNuevo(){   // agrega o, en modo edición, guarda cambios
     limpiarNuevo();
   }
   guardarCustom(); $('buscar').value = '';
-  renderChips(); renderLista(); renderMapa(true); generar(); pintarNuevos();
+  renderChips(); renderLista(); renderMapa(true); generar();
 }
 function limpiarNuevo(){ $('nuevoDir').value = ''; $('nuevoCiudad').value = ''; quitarPin(); }
 function editarCustom(k){
@@ -323,52 +319,11 @@ function salirEdicion(){
   S.editK = null; limpiarNuevo();
   $('btnNuevo').textContent = '+ Agregar a la lista'; $('btnCancelEd').hidden = true;
 }
-function pintarNuevos(){
-  var n = S.custom.length;
-  $('nuevosTxt').textContent = n ? n + (n === 1 ? ' semáforo agregado por ustedes, guardado en este navegador.' : ' semáforos agregados por ustedes, guardados en este navegador.') + ' Exporta para compartir.' : 'Semáforos agregados quedan en este navegador. Exporta para compartir.';
-  $('btnExportar').disabled = !n;
-}
-function bajarArchivo(b, nombre){
-  var u = URL.createObjectURL(b), a = document.createElement('a');
-  a.href = u; a.download = nombre; document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(function(){ URL.revokeObjectURL(u); }, 4000);
-}
-function exportarNuevos(){
-  if (!S.custom.length){ aviso('No hay semáforos nuevos para exportar.'); return; }
-  var d = new Date(), f = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
-  var datos = { formato:'ups-semaforos-nuevos', version:1, fecha:f,
-    semaforos: S.custom.map(function(x){ return { nombre:x.d, ciudad:x.c || '', lat:x.la, lon:x.lo }; }) };
-  bajarArchivo(new Blob([JSON.stringify(datos, null, 2)], { type:'application/json' }), 'semaforos-nuevos-' + f + '.json');
-  aviso('✓ Archivo exportado. Envíalo a tu compañero.');
-}
-function importarNuevos(archivo){
-  if (!archivo) return;
-  var fr = new FileReader();
-  fr.onload = function(){
-    var datos; try { datos = JSON.parse(fr.result); } catch(e){ aviso('Archivo no válido.'); return; }
-    var lista = Array.isArray(datos) ? datos : (datos && Array.isArray(datos.semaforos) ? datos.semaforos : null);
-    if (!lista){ aviso('Archivo no válido.'); return; }
-    var nuevos = 0, rep = 0, malos = 0;
-    lista.forEach(function(r, i){
-      var d = String((r && (r.nombre || r.d)) || '').trim(), c = String((r && (r.ciudad || r.c)) || '').trim().toUpperCase();
-      var la = parseFloat(r && (r.lat != null ? r.lat : r.la)), lo = parseFloat(r && (r.lon != null ? r.lon : r.lo));
-      var ok = d && leerCoord(la + ', ' + lo);
-      if (!ok){ malos++; return; }
-      var ya = todos().some(function(x){ return norm(x.d) === norm(d) && tieneCoord(x) && Math.abs(x.la - ok[0]) < 1e-4 && Math.abs(x.lo - ok[1]) < 1e-4; });
-      if (ya){ rep++; return; }
-      S.custom.push({ k:'N' + Date.now() + '_' + i, id:'NUEVO', d:d, c:c, n:1, la:ok[0], lo:ok[1] });
-      nuevos++;
-    });
-    guardarCustom(); renderLista(); renderMapa(false); pintarNuevos();
-    aviso('✓ ' + nuevos + ' importados' + (rep ? ', ' + rep + ' ya existían' : '') + (malos ? ', ' + malos + ' con datos inválidos' : '') + '.');
-  };
-  fr.readAsText(archivo);
-}
 function borrarCustom(k){
   S.custom = S.custom.filter(function(x){ return x.k !== k; });
   S.sel = S.sel.filter(function(x){ return x !== k; });
   if (S.editK === k) salirEdicion();
-  guardarCustom(); renderChips(); renderLista(); renderMapa(true); generar(); pintarNuevos();
+  guardarCustom(); renderChips(); renderLista(); renderMapa(true); generar();
 }
 function renderChips(){
   var h = '';
@@ -706,9 +661,6 @@ function eventos(){
   $('nuevoCoord').addEventListener('input', coordEscrita);
   $('nuevoCoord').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); agregarNuevo(); } });
   $('btnCancelEd').addEventListener('click', salirEdicion);
-  $('btnExportar').addEventListener('click', exportarNuevos);
-  $('btnImportar').addEventListener('click', function(){ $('archivoImp').value = ''; $('archivoImp').click(); });
-  $('archivoImp').addEventListener('change', function(){ importarNuevos(this.files && this.files[0]); });
   $('btnMapaCopiar').addEventListener('click', copiarMapa);
   $('btnMapaBajar').addEventListener('click', bajarMapa);
   $('buscar').addEventListener('input', renderLista);
@@ -749,7 +701,6 @@ function eventos(){
 cargarTema();
 cargarCustom();
 iniciarMapa();
-pintarNuevos();
 eventos();
 reset();
 </script>
