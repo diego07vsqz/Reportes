@@ -154,7 +154,8 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
           <label class="f">¿No está en la lista? Escríbelo<input type="text" id="nuevoDir" placeholder="Av. Almendro - C. Mascota" autocomplete="off"></label>
           <label class="f">Ciudad (opcional)<input type="text" id="nuevoCiudad" placeholder="San Salvador" autocomplete="off"></label>
         </div>
-        <p class="hint" id="pinTxt">Para ubicarlo en el mapa: toca el lugar en el mapa antes de agregar (opcional).</p>
+        <label class="f">Coordenadas (opcional)<input type="text" id="nuevoCoord" placeholder="13.697066, -89.249963" autocomplete="off" inputmode="decimal"></label>
+        <p class="hint" id="pinTxt">Pega coordenadas de Google Maps o toca el lugar en el mapa (opcional).</p>
         <button type="button" class="btn-add" id="btnNuevo">+ Agregar a la lista</button>
         <label class="f" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="conId" style="width:auto"> Mostrar código del semáforo (ej. SS1301)</label>
         <label class="f" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="conLink" style="width:auto"> Agregar enlace de Google Maps (tráfico en vivo)</label>
@@ -287,6 +288,7 @@ function toggleSel(k){
 function agregarNuevo(){
   var d = $('nuevoDir').value.trim(); var c = $('nuevoCiudad').value.trim().toUpperCase();
   if (!d){ $('nuevoDir').focus(); return; }
+  if ($('nuevoCoord').value.trim() && !S.pin){ aviso('Coordenada no válida. Corrígela o bórrala.'); $('nuevoCoord').focus(); return; }
   var k = 'N' + Date.now();
   var nuevo = { k:k, id:'NUEVO', d:d, c:c, n:1 };
   if (S.pin){ nuevo.la = S.pin[0]; nuevo.lo = S.pin[1]; }
@@ -336,7 +338,7 @@ function iniciarMapa(){
   MAPA = L.map('mapa', { preferCanvas:true }).setView(MAPA_CENTRO, MAPA_ZOOM);
   TILES = L.tileLayer(BASES[S.base].url, { maxZoom:19, attribution:BASES[S.base].attr, crossOrigin:'anonymous' }).addTo(MAPA);
   CAPA = L.layerGroup().addTo(MAPA);
-  MAPA.on('click', function(e){ ponerPin(e.latlng.lat, e.latlng.lng); });
+  MAPA.on('click', function(e){ ponerPin(e.latlng.lat, e.latlng.lng); $('nuevoCoord').value = S.pin[0] + ', ' + S.pin[1]; });
 }
 function cambiarBase(){
   if (!MAPA || !TILES) return;
@@ -346,18 +348,48 @@ function cambiarBase(){
   if (MAPA.attributionControl){ MAPA.attributionControl.removeAttribution(antes); MAPA.attributionControl.addAttribution(BASES[S.base].attr); }
   $('btnBase').textContent = (S.base === 'calle' ? 'Satélite' : 'Calles');
 }
+function leerCoord(t){   // acepta 13.697066, -89.249963 · 13.697066 -89.249963 · 13°41'49.4"N 89°14'59.9"O
+  t = String(t || '').trim();
+  if (!t) return null;
+  var la, lo, dms = [], r = /(\d+(?:\.\d+)?)\s*°\s*(\d+(?:\.\d+)?)\s*['’′]\s*(?:(\d+(?:\.\d+)?)\s*(?:["”″]|''))?\s*([NSEOW])/gi, x;
+  while ((x = r.exec(t))) dms.push(x);
+  if (dms.length === 2){
+    var v = dms.map(function(q){ var n = parseFloat(q[1]) + parseFloat(q[2]) / 60 + (q[3] ? parseFloat(q[3]) / 3600 : 0); return /[SOW]/i.test(q[4]) ? -n : n; });
+    la = v[0]; lo = v[1];
+  } else {
+    var num = t.replace(/[()]/g, ' ').match(/-?\d+(?:\.\d+)?/g);
+    if (!num || num.length !== 2) return null;
+    la = parseFloat(num[0]); lo = parseFloat(num[1]);
+  }
+  if (lo > 87 && lo < 91) lo = -lo;                       // longitud pegada sin signo
+  if (!(la > 12.5 && la < 14.8 && lo > -90.5 && lo < -87.3)) return null;   // fuera de El Salvador
+  return [Math.round(la * 1e6) / 1e6, Math.round(lo * 1e6) / 1e6];
+}
+function coordEscrita(){
+  var t = $('nuevoCoord').value.trim();
+  if (!t){ quitarPin(); return; }
+  var c = leerCoord(t);
+  if (!c){
+    S.pin = null; if (PIN && MAPA) MAPA.removeLayer(PIN); PIN = null;
+    $('pinTxt').textContent = 'Coordenada no válida o fuera de El Salvador. Ejemplo: 13.697066, -89.249963';
+    return;
+  }
+  ponerPin(c[0], c[1]);
+  if (MAPA) MAPA.setView(c, Math.max(MAPA.getZoom(), 16), { animate:false });
+}
 function ponerPin(la, lo){
   if (!MAPA) return;
   S.pin = [Math.round(la * 1e6) / 1e6, Math.round(lo * 1e6) / 1e6];
   if (PIN) MAPA.removeLayer(PIN);
   PIN = L.circleMarker(S.pin, { radius:8, color:'#f59e0b', weight:3, fillColor:'#f59e0b', fillOpacity:.35 }).addTo(MAPA);
-  $('pinTxt').textContent = 'Lugar marcado en el mapa. Escribe el nombre y agrega.';
+  $('pinTxt').textContent = 'Ubicación lista (' + S.pin[0] + ', ' + S.pin[1] + '). Escribe el nombre y agrega.';
 }
 function quitarPin(){
   S.pin = null;
   if (PIN && MAPA) MAPA.removeLayer(PIN);
   PIN = null;
-  $('pinTxt').textContent = 'Para ubicarlo en el mapa: toca el lugar en el mapa antes de agregar (opcional).';
+  $('nuevoCoord').value = '';
+  $('pinTxt').textContent = 'Pega coordenadas de Google Maps o toca el lugar en el mapa (opcional).';
 }
 function svgSemaforo(num){   // círculo con semáforo dentro, centrado en la ubicación; número en pastilla azul
   return '<svg xmlns="http://www.w3.org/2000/svg" width="36" height="32" viewBox="0 0 36 32">' +
@@ -599,6 +631,8 @@ function eventos(){
   $('conId').addEventListener('change', generar);
   $('conLink').addEventListener('change', generar);
   $('btnBase').addEventListener('click', cambiarBase);
+  $('nuevoCoord').addEventListener('input', coordEscrita);
+  $('nuevoCoord').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); agregarNuevo(); } });
   $('btnMapaCopiar').addEventListener('click', copiarMapa);
   $('btnMapaBajar').addEventListener('click', bajarMapa);
   $('buscar').addEventListener('input', renderLista);
