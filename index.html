@@ -86,13 +86,6 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
 .mapwrap{position:relative}
 .item .edit{color:var(--sel-line)}
 .nuevos-acc{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.colmapa{display:none}
-@media (min-width:1200px){
-  .wrap{max-width:1640px}
-  .cols{grid-template-columns:minmax(360px,1fr) minmax(0,1.45fr) minmax(320px,.9fr)}
-  .colmapa{display:block;position:sticky;top:16px;padding:12px}
-  .colmapa #mapa{height:calc(100vh - 64px);min-height:440px}
-}
 .mapsw{position:absolute;top:10px;right:10px;z-index:500;padding:6px 14px;border-radius:999px;font-size:13px;box-shadow:0 1px 4px rgba(0,0,0,.3)}
 .sempin{background:none;border:0}
 .sempin svg{display:block;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}
@@ -201,7 +194,6 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
       </section>
     </div>
 
-    <aside class="card colmapa" id="colMapa" aria-label="Mapa"></aside>
     <aside class="side">
       <section class="card">
         <h2><span class="num">5</span>Así se verá en WhatsApp</h2>
@@ -371,12 +363,6 @@ function importarNuevos(archivo){
     aviso('✓ ' + nuevos + ' importados' + (rep ? ', ' + rep + ' ya existían' : '') + (malos ? ', ' + malos + ' con datos inválidos' : '') + '.');
   };
   fr.readAsText(archivo);
-}
-function ubicarMapa(){   // PC ancho: mapa en columna propia; si no, dentro del paso 2
-  var ancho = window.matchMedia && window.matchMedia('(min-width:1200px)').matches;
-  var destino = ancho ? $('colMapa') : $('mapaSlot');
-  if ($('mapWrap').parentNode !== destino) destino.appendChild($('mapWrap'));
-  if (MAPA) MAPA.invalidateSize();
 }
 function borrarCustom(k){
   S.custom = S.custom.filter(function(x){ return x.k !== k; });
@@ -723,7 +709,6 @@ function eventos(){
   $('btnExportar').addEventListener('click', exportarNuevos);
   $('btnImportar').addEventListener('click', function(){ $('archivoImp').value = ''; $('archivoImp').click(); });
   $('archivoImp').addEventListener('change', function(){ importarNuevos(this.files && this.files[0]); });
-  if (window.matchMedia){ var mq = window.matchMedia('(min-width:1200px)'); if (mq.addEventListener) mq.addEventListener('change', ubicarMapa); else if (mq.addListener) mq.addListener(ubicarMapa); }
   $('btnMapaCopiar').addEventListener('click', copiarMapa);
   $('btnMapaBajar').addEventListener('click', bajarMapa);
   $('buscar').addEventListener('input', renderLista);
@@ -763,9 +748,7 @@ function eventos(){
 /* ══ INIT ══ */
 cargarTema();
 cargarCustom();
-ubicarMapa();
 iniciarMapa();
-ubicarMapa();
 pintarNuevos();
 eventos();
 reset();
