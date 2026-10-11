@@ -167,6 +167,14 @@ body[data-modo="evento"] .bar{display:none!important}
 #vistaEvento .mapwrap{position:relative}
 #evMapa{height:380px;border:1px solid var(--line);border-radius:12px;z-index:0;background:var(--bg)}
 #evMapa.modo-area{cursor:crosshair}
+#vistaEvento .dd{position:relative;max-width:420px}
+#vistaEvento .dd-btn{width:100%;height:48px;display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;border:2px solid var(--field-line);background:var(--field);border-radius:10px;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#vistaEvento .dd-btn::after{content:"▾";color:var(--muted);flex:none}
+#vistaEvento .dd-btn[aria-expanded="true"]{border-color:var(--sel-line)}
+#vistaEvento .dd-menu{position:absolute;z-index:600;left:0;right:0;top:calc(100% + 6px);background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:6px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
+#vistaEvento .dd-menu button{border:0;text-align:left;padding:9px 10px;border-radius:8px;background:transparent;font-weight:600}
+#vistaEvento .dd-menu button:hover,#vistaEvento .dd-menu button[aria-selected="true"]{background:var(--sel)}
+#vistaEvento .opt{border:2px solid var(--field-line)}
 #vistaEvento div.f{display:grid;gap:5px;font-size:14px;font-weight:700;color:var(--fg);min-width:0}
 #vistaEvento .lbl-row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:22px}
 #vistaEvento .row label.f, #vistaEvento .row div.f{grid-template-rows:24px auto;align-items:center;align-content:start}
@@ -311,7 +319,7 @@ select{font:inherit;font-size:16px;color:var(--fg);background:var(--field);borde
           <label class="f">Zona o recinto (opcional)<input type="text" id="evZona" placeholder="Ej. Estadio Jorge &quot;El Mágico&quot; González" autocomplete="off"></label>
         </div>
         <span class="f" data-pista="Elige uno">Tipo de evento</span>
-        <div class="opts" id="evTipos"></div>
+        <div class="dd"><button type="button" class="dd-btn" id="evTipoBtn" aria-haspopup="listbox" aria-expanded="false"></button><div class="dd-menu" id="evTipos" role="listbox" hidden></div></div>
         <div class="row">
           <label class="f">Encabezado<select id="evEncabezado"></select></label>
           <div class="f"><span class="lbl-row"><label for="evHora">Hora de actualización</label><button type="button" class="hora-modo" id="evHoraModo"></button></span><input type="time" id="evHora"></div>
@@ -1212,7 +1220,9 @@ function toggleSel(k){ if (S.sel.indexOf(k) >= 0) quitarSel(k); else agregarSel(
 /* ══ RENDER ══ */
 // Botones de tipo, fase y monitoreo.
 function renderOpts(){
-  $('evTipos').innerHTML = TIPOS.map(function(t, i){ return '<button type="button" class="opt" data-tipo="' + i + '" aria-pressed="' + (S.tipo === i) + '">' + t.e + ' ' + esc(t.b) + '</button>'; }).join('');
+  var tp = TIPOS[S.tipo] || TIPOS[0];
+  $('evTipoBtn').textContent = tp.e + ' ' + tp.b;
+  $('evTipos').innerHTML = TIPOS.map(function(t, i){ return '<button type="button" role="option" data-tipo="' + i + '" aria-selected="' + (S.tipo === i) + '">' + t.e + ' ' + esc(t.b) + '</button>'; }).join('');
   $('evFases').innerHTML = FASES.map(function(f, i){ return '<button type="button" class="opt" data-fase="' + i + '" aria-pressed="' + (S.fase === i) + '">' + esc(f) + '</button>'; }).join('');
   $('evMonitoreos').innerHTML = MONITOREO.map(function(m, i){ return '<button type="button" class="opt" data-monit="' + i + '" aria-pressed="' + (S.monit === i) + '">' + esc(m) + '</button>'; }).join('');
 }
@@ -1551,6 +1561,10 @@ function tickHora(forzar){   // con hora automática, sigue al reloj
   var h = horaAhora();
   if (h !== S.hora || forzar){ S.hora = h; $('evHora').value = h; generar(); guardar(); }
 }
+// Abre o cierra el desplegable de tipo de evento.
+function menuTipo(abrir){   // desplegable de tipo de evento
+  $('evTipos').hidden = !abrir; $('evTipoBtn').setAttribute('aria-expanded', !!abrir);
+}
 // Pasa el estado a los campos del formulario.
 function campos(){
   $('evNombre').value = S.nombre; $('evZona').value = S.zona; $('evHora').value = S.hora; $('evNota').value = S.nota;
@@ -1577,7 +1591,11 @@ function eventos(){
   [['evOptBarra','barra'],['evOptDetalle','detalle']].forEach(function(p){ $(p[0]).addEventListener('change', function(){ S[p[1]] = this.checked; generar(); guardar(); }); });
   document.addEventListener('click', function(e){
     var b;
-    if ((b = e.target.closest('[data-tipo]'))){ S.tipo = +b.getAttribute('data-tipo'); todo(); }
+    // 1) desplegable de tipo: abrir/cerrar (por clase: los id cambian al integrarse). No corta el resto.
+    if (e.target.closest('.dd-btn[aria-haspopup]')){ menuTipo($('evTipos').hidden); return; }
+    if (!e.target.closest('.dd-menu')) menuTipo(false);
+    // 2) botones de opciones
+    if ((b = e.target.closest('[data-tipo]'))){ S.tipo = +b.getAttribute('data-tipo'); menuTipo(false); todo(); }
     else if ((b = e.target.closest('[data-fase]'))){ S.fase = +b.getAttribute('data-fase'); if (S.horaAuto){ S.hora = horaAhora(); $('evHora').value = S.hora; } if (FASES[S.fase] === 'Cierre') S.monit = MONITOREO.length - 1; todo(); }
     else if ((b = e.target.closest('[data-monit]'))){ S.monit = +b.getAttribute('data-monit'); todo(); }
   });
@@ -1629,7 +1647,7 @@ function eventos(){
   $('evBtnMapaBajar').addEventListener('click', function(){ imagenMapa().then(function(b){ bajarBlob(b); aviso('✓ Mapa descargado.'); }).catch(function(){ aviso('No se pudo crear el mapa.'); }); });
   $('evBtnNuevoEvento').addEventListener('click', nuevoEvento);
   document.addEventListener('mouseup', function(){ if (AREA.rect) areaFin({ latlng:AREA.ultimo || AREA.inicio }); });   // soltó fuera del mapa
-  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && AREA.activo){ if (AREA.rect){ MAPA.removeLayer(AREA.rect); AREA.rect = null; } modoArea(false); } });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') menuTipo(false); if (e.key === 'Escape' && AREA.activo){ if (AREA.rect){ MAPA.removeLayer(AREA.rect); AREA.rect = null; } modoArea(false); } });
 }
 
 /* ══ INIT ══ */
