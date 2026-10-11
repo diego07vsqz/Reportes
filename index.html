@@ -802,10 +802,12 @@ function renderTiempos(cual){
   });
   cont.innerHTML = h;
 }
+// Quita espacios sobrantes y * _ ~ del texto del usuario, para que las negritas de WhatsApp no se rompan.
+function limpiarWA(t){ return String(t == null ? '' : t).replace(/[*_~]/g, ' ').replace(/\s+/g, ' ').trim(); }   // sin espacios sobrantes ni símbolos de formato
 // Convierte las filas con segundos en líneas del reporte. Ignora filas sin segundos.
 function lineasTiempo(arr){
   return arr.filter(function(r){ return String(r.s || '').trim() !== ''; })
-            .map(function(r){ return '* *' + (String(r.s || '').trim() + ' segundos ' + String(r.d || '').trim()).trim() + '*'; });
+            .map(function(r){ return '* *' + (limpiarWA(r.s) + ' segundos ' + limpiarWA(r.d)).trim() + '*'; });   // * pegado al texto para que WhatsApp ponga negrita
 }
 
 // Aviso "¿Seguro?" si hay segundos fuera de SEG_MIN–SEG_MAX. No bloquea.
@@ -1266,14 +1268,16 @@ function renderCorredores(){
   $('evProgBar').style.width = (tot ? n * 100 / tot : 0) + '%';
   $('evBtnReagrupar').hidden = !S.sel.length;
 }
+// Quita espacios sobrantes y * _ ~ del texto del usuario, para que las negritas de WhatsApp no se rompan.
+function limpiarWA(t){ return String(t || '').replace(/[*_~]/g, ' ').replace(/\s+/g, ' ').trim(); }   // sin espacios sobrantes ni símbolos de formato de WhatsApp
 // Barra de avance en texto: ▰▰▱▱▱▱▱▱▱▱ 20 %.
 function barraTexto(n, tot){ var b = tot ? Math.round(n * 10 / tot) : 0; return Array(b + 1).join('▰') + Array(10 - b + 1).join('▱') + ' ' + (tot ? Math.round(n * 100 / tot) : 0) + ' %'; }
 // Arma el texto del evento y la vista previa.
 function generar(){
   var t = TIPOS[S.tipo] || TIPOS[0], tot = S.sel.length, n = intervenidas(S.sel), lin = [];
   lin.push('*' + (ENCABEZADOS[S.enc] || ENCABEZADOS[0]) + '*');
-  var titulo = (S.nombre || 'Evento') + (S.zona ? '* – ' + S.zona : '*');
-  lin.push(t.e + ' *' + titulo + ' ' + t.e);
+  var nom = limpiarWA(S.nombre) || 'Evento', zona = limpiarWA(S.zona);
+  lin.push(t.e + ' *' + nom + '*' + (zona ? ' – ' + zona : '') + ' ' + t.e);   // el * debe ir pegado al texto o WhatsApp no pone negrita
   lin.push('⏱️ Fase: ' + (FASES[S.fase] || FASES[0]) + (S.hora ? ' · Actualización ' + fmtHora(S.hora) : ''));
   lin.push('');
   lin.push('🚦 *Intersecciones intervenidas: ' + n + '/' + tot + '* 🚦');
@@ -1281,12 +1285,12 @@ function generar(){
   lin.push('');
   S.cor.forEach(function(c){
     var ks = semsDe(c); if (!ks.length) return;
-    lin.push('• ' + c.nombre + ': ' + intervenidas(ks) + '/' + ks.length);
+    lin.push('• ' + (limpiarWA(c.nombre) || 'Corredor') + ': ' + intervenidas(ks) + '/' + ks.length);
     if (S.detalle) ks.forEach(function(k){ var s = porKey(k); if (S.inter[k] && s) lin.push('   ✅ ' + s.d); });
   });
   lin.push('');
   lin.push(MONITOREO[S.monit] || '');
-  if (S.nota.trim()) lin.push(S.nota.trim());
+  if (S.nota.trim()) lin.push(S.nota.trim().replace(/[ \t]+$/gm, ''));
   $('evOut').value = lin.join('\n').replace(/\n{3,}/g, '\n\n').trim();
   pintarBurbuja($('evOut').value);
 }
