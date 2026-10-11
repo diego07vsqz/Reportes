@@ -1035,8 +1035,26 @@ function agregarSel(ks){
   var nuevos = ks.filter(function(k){ return S.sel.indexOf(k) < 0; });
   if (!nuevos.length) return 0;
   nuevos.forEach(function(k){ S.sel.push(k); });
-  if (!S.manual) agruparTodo(); else nuevos.forEach(asignarNuevo);
+  if (!S.manual) agruparTodo(); else { nuevos.forEach(asignarNuevo); agruparOtras(); }
   return nuevos.length;
+}
+function agruparOtras(){   // en "Otras", los que comparten calle forman su propio corredor
+  var o = S.cor.filter(function(c){ return c.otras; })[0]; if (!o) return;
+  for (;;){
+    var ks = semsDe(o), cuenta = {}, nombres = {}, mejor = null;
+    ks.forEach(function(k){
+      var s = porKey(k);
+      partes(s.d).forEach(function(p){ var c = clave(p); if (!c) return; if (!nombres[c]) nombres[c] = {}; nombres[c][p] = (nombres[c][p] || 0) + 1; });
+      clavesDe(s).forEach(function(c){ cuenta[c] = (cuenta[c] || 0) + 1; });
+    });
+    Object.keys(cuenta).forEach(function(c){ if (cuenta[c] >= 2 && (!mejor || cuenta[c] > cuenta[mejor])) mejor = c; });
+    if (!mejor) break;
+    var vv = nombres[mejor], nom = Object.keys(vv).sort(function(a, b){ return vv[b] - vv[a]; })[0];
+    var cor = { id:nuevoId(), nombre:abreviar(nom), color:colorLibre(), clave:mejor, estado:-1 };
+    S.cor.splice(S.cor.indexOf(o), 0, cor);
+    ks.forEach(function(k){ if (clavesDe(porKey(k)).indexOf(mejor) >= 0) S.asig[k] = cor.id; });
+  }
+  limpiarVacios();
 }
 function quitarSel(k){
   S.sel = S.sel.filter(function(x){ return x !== k; });
