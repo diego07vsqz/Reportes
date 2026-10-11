@@ -1660,6 +1660,7 @@ function campos(){
 function nuevoEvento(){
   var copia = JSON.stringify(S);
   S = nuevoEstado(); S.hora = horaAhora(); FIJA = null; pintarFijar(); PLAN_ACTIVO = ''; renderPlanes();
+  $('evBuscar').value = '';   // el buscador no guarda texto del evento anterior
   campos(); todo(); if (MAPA) MAPA.setView(MAPA_CENTRO, MAPA_ZOOM);
   aviso('Evento borrado.', { txt:'Deshacer', fn:function(){ S = JSON.parse(copia); campos(); todo(); encuadrar(); aviso('✓ Evento recuperado.'); } });
 }
@@ -1718,7 +1719,7 @@ function cargarPlan(i){
   limpiarVacios();
   if (x.zona && !S.zona.trim()) S.zona = x.zona;
   if (typeof x.tipo === 'number' && TIPOS[x.tipo]) S.tipo = x.tipo;
-  ABIERTO = {}; FIJA = null; pintarFijar(); PLAN_ACTIVO = x.nombre; renderPlanes();
+  ABIERTO = {}; FIJA = null; pintarFijar(); PLAN_ACTIVO = x.nombre; renderPlanes(); $('evBuscar').value = '';
   campos(); todo(); encuadrar();
   aviso('✓ Plan "' + x.nombre + '" cargado' + (faltan ? ' (' + faltan + (faltan === 1 ? ' semáforo ya no existe)' : ' semáforos ya no existen)') : '') + '.', { txt:'Deshacer', fn:function(){ S = JSON.parse(copia); PLAN_ACTIVO = ''; renderPlanes(); campos(); todo(); encuadrar(); } });
 }
@@ -1753,7 +1754,7 @@ function eventos(){
   $('evBuscar').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ var b = $('evLista').querySelector('.item'); if (b){ e.preventDefault(); toggleSel(b.getAttribute('data-k')); this.value = ''; renderLista(); } } });
   $('evLista').addEventListener('click', function(e){ var b = e.target.closest('.item'); if (b){ toggleSel(b.getAttribute('data-k')); encuadrar(); } });
   $('evBtnQuitarTodos').addEventListener('click', function(){
-    var copia = JSON.stringify(S); S.sel = []; S.asig = {}; S.inter = {}; S.cor = []; S.manual = false; todo();
+    var copia = JSON.stringify(S); S.sel = []; S.asig = {}; S.inter = {}; S.cor = []; S.manual = false; $('evBuscar').value = ''; todo();
     aviso('Semáforos quitados.', { txt:'Deshacer', fn:function(){ S = JSON.parse(copia); todo(); encuadrar(); } });
   });
   $('evBtnArea').addEventListener('click', function(){ modoArea(!AREA.activo); if (AREA.activo) aviso('Arrastra un recuadro sobre el mapa.'); });
