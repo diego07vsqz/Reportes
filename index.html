@@ -134,13 +134,73 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
   .bar{display:block;position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));z-index:10}
   .bar .btn-copy{display:block;width:100%}
 }
+
+/* ══ PESTAÑAS ══ */
+body{--acc:var(--gold);--on-acc:var(--on-gold)}
+body[data-modo="evento"]{--acc:#8b5cf6;--on-acc:#ffffff}
+header.top{border-bottom-color:var(--acc)}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tab{display:grid;gap:2px;text-align:left;padding:12px 16px;border:2px solid var(--line);border-radius:14px;background:var(--card)}
+.tab b{font-size:16px}
+.tab small{font-size:12px;font-weight:500;color:var(--muted)}
+.tab[aria-selected="true"]{border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb, var(--acc) 30%, transparent)}
+.tab[aria-selected="true"] b{color:var(--fg)}
+#vistaEvento .num{background:var(--acc);color:var(--on-acc)}
+body[data-modo="evento"] .bar{display:none!important}
+@media (max-width:899px){ body[data-modo="evento"]{padding-bottom:40px} }
+.puente{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;border:2px dashed #8b5cf6;border-radius:12px;padding:10px 12px;background:color-mix(in srgb, #8b5cf6 8%, transparent)}
+.puente span{font-size:14px;font-weight:600}
+.puente button{background:#8b5cf6;color:#fff;border-color:#8b5cf6}
+
+/* ══ EVENTO ══ */
+@media (min-width:960px){ .cols-ev{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)} }
+#vistaEvento .mapwrap{position:relative}
+#evMapa{height:380px;border:1px solid var(--line);border-radius:12px;z-index:0;background:var(--bg)}
+#evMapa.modo-area{cursor:crosshair}
+#vistaEvento .maptools{position:absolute;top:10px;right:10px;z-index:500;display:flex;gap:6px}
+#vistaEvento .maptools button{padding:6px 12px;border-radius:999px;font-size:13px;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+#vistaEvento .maptools button[aria-pressed="true"]{background:var(--acc);color:var(--on-acc);border-color:var(--acc)}
+#evBuscar{font-size:17px;font-weight:500;padding:13px 14px 13px 44px;border-color:var(--sel-line);background-repeat:no-repeat;background-position:14px 50%;background-size:20px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E")}
+#vistaEvento .list{max-height:240px}
+#vistaEvento .list:empty{display:none}
+#vistaEvento .barra-sel{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+#vistaEvento .cor{border:1px solid var(--line);border-left:6px solid var(--c);border-radius:12px;padding:10px 12px;display:grid;gap:8px}
+#vistaEvento .cor-head{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center}
+#vistaEvento .cor-head input{font-weight:700;padding:8px 10px}
+#vistaEvento .cuenta{font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+#vistaEvento .estados{display:flex;gap:4px}
+#vistaEvento .estados button{padding:4px 8px;border-radius:999px;font-size:14px;line-height:1.2;opacity:.45}
+#vistaEvento .estados button[aria-pressed="true"]{opacity:1;border-color:var(--fg)}
+#vistaEvento .sem{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,150px) auto;gap:8px;align-items:center;font-size:14px}
+#vistaEvento .sem label{display:contents;cursor:pointer}
+#vistaEvento .sem input[type=checkbox]{accent-color:var(--ok);width:20px;height:20px}
+#vistaEvento .sem .nom{min-width:0;overflow-wrap:anywhere}
+#vistaEvento .sem .nom small{color:var(--muted);font-size:12px;margin-left:4px}
+#vistaEvento .sem select{font-size:13px;padding:5px 8px;border-width:1px}
+#vistaEvento .sem .x{padding:4px 8px;color:var(--danger);border-color:transparent;background:transparent}
+#vistaEvento .sem.hecho .nom{color:var(--ok);font-weight:600}
+#vistaEvento .cor-pie{display:flex;gap:8px;justify-content:space-between;align-items:center}
+#vistaEvento .cor-pie .x{color:var(--danger);font-size:13px;padding:4px 8px}
+#vistaEvento .vacio{padding:12px;color:var(--muted);font-size:13px;border:1px dashed var(--line);border-radius:12px}
+#vistaEvento .total{display:grid;gap:6px}
+#vistaEvento .prog{height:10px;border-radius:999px;background:var(--line);overflow:hidden}
+#vistaEvento .prog span{display:block;height:100%;background:var(--ok);width:0;transition:width .2s}
+#vistaEvento .opciones label{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--muted)}
+#evOut{position:absolute;left:-9999px;top:0;width:10px;height:10px;opacity:0}
+select{font:inherit;font-size:16px;color:var(--fg);background:var(--field);border:2px solid var(--field-line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
 </style>
 </head>
 <body>
 
 <div class="wrap">
-  <header class="top"><button type="button" class="tema" id="btnTema">🌙 Oscuro</button><h1>Unidad Planeamiento Semafórico</h1><p>Llena los pasos. Copia el reporte. Pégalo en WhatsApp.</p></header>
+  <header class="top"><button type="button" class="tema" id="btnTema">🌙 Oscuro</button><h1>Unidad Planeamiento Semafórico</h1><p id="subtitulo">Llena los pasos. Copia el reporte. Pégalo en WhatsApp.</p></header>
+  <nav class="tabs" role="tablist" aria-label="Tipo de reporte">
+    <button type="button" class="tab" role="tab" id="tabTiempos" aria-selected="true"><b>🚦 Cambio de tiempos</b><small>Pocos semáforos, con segundos antes y después</small></button>
+    <button type="button" class="tab" role="tab" id="tabEvento" aria-selected="false"><b>🎪 Evento con corredores</b><small>Muchos semáforos, conteo de intervenidas por corredor</small></button>
+  </nav>
 
+  <div id="vistaTiempos">
   <div class="cols">
     <div class="form">
 
@@ -195,6 +255,7 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
         <p class="hint">Toca motivo y sentido. La frase se arma sola. Opcional.</p>
         <span class="f">¿Por qué?</span>
         <div class="opts" id="motivos"></div>
+        <div class="puente" id="puente" hidden><span id="puenteTxt"></span><button type="button" id="btnPuente">Pasar a Evento con corredores →</button></div>
         <span class="f">¿Hacia dónde?</span>
         <div class="opts" id="sentidos"></div>
         <label class="f">Detalle adicional<textarea id="notas" rows="2" placeholder="Ej. registrado en Troncal del Norte, por 15 minutos."></textarea></label>
@@ -220,6 +281,82 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
         <button type="button" class="btn-ghost" id="btnReset">Empezar otro reporte</button>
       </section>
     </aside>
+  </div>
+  </div>
+  <div id="vistaEvento" hidden>
+  <div class="cols cols-ev">
+    <div class="form">
+
+      <section class="card">
+        <h2><span class="num">1</span>Evento</h2>
+        <div class="row">
+          <label class="f">Nombre del evento<input type="text" id="evNombre" placeholder="Ej. Concierto Iron Maiden" autocomplete="off"></label>
+          <label class="f">Zona o recinto (opcional)<input type="text" id="evZona" placeholder="Ej. Estadio Jorge &quot;El Mágico&quot; González" autocomplete="off"></label>
+        </div>
+        <span class="f">Tipo</span>
+        <div class="opts" id="evTipos"></div>
+        <div class="row">
+          <label class="f">Encabezado<select id="evEncabezado"></select></label>
+          <label class="f">Hora de actualización<input type="time" id="evHora"></label>
+        </div>
+        <span class="f">Fase</span>
+        <div class="opts" id="evFases"></div>
+      </section>
+
+      <section class="card">
+        <h2><span class="num">2</span>Semáforos del evento</h2>
+        <p class="hint"><b>Selección por área:</b> toca "Seleccionar área" y arrastra un recuadro sobre el mapa (o mantén Shift y arrastra). Clic en un punto lo agrega o lo quita. Clic derecho en un punto elegido lo marca como intervenido.</p>
+        <div class="mapwrap">
+          <div id="evMapa"></div>
+          <div class="maptools">
+            <button type="button" id="evBtnArea" aria-pressed="false">▭ Seleccionar área</button>
+            <button type="button" id="evBtnBase">Satélite</button>
+          </div>
+        </div>
+        <input type="search" id="evBuscar" placeholder="Buscar semáforo: calle, ciudad o código…" autocomplete="off">
+        <div class="list" id="evLista"></div>
+        <div class="barra-sel"><span class="hint" id="evCuentaSel"></span><button type="button" class="btn-ghost" id="evBtnQuitarTodos">Quitar todos</button></div>
+      </section>
+
+      <section class="card">
+        <h2><span class="num">3</span>Corredores e intervenidas</h2>
+        <p class="hint">Se agrupan solos por calle en común. Cambia nombres, mueve semáforos de corredor y marca los intervenidos.</p>
+        <div class="total">
+          <div class="cor-pie"><b id="evTotalTxt">0/0 intervenidas</b><button type="button" class="btn-ghost" id="evBtnReagrupar">↻ Reagrupar automático</button></div>
+          <div class="prog"><span id="evProgBar"></span></div>
+        </div>
+        <div id="evCorredores" style="display:grid;gap:10px"></div>
+        <button type="button" class="btn-add" id="evBtnNuevoCor">+ Nuevo corredor</button>
+      </section>
+
+      <section class="card">
+        <h2><span class="num">4</span>Monitoreo</h2>
+        <div class="opts" id="evMonitoreos"></div>
+        <label class="f">Nota adicional (opcional)<textarea id="evNota" rows="2" placeholder="Ej. Se coordina con PNC el cierre de carril."></textarea></label>
+      </section>
+    </div>
+
+    <aside class="side">
+      <section class="card">
+        <h2><span class="num">5</span>Así se verá en WhatsApp</h2>
+        <div class="phone"><div class="bubble" id="evBurbuja"></div></div>
+        <div class="opciones">
+          <span class="f">Opciones del texto</span>
+          <label><input type="checkbox" id="evOptBarra" checked> Barra de avance</label>
+          <label><input type="checkbox" id="evOptEstado" checked> Estado de carga por corredor (🟢🟡🔴)</label>
+          <label><input type="checkbox" id="evOptDetalle"> Detalle de intersecciones intervenidas</label>
+        </div>
+        <textarea id="evOut" readonly tabindex="-1" aria-hidden="true"></textarea>
+        <button type="button" class="btn-copy" id="evBtnCopy">Copiar reporte</button>
+        <div class="mapbtns">
+          <button type="button" class="btn-blue" id="evBtnMapaCopiar">Copiar mapa</button>
+          <button type="button" id="evBtnMapaBajar">Descargar mapa</button>
+        </div>
+        <p class="hint">El evento se guarda solo en este navegador mientras trabajas.</p>
+        <button type="button" class="btn-ghost" id="evBtnNuevoEvento">Empezar otro evento</button>
+      </section>
+    </aside>
+  </div>
   </div>
 </div>
 <div class="bar"><button type="button" class="btn-copy" id="btnCopy2">Copiar reporte</button></div>
@@ -628,6 +765,7 @@ function generar(){
   if (notas){ lin.push(''); lin.push('Notas: ' + notas); }
   $('out').value = lin.join('\n');
   pintarBurbuja($('out').value);
+  if (typeof pintarPuente === 'function') pintarPuente();
   revisarSegundos();
   if (S.aviso) pintarFaltantes();
 }
@@ -767,6 +905,497 @@ cargarCustom();
 iniciarMapa();
 eventos();
 reset();
+</script>
+<script>
+/* ══════════ MODO EVENTO ══════════ */
+var EV = (function(){
+
+/* ══ CONFIG ══ */
+var LS_EVENTO = 'ups_evento_actual';
+var MAX_LISTA = 40;
+var ENCABEZADOS = ['🇸🇻 VMT Dirección General de Tránsito', '🚦 Unidad de Planeamiento Semafórico – CCM', '🇸🇻 VMT – Centro de Control y Monitoreo'];
+var TIPOS = [
+  { b:'Concierto', e:'🎸' }, { b:'Partido', e:'⚽' }, { b:'Feria', e:'🎡' }, { b:'Maratón', e:'🏃' },
+  { b:'Procesión', e:'✝️' }, { b:'Marcha', e:'🪧' }, { b:'Desfile', e:'🎉' }, { b:'Otro', e:'📍' }
+];
+var FASES = ['Ingreso', 'Durante', 'Salida', 'Cierre'];
+var MONITOREO = [
+  'Se monitorean las cargas en sector, con mapa de calor.',
+  'Sin novedad en el sector.',
+  'Carga vehicular alta en el sector.',
+  'Se restablecen tiempos normales.'
+];
+var ESTADOS = [ { e:'🟢', t:'Fluido' }, { e:'🟡', t:'Moderado' }, { e:'🔴', t:'Cargado' } ];
+var COLORES = ['#2563eb','#db2777','#7c3aed','#ea580c','#0891b2','#65a30d','#b45309','#4f46e5','#be123c','#0d9488'];
+var COLOR_OTRAS = '#64748b';
+var BASES = {
+  calle: { url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attr:'© OpenStreetMap' },
+  sat:   { url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attr:'© Esri' }
+};
+var MAPA_CENTRO = [13.6989, -89.1914], MAPA_ZOOM = 12, MAPA_IMG_ANCHO = 1200;
+var PALABRAS_VACIAS = ['boulevard','bulevar','blvd','avenida','av','alameda','alam','calle','c','carretera','carr','paseo','pje','pasaje','autopista','del','de','la','el','los','las','y','a','al','norte','sur','oriente','poniente','nte','pte','ote','redondel','rotonda','final','prolongacion','prol'];
+
+/* ══ CATÁLOGO ══ */
+
+/* ══ ESTADO ══ */
+var S = nuevoEstado();
+var MAPA = null, CAPA = null, TILES = null, BASE_MAPA = 'calle', AREA = { activo:false, inicio:null, rect:null };
+function nuevoEstado(){
+  return { nombre:'', zona:'', tipo:0, enc:0, hora:'', fase:0, monit:0, nota:'',
+           sel:[], cor:[], asig:{}, inter:{}, manual:false, barra:true, estado:true, detalle:false };
+}
+
+/* ══ UTILIDADES ══ */
+function $(id){ return document.getElementById(id); }
+function norm(t){ return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(); }
+function esc(t){ return String(t == null ? '' : t).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function pad(n){ return (n < 10 ? '0' : '') + n; }
+function tieneCoord(s){ return s && typeof s.la === 'number' && typeof s.lo === 'number'; }
+function fmtHora(v){ var p = String(v || '').split(':'); return p.length >= 2 ? (parseInt(p[0],10) + ':' + p[1]) : ''; }
+function horaAhora(){ var d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+
+/* ══ GUARDADO LOCAL (evento en curso) ══ */
+function guardar(){ try { localStorage.setItem(LS_EVENTO, JSON.stringify(S)); } catch(e){} }
+function cargar(){
+  try {
+    var raw = localStorage.getItem(LS_EVENTO); if (!raw) return;
+    var x = JSON.parse(raw); if (!x || !Array.isArray(x.sel)) return;
+    var n = nuevoEstado(); for (var k in n){ if (x[k] !== undefined) n[k] = x[k]; }
+    n.sel = n.sel.filter(porKey); S = n;
+  } catch(e){}
+}
+
+/* ══ CORREDORES: agrupación automática por calle en común ══ */
+function abreviar(t){
+  return String(t || '').trim()
+    .replace(/\b(Boulevard|Bulevar)\b\.?/gi, 'Blvd.').replace(/\bAvenida\b/gi, 'Av.').replace(/\bAlameda\b/gi, 'Alam.')
+    .replace(/\bCarretera\b/gi, 'Carr.').replace(/\bAutopista\b/gi, 'Autop.').replace(/\s+/g, ' ');
+}
+function partes(d){   // tramos de la dirección: "Blvd. Del Ejercito - Calle San Bartolo" → 2 calles
+  return String(d || '').split(/\s+-\s+|\s*-\s*(?=[A-ZÁÉÍÓÚ0-9])|\s+y\s+|\s*_\s*|\s*\/\s*|,/).map(function(p){ return p.replace(/[().]+$/,'').trim(); }).filter(Boolean);
+}
+function clave(p){
+  var w = norm(p).replace(/[^a-z0-9ñ ]/g, ' ').split(/\s+/).filter(function(x){ return x && PALABRAS_VACIAS.indexOf(x) < 0; });
+  w = w.map(function(x){ return x.replace(/^(\d+)(a|ª|o|º)?$/, '$1'); });
+  return w.join(' ');
+}
+function clavesDe(s){ var v = []; partes(s.d).forEach(function(p){ var c = clave(p); if (c && v.indexOf(c) < 0) v.push(c); }); return v; }
+function corPorId(id){ for (var i = 0; i < S.cor.length; i++){ if (S.cor[i].id === id) return S.cor[i]; } return null; }
+function nuevoId(){ return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+function colorLibre(){ var usados = S.cor.map(function(c){ return c.color; }); for (var i = 0; i < COLORES.length; i++){ if (usados.indexOf(COLORES[i]) < 0) return COLORES[i]; } return COLORES[S.cor.length % COLORES.length]; }
+function corOtras(){
+  for (var i = 0; i < S.cor.length; i++){ if (S.cor[i].otras) return S.cor[i]; }
+  var c = { id:nuevoId(), nombre:'Otras intersecciones', color:COLOR_OTRAS, clave:'', estado:-1, otras:true };
+  S.cor.push(c); return c;
+}
+function agruparTodo(){
+  var cuenta = {}, nombreDe = {};
+  S.sel.forEach(function(k){
+    var s = porKey(k); if (!s) return;
+    partes(s.d).forEach(function(p){
+      var c = clave(p); if (!c) return;
+      if (!nombreDe[c]) nombreDe[c] = {};
+      nombreDe[c][p] = (nombreDe[c][p] || 0) + 1;
+    });
+    clavesDe(s).forEach(function(c){ cuenta[c] = (cuenta[c] || 0) + 1; });
+  });
+  var viejos = {}; S.cor.forEach(function(c){ if (c.clave) viejos[c.clave] = c; });
+  S.cor = []; S.asig = {};
+  S.sel.forEach(function(k){
+    var s = porKey(k); if (!s) return;
+    var mejor = null;
+    clavesDe(s).forEach(function(c){ if (cuenta[c] >= 2 && (!mejor || cuenta[c] > cuenta[mejor])) mejor = c; });
+    var cor;
+    if (mejor){
+      cor = S.cor.filter(function(c){ return c.clave === mejor; })[0];
+      if (!cor){
+        var vv = nombreDe[mejor], nom = Object.keys(vv).sort(function(a, b){ return vv[b] - vv[a]; })[0];
+        var prev = viejos[mejor];
+        cor = { id:nuevoId(), nombre:abreviar(nom), color:prev ? prev.color : colorLibre(), clave:mejor, estado:prev ? prev.estado : -1 };
+        S.cor.push(cor);
+      }
+    } else cor = corOtras();
+    S.asig[k] = cor.id;
+  });
+  var o = S.cor.filter(function(c){ return c.otras; })[0];   // "Otras" siempre al final
+  if (o){ S.cor = S.cor.filter(function(c){ return !c.otras; }); S.cor.push(o); }
+  S.manual = false;
+}
+function asignarNuevo(k){   // ya editado a mano: el nuevo va al corredor de su calle o a "Otras"
+  var s = porKey(k), ks = clavesDe(s);
+  var cor = S.cor.filter(function(c){ return c.clave && ks.indexOf(c.clave) >= 0; })[0] || corOtras();
+  S.asig[k] = cor.id;
+}
+function limpiarVacios(){ S.cor = S.cor.filter(function(c){ return S.sel.some(function(k){ return S.asig[k] === c.id; }) || c.manualVacio; }); }
+function semsDe(c){ return S.sel.filter(function(k){ return S.asig[k] === c.id; }); }
+function intervenidas(lista){ return lista.filter(function(k){ return S.inter[k]; }).length; }
+
+/* ══ SELECCIÓN ══ */
+function agregarSel(ks){
+  var nuevos = ks.filter(function(k){ return S.sel.indexOf(k) < 0; });
+  if (!nuevos.length) return 0;
+  nuevos.forEach(function(k){ S.sel.push(k); });
+  if (!S.manual) agruparTodo(); else nuevos.forEach(asignarNuevo);
+  return nuevos.length;
+}
+function quitarSel(k){
+  S.sel = S.sel.filter(function(x){ return x !== k; });
+  delete S.asig[k]; delete S.inter[k];
+  limpiarVacios();
+}
+function toggleSel(k){ if (S.sel.indexOf(k) >= 0) quitarSel(k); else agregarSel([k]); todo(); }
+
+/* ══ RENDER ══ */
+function renderOpts(){
+  $('evTipos').innerHTML = TIPOS.map(function(t, i){ return '<button type="button" class="opt" data-tipo="' + i + '" aria-pressed="' + (S.tipo === i) + '">' + t.e + ' ' + esc(t.b) + '</button>'; }).join('');
+  $('evFases').innerHTML = FASES.map(function(f, i){ return '<button type="button" class="opt" data-fase="' + i + '" aria-pressed="' + (S.fase === i) + '">' + esc(f) + '</button>'; }).join('');
+  $('evMonitoreos').innerHTML = MONITOREO.map(function(m, i){ return '<button type="button" class="opt" data-monit="' + i + '" aria-pressed="' + (S.monit === i) + '">' + esc(m) + '</button>'; }).join('');
+}
+function renderLista(){
+  var q = norm($('evBuscar').value).split(/\s+/).filter(Boolean), h = '';
+  if (q.length){
+    var a = todos().filter(function(s){ var t = norm(s.id + ' ' + s.d + ' ' + s.c); return q.every(function(w){ return t.indexOf(w) >= 0; }); });
+    a.slice(0, MAX_LISTA).forEach(function(s){
+      var on = S.sel.indexOf(s.k) >= 0;
+      h += '<button type="button" class="item" data-k="' + esc(s.k) + '" aria-pressed="' + on + '"><span class="box">' + (on ? '✓' : '') + '</span><span>' + esc(s.d) + '<small>' + esc(s.id) + (s.c ? ' · ' + esc(s.c) : '') + '</small></span></button>';
+    });
+    if (!a.length) h = '<div class="hint" style="padding:10px">Sin resultados.</div>';
+  }
+  $('evLista').innerHTML = h;
+  $('evCuentaSel').textContent = S.sel.length ? S.sel.length + ' semáforos en el evento' : 'Ningún semáforo elegido todavía.';
+  $('evBtnQuitarTodos').hidden = !S.sel.length;
+}
+function renderCorredores(){
+  var h = '';
+  if (!S.sel.length) h = '<div class="vacio">Elige semáforos en el mapa o con el buscador. Los corredores aparecen aquí solos.</div>';
+  S.cor.forEach(function(c){
+    var ks = semsDe(c), n = intervenidas(ks);
+    h += '<div class="cor" style="--c:' + c.color + '" data-cor="' + c.id + '">' +
+      '<div class="cor-head"><input type="text" value="' + esc(c.nombre) + '" data-nombre="' + c.id + '" aria-label="Nombre del corredor">' +
+      '<div class="estados">' + ESTADOS.map(function(e, i){ return '<button type="button" title="' + e.t + '" data-estado="' + c.id + '" data-i="' + i + '" aria-pressed="' + (c.estado === i) + '">' + e.e + '</button>'; }).join('') + '</div>' +
+      '<span class="cuenta">' + n + '/' + ks.length + '</span></div>';
+    ks.forEach(function(k){
+      var s = porKey(k), on = !!S.inter[k];
+      h += '<div class="sem' + (on ? ' hecho' : '') + '"><label><input type="checkbox" data-inter="' + esc(k) + '"' + (on ? ' checked' : '') + '><span class="nom">' + esc(s.d) + '<small>' + esc(s.id) + '</small></span></label>' +
+        '<select data-mover="' + esc(k) + '" aria-label="Mover a otro corredor">' + S.cor.map(function(o){ return '<option value="' + o.id + '"' + (o.id === c.id ? ' selected' : '') + '>' + esc(o.nombre) + '</option>'; }).join('') + '<option value="__nuevo">+ Nuevo corredor…</option></select>' +
+        '<button type="button" class="x" data-quitar="' + esc(k) + '" aria-label="Quitar del evento">×</button></div>';
+    });
+    if (!ks.length) h += '<div class="hint">Vacío. Mueve semáforos aquí con el selector de cada fila.</div>';
+    h += '<div class="cor-pie"><button type="button" class="btn-ghost" data-todos="' + c.id + '">' + (ks.length && n === ks.length ? 'Desmarcar todos' : 'Marcar todos intervenidos') + '</button>' +
+      '<button type="button" class="btn-ghost x" data-borrar="' + c.id + '">Eliminar corredor</button></div></div>';
+  });
+  $('evCorredores').innerHTML = h;
+  var tot = S.sel.length, n = intervenidas(S.sel);
+  $('evTotalTxt').textContent = n + '/' + tot + ' intervenidas' + (tot ? ' · ' + Math.round(n * 100 / tot) + ' %' : '');
+  $('evProgBar').style.width = (tot ? n * 100 / tot : 0) + '%';
+  $('evBtnReagrupar').hidden = !S.sel.length;
+}
+function barraTexto(n, tot){ var b = tot ? Math.round(n * 10 / tot) : 0; return Array(b + 1).join('▰') + Array(10 - b + 1).join('▱') + ' ' + (tot ? Math.round(n * 100 / tot) : 0) + ' %'; }
+function generar(){
+  var t = TIPOS[S.tipo] || TIPOS[0], tot = S.sel.length, n = intervenidas(S.sel), lin = [];
+  lin.push('*' + ENCABEZADOS[S.enc] + '*');
+  var titulo = (S.nombre || 'Evento') + (S.zona ? '* – ' + S.zona : '*');
+  lin.push(t.e + ' *' + titulo + ' ' + t.e);
+  lin.push('⏱️ Fase: ' + FASES[S.fase] + (S.hora ? ' · Actualización ' + fmtHora(S.hora) : ''));
+  lin.push('');
+  lin.push('🚦 *Intersecciones intervenidas: ' + n + '/' + tot + '* 🚦');
+  if (S.barra) lin.push(barraTexto(n, tot));
+  lin.push('');
+  S.cor.forEach(function(c){
+    var ks = semsDe(c); if (!ks.length) return;
+    lin.push('• ' + c.nombre + ': ' + intervenidas(ks) + '/' + ks.length + (S.estado && c.estado >= 0 ? ' ' + ESTADOS[c.estado].e : ''));
+    if (S.detalle) ks.forEach(function(k){ if (S.inter[k]) lin.push('   ✅ ' + porKey(k).d); });
+  });
+  lin.push('');
+  lin.push(MONITOREO[S.monit] || '');
+  if (S.nota.trim()) lin.push(S.nota.trim());
+  $('evOut').value = lin.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  pintarBurbuja($('evOut').value);
+}
+function pintarBurbuja(txt){
+  $('evBurbuja').innerHTML = String(txt).split('\n').map(function(l){
+    return '<div>' + esc(l).replace(/\*_([^*_]+?)_\*/g, '<b><i>$1</i></b>').replace(/\*([^*]+?)\*/g, '<b>$1</b>').replace(/^( +)/, function(m){ return Array(m.length + 1).join('&nbsp;'); }) + '</div>';
+  }).join('');
+}
+function todo(){ renderOpts(); renderLista(); renderCorredores(); renderMapa(); generar(); guardar(); }
+
+/* ══ MAPA ══ */
+function iniciarMapa(){
+  if (typeof L === 'undefined'){ $('evMapa').innerHTML = '<div class="hint" style="padding:16px">Mapa no disponible. Revisa conexión a internet. Puedes elegir semáforos con el buscador.</div>'; return; }
+  MAPA = L.map('evMapa', { preferCanvas:true, boxZoom:false }).setView(MAPA_CENTRO, MAPA_ZOOM);
+  TILES = L.tileLayer(BASES.calle.url, { maxZoom:19, attribution:BASES.calle.attr, crossOrigin:'anonymous' }).addTo(MAPA);
+  CAPA = L.layerGroup().addTo(MAPA);
+  MAPA.on('mousedown', areaInicio); MAPA.on('mousemove', areaMover); MAPA.on('mouseup', areaFin);
+}
+function renderMapa(){
+  if (!MAPA) return;
+  CAPA.clearLayers();
+  todos().forEach(function(s){
+    if (!tieneCoord(s)) return;
+    var on = S.sel.indexOf(s.k) >= 0, c = on ? corPorId(S.asig[s.k]) : null, hecho = on && S.inter[s.k];
+    var m = on
+      ? L.circleMarker([s.la, s.lo], { radius:hecho ? 9 : 8, color:hecho ? '#ffffff' : (c ? c.color : COLOR_OTRAS), weight:3, fillColor:hecho ? (c ? c.color : COLOR_OTRAS) : '#ffffff', fillOpacity:1 })
+      : L.circleMarker([s.la, s.lo], { radius:4, color:'#ffffff', weight:1, fillColor:'#94a3b8', fillOpacity:.9 });
+    m.bindTooltip('<b>' + esc(s.id) + '</b> · ' + esc(s.d) + (c ? '<br>' + esc(c.nombre) + (hecho ? ' · ✅ intervenido' : ' · pendiente') + '<br><small>Clic derecho: marcar intervenido</small>' : ''));
+    m.on('click', function(e){ L.DomEvent.stopPropagation(e); if (!AREA.activo) toggleSel(s.k); });
+    m.on('contextmenu', function(e){ if (e.originalEvent) L.DomEvent.preventDefault(e.originalEvent); if (on){ S.inter[s.k] = !S.inter[s.k]; todo(); } });
+    m.addTo(CAPA);
+  });
+}
+function encuadrar(){
+  if (!MAPA) return;
+  var pts = S.sel.map(porKey).filter(tieneCoord).map(function(s){ return [s.la, s.lo]; });
+  if (pts.length) MAPA.fitBounds(pts, { padding:[40,40], maxZoom:16, animate:false });
+}
+function modoArea(on){
+  AREA.activo = on;
+  $('evBtnArea').setAttribute('aria-pressed', on);
+  $('evMapa').classList.toggle('modo-area', on);
+  if (MAPA){ if (on) MAPA.dragging.disable(); else MAPA.dragging.enable(); }
+}
+function areaInicio(e){
+  var shift = e.originalEvent && e.originalEvent.shiftKey;
+  if (!AREA.activo && !shift) return;
+  if (shift && !AREA.activo){ AREA.porShift = true; modoArea(true); }
+  AREA.inicio = e.latlng;
+  AREA.rect = L.rectangle([e.latlng, e.latlng], { color:'#f59e0b', weight:2, dashArray:'6 4', fillOpacity:.12, interactive:false }).addTo(MAPA);
+}
+function areaMover(e){ if (AREA.rect) AREA.rect.setBounds(L.latLngBounds(AREA.inicio, e.latlng)); }
+function areaFin(e){
+  if (!AREA.rect) return;
+  var b = L.latLngBounds(AREA.inicio, e.latlng);
+  MAPA.removeLayer(AREA.rect); AREA.rect = null; AREA.inicio = null;
+  var dentro = todos().filter(function(s){ return tieneCoord(s) && b.contains([s.la, s.lo]); }).map(function(s){ return s.k; });
+  var n = agregarSel(dentro);
+  modoArea(false); AREA.porShift = false;
+  todo();
+  aviso(n ? '✓ ' + n + ' semáforos agregados al evento.' : (dentro.length ? 'Esos semáforos ya estaban en el evento.' : 'No hay semáforos dentro del recuadro.'));
+}
+function cambiarBase(){
+  if (!TILES) return;
+  var antes = BASES[BASE_MAPA].attr;
+  BASE_MAPA = BASE_MAPA === 'calle' ? 'sat' : 'calle';
+  TILES.setUrl(BASES[BASE_MAPA].url);
+  if (MAPA.attributionControl){ MAPA.attributionControl.removeAttribution(antes); MAPA.attributionControl.addAttribution(BASES[BASE_MAPA].attr); }
+  $('evBtnBase').textContent = BASE_MAPA === 'calle' ? 'Satélite' : 'Calles';
+}
+
+/* ══ IMAGEN DEL MAPA (con leyenda de corredores) ══ */
+function cargarTile(url){ return new Promise(function(res){ var im = new Image(); im.crossOrigin = 'anonymous'; im.onload = function(){ res(im); }; im.onerror = function(){ res(null); }; im.src = url; }); }
+function imagenMapa(){
+  if (!MAPA) return Promise.reject(new Error('sin mapa'));
+  var tam = MAPA.getSize(), z = Math.round(MAPA.getZoom());
+  var W = MAPA_IMG_ANCHO, H = Math.round(tam.y * W / tam.x), m = W / tam.x;
+  var dz = Math.max(0, Math.min(2, Math.round(Math.log(m) / Math.LN2), (BASE_MAPA === 'sat' ? 18 : 19) - z));
+  var zz = z + dz, e = W / (tam.x * Math.pow(2, dz));
+  var c = MAPA.project(MAPA.getCenter(), zz), ox = c.x - (W / e) / 2, oy = c.y - (H / e) / 2, n = Math.pow(2, zz);
+  var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  var g = cv.getContext('2d'); g.fillStyle = '#e5e7eb'; g.fillRect(0, 0, W, H);
+  var tareas = [];
+  for (var tx = Math.floor(ox / 256); tx <= Math.floor((ox + W / e) / 256); tx++){
+    for (var ty = Math.floor(oy / 256); ty <= Math.floor((oy + H / e) / 256); ty++){
+      if (ty < 0 || ty >= n) continue;
+      (function(tx, ty){
+        var url = BASES[BASE_MAPA].url.replace('{z}', zz).replace('{x}', ((tx % n) + n) % n).replace('{y}', ty);
+        tareas.push(cargarTile(url).then(function(im){ if (im) g.drawImage(im, Math.floor((tx * 256 - ox) * e), Math.floor((ty * 256 - oy) * e), Math.ceil(256 * e) + 1, Math.ceil(256 * e) + 1); }));
+      })(tx, ty);
+    }
+  }
+  return Promise.all(tareas).then(function(){
+    var k = Math.min(m, 1.6);
+    S.sel.forEach(function(key){
+      var s = porKey(key); if (!tieneCoord(s)) return;
+      var cor = corPorId(S.asig[key]), col = cor ? cor.color : COLOR_OTRAS, hecho = S.inter[key];
+      var p = MAPA.project([s.la, s.lo], zz), x = (p.x - ox) * e, y = (p.y - oy) * e;
+      g.beginPath(); g.arc(x, y, 9 * k, 0, Math.PI * 2);
+      g.fillStyle = hecho ? col : '#ffffff'; g.fill();
+      g.lineWidth = 3 * k; g.strokeStyle = hecho ? '#ffffff' : col; g.stroke();
+      if (hecho){ g.strokeStyle = '#ffffff'; g.lineWidth = 2.2 * k; g.beginPath(); g.moveTo(x - 4 * k, y); g.lineTo(x - 1 * k, y + 3 * k); g.lineTo(x + 4.5 * k, y - 3.5 * k); g.stroke(); }
+    });
+    // leyenda
+    var cors = S.cor.filter(function(c){ return semsDe(c).length; });
+    if (cors.length){
+      var fs = Math.round(13 * k), lh = fs * 1.6, pad2 = 10 * k;
+      g.font = '600 ' + fs + 'px sans-serif'; g.textBaseline = 'middle'; g.textAlign = 'left';
+      var lineas = cors.map(function(c){ var ks = semsDe(c); return { c:c, t:c.nombre + '  ' + intervenidas(ks) + '/' + ks.length }; });
+      var titulo = 'Intervenidas ' + intervenidas(S.sel) + '/' + S.sel.length;
+      var ancho = Math.max.apply(null, lineas.map(function(l){ return g.measureText(l.t).width; }).concat([g.measureText(titulo).width])) + pad2 * 2 + fs * 1.4;
+      var alto = lh * (lineas.length + 1) + pad2 * 2;
+      g.fillStyle = 'rgba(255,255,255,.92)'; g.fillRect(pad2, pad2, ancho, alto);
+      g.fillStyle = '#111827'; g.font = '800 ' + fs + 'px sans-serif'; g.fillText(titulo, pad2 * 2, pad2 + lh / 2 + pad2 / 2);
+      g.font = '600 ' + fs + 'px sans-serif';
+      lineas.forEach(function(l, i){
+        var yy = pad2 + lh * (i + 1.5) + pad2 / 2;
+        g.fillStyle = l.c.color; g.beginPath(); g.arc(pad2 * 2 + fs * .4, yy, fs * .4, 0, Math.PI * 2); g.fill();
+        g.fillStyle = '#111827'; g.fillText(l.t, pad2 * 2 + fs * 1.2, yy);
+      });
+    }
+    var fa = Math.round(11 * k), at = BASES[BASE_MAPA].attr;
+    g.font = fa + 'px sans-serif'; g.textBaseline = 'alphabetic'; var w = g.measureText(at).width + fa;
+    g.fillStyle = 'rgba(255,255,255,.8)'; g.fillRect(W - w, H - fa * 1.7, w, fa * 1.7);
+    g.fillStyle = '#111827'; g.fillText(at, W - w + fa / 2, H - fa * .5);
+    return new Promise(function(res, rej){ try { cv.toBlob(function(b){ if (b) res(b); else rej(new Error('sin imagen')); }, 'image/png'); } catch(err){ rej(err); } });
+  });
+}
+function bajarBlob(b){ var u = URL.createObjectURL(b), a = document.createElement('a'); a.href = u; a.download = 'mapa-evento.png'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(u); }, 4000); }
+function copiarMapa(){
+  var p = imagenMapa();
+  if (navigator.clipboard && navigator.clipboard.write && typeof ClipboardItem !== 'undefined'){
+    var item; try { item = new ClipboardItem({ 'image/png': p }); } catch(e){ item = null; }
+    if (item){ navigator.clipboard.write([item]).then(function(){ aviso('✓ Mapa copiado. Pégalo en WhatsApp.'); }).catch(function(){ p.then(function(b){ bajarBlob(b); aviso('No se pudo copiar. Mapa descargado.'); }).catch(function(){ aviso('No se pudo crear el mapa.'); }); }); return; }
+  }
+  p.then(function(b){ bajarBlob(b); aviso('Mapa descargado.'); }).catch(function(){ aviso('No se pudo crear el mapa.'); });
+}
+
+/* ══ ACCIONES ══ */
+function copiar(){
+  generar();
+  var ta = $('evOut'), falta = !S.sel.length ? 'Aún no hay semáforos en el evento.' : (!S.nombre.trim() ? 'Falta el nombre del evento.' : '');
+  var ok = falta ? '⚠️ Copiado, pero ' + falta.charAt(0).toLowerCase() + falta.slice(1) : '✓ Copiado. Pégalo en WhatsApp.';
+  function plan(){ ta.focus(); ta.select(); var r = false; try { r = document.execCommand('copy'); } catch(e){} aviso(r ? ok : 'No se pudo copiar. Intenta de nuevo.'); }
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(function(){ aviso(ok); }).catch(plan); else plan();
+}
+function campos(){
+  $('evNombre').value = S.nombre; $('evZona').value = S.zona; $('evHora').value = S.hora; $('evNota').value = S.nota;
+  $('evEncabezado').value = String(S.enc);
+  $('evOptBarra').checked = S.barra; $('evOptEstado').checked = S.estado; $('evOptDetalle').checked = S.detalle;
+}
+function nuevoEvento(){
+  var copia = JSON.stringify(S);
+  S = nuevoEstado(); S.hora = horaAhora();
+  campos(); todo(); if (MAPA) MAPA.setView(MAPA_CENTRO, MAPA_ZOOM);
+  aviso('Evento borrado.', { txt:'Deshacer', fn:function(){ S = JSON.parse(copia); campos(); todo(); encuadrar(); aviso('✓ Evento recuperado.'); } });
+}
+
+/* ══ EVENTOS ══ */
+function eventos(){
+  $('evEncabezado').innerHTML = ENCABEZADOS.map(function(e, i){ return '<option value="' + i + '">' + esc(e) + '</option>'; }).join('');
+  [['evNombre','nombre'],['evZona','zona'],['evHora','hora'],['evNota','nota']].forEach(function(p){ $(p[0]).addEventListener('input', function(){ S[p[1]] = this.value; generar(); guardar(); }); });
+  $('evEncabezado').addEventListener('change', function(){ S.enc = parseInt(this.value, 10) || 0; generar(); guardar(); });
+  [['evOptBarra','barra'],['evOptEstado','estado'],['evOptDetalle','detalle']].forEach(function(p){ $(p[0]).addEventListener('change', function(){ S[p[1]] = this.checked; generar(); guardar(); }); });
+  document.addEventListener('click', function(e){
+    var b;
+    if ((b = e.target.closest('[data-tipo]'))){ S.tipo = +b.getAttribute('data-tipo'); todo(); }
+    else if ((b = e.target.closest('[data-fase]'))){ S.fase = +b.getAttribute('data-fase'); S.hora = horaAhora(); $('evHora').value = S.hora; if (FASES[S.fase] === 'Cierre') S.monit = MONITOREO.length - 1; todo(); }
+    else if ((b = e.target.closest('[data-monit]'))){ S.monit = +b.getAttribute('data-monit'); todo(); }
+  });
+  $('evBuscar').addEventListener('input', renderLista);
+  $('evBuscar').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ var b = $('evLista').querySelector('.item'); if (b){ e.preventDefault(); toggleSel(b.getAttribute('data-k')); this.value = ''; renderLista(); } } });
+  $('evLista').addEventListener('click', function(e){ var b = e.target.closest('.item'); if (b){ toggleSel(b.getAttribute('data-k')); encuadrar(); } });
+  $('evBtnQuitarTodos').addEventListener('click', function(){
+    var copia = JSON.stringify(S); S.sel = []; S.asig = {}; S.inter = {}; S.cor = []; S.manual = false; todo();
+    aviso('Semáforos quitados.', { txt:'Deshacer', fn:function(){ S = JSON.parse(copia); todo(); encuadrar(); } });
+  });
+  $('evBtnArea').addEventListener('click', function(){ modoArea(!AREA.activo); if (AREA.activo) aviso('Arrastra un recuadro sobre el mapa.'); });
+  $('evBtnBase').addEventListener('click', cambiarBase);
+  $('evBtnReagrupar').addEventListener('click', function(){ agruparTodo(); todo(); aviso('✓ Corredores reagrupados por calle.'); });
+  $('evBtnNuevoCor').addEventListener('click', function(){
+    S.cor.splice(S.cor.filter(function(c){ return !c.otras; }).length, 0, { id:nuevoId(), nombre:'Corredor ' + (S.cor.length + 1), color:colorLibre(), clave:'', estado:-1, manualVacio:true });
+    S.manual = true; todo();
+    var ins = $('evCorredores').querySelectorAll('[data-nombre]'); var ult = ins[S.cor.filter(function(c){ return !c.otras; }).length - 1]; if (ult){ ult.focus(); ult.select(); }
+  });
+  var cont = $('evCorredores');
+  cont.addEventListener('input', function(e){
+    var t = e.target;
+    if (t.hasAttribute('data-nombre')){ var c = corPorId(t.getAttribute('data-nombre')); if (c){ c.nombre = t.value; c.otras = false; S.manual = true; generar(); guardar(); } }
+  });
+  cont.addEventListener('change', function(e){
+    var t = e.target;
+    if (t.hasAttribute('data-nombre')){ renderCorredores(); renderMapa(); }
+    else if (t.hasAttribute('data-inter')){ S.inter[t.getAttribute('data-inter')] = t.checked; todo(); }
+    else if (t.hasAttribute('data-mover')){
+      var k = t.getAttribute('data-mover'), dest = t.value;
+      if (dest === '__nuevo'){ var nc = { id:nuevoId(), nombre:'Corredor ' + (S.cor.length + 1), color:colorLibre(), clave:'', estado:-1 }; S.cor.splice(S.cor.filter(function(c){ return !c.otras; }).length, 0, nc); dest = nc.id; }
+      S.asig[k] = dest; S.manual = true; limpiarVacios(); todo();
+    }
+  });
+  cont.addEventListener('click', function(e){
+    var b;
+    if ((b = e.target.closest('[data-estado]'))){ var c = corPorId(b.getAttribute('data-estado')), i = +b.getAttribute('data-i'); if (c){ c.estado = c.estado === i ? -1 : i; todo(); } }
+    else if ((b = e.target.closest('[data-quitar]'))){ quitarSel(b.getAttribute('data-quitar')); todo(); }
+    else if ((b = e.target.closest('[data-todos]'))){ var c2 = corPorId(b.getAttribute('data-todos')), ks = semsDe(c2), marcar = intervenidas(ks) < ks.length; ks.forEach(function(k){ S.inter[k] = marcar; }); todo(); }
+    else if ((b = e.target.closest('[data-borrar]'))){
+      var id = b.getAttribute('data-borrar'), cb = corPorId(id), dentro = semsDe(cb);
+      S.cor = S.cor.filter(function(c){ return c.id !== id; });
+      if (dentro.length){ var o = corOtras(); dentro.forEach(function(k){ S.asig[k] = o.id; }); }
+      S.manual = true; todo();
+      if (dentro.length) aviso('Corredor eliminado. Sus semáforos pasaron a "Otras intersecciones".');
+    }
+  });
+  $('evBtnCopy').addEventListener('click', copiar);
+  $('evBtnMapaCopiar').addEventListener('click', copiarMapa);
+  $('evBtnMapaBajar').addEventListener('click', function(){ imagenMapa().then(function(b){ bajarBlob(b); aviso('✓ Mapa descargado.'); }).catch(function(){ aviso('No se pudo crear el mapa.'); }); });
+  $('evBtnNuevoEvento').addEventListener('click', nuevoEvento);
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && AREA.activo){ if (AREA.rect){ MAPA.removeLayer(AREA.rect); AREA.rect = null; } modoArea(false); } });
+}
+
+/* ══ INIT ══ */
+cargar();
+if (!S.hora) S.hora = horaAhora();
+eventos();
+campos();
+todo();
+var listo = false;
+return {
+  mostrar: function(){
+    if (!listo){ iniciarMapa(); listo = true; todo(); encuadrar(); }
+    else if (MAPA){ MAPA.invalidateSize(); }
+  },
+  importar: function(ks){   // puente desde "Cambio de tiempos"
+    var antes = S.sel.length, n = agregarSel(ks);
+    if (!S.tipo) S.tipo = 0;
+    S.hora = horaAhora(); campos(); todo();
+    return { nuevos:n, habia:antes };
+  },
+  encuadrar: function(){ encuadrar(); },
+  mapa: function(){ return MAPA; },        // solo lectura (pruebas / consola)
+  estado: function(){ return S; }
+};
+})();
+
+/* ══ PESTAÑAS ══ */
+var LS_VISTA = 'ups_vista';
+var PUENTE_MIN = 6;                                  // con motivo Evento y esta cantidad de semáforos, sugiere el modo Evento
+var SUBTITULOS = { tiempos:'Llena los pasos. Copia el reporte. Pégalo en WhatsApp.', evento:'Elige semáforos, revisa corredores, marca intervenidos y copia.' };
+function cambiarVista(v, sinHash){
+  if (v !== 'evento') v = 'tiempos';
+  document.body.setAttribute('data-modo', v);
+  $('vistaTiempos').hidden = v !== 'tiempos';
+  $('vistaEvento').hidden = v !== 'evento';
+  $('tabTiempos').setAttribute('aria-selected', v === 'tiempos');
+  $('tabEvento').setAttribute('aria-selected', v === 'evento');
+  $('subtitulo').textContent = SUBTITULOS[v];
+  try { localStorage.setItem(LS_VISTA, v); } catch(e){}
+  if (!sinHash && history.replaceState) history.replaceState(null, '', '#' + v);
+  if (v === 'evento') EV.mostrar(); else if (MAPA) MAPA.invalidateSize();
+}
+function vistaInicial(){
+  var h = (location.hash || '').replace('#', '');
+  if (h === 'evento' || h === 'tiempos') return h;
+  var v = null; try { v = localStorage.getItem(LS_VISTA); } catch(e){}
+  return v === 'evento' ? 'evento' : 'tiempos';
+}
+
+/* ══ PUENTE: Cambio de tiempos → Evento ══ */
+function indiceEvento(){ for (var i = 0; i < MOTIVOS.length; i++){ if (norm(MOTIVOS[i].b) === 'evento') return i; } return -1; }
+function pintarPuente(){
+  var ver = S.motivo === indiceEvento() && S.sel.length >= PUENTE_MIN;
+  $('puente').hidden = !ver;
+  if (ver) $('puenteTxt').textContent = '¿Es un evento grande? Tienes ' + S.sel.length + ' semáforos.';
+}
+function pasarAEvento(){
+  var r = EV.importar(S.sel.slice());
+  cambiarVista('evento');
+  EV.encuadrar();
+  aviso(r.habia ? '✓ ' + r.nuevos + ' semáforos sumados al evento en curso. Revisa los corredores.' : '✓ ' + r.nuevos + ' semáforos pasados al evento. Revisa los corredores.');
+  try { window.scrollTo({ top:0, behavior:'smooth' }); } catch(e){}
+}
+$('tabTiempos').addEventListener('click', function(){ cambiarVista('tiempos'); });
+$('tabEvento').addEventListener('click', function(){ cambiarVista('evento'); });
+$('btnPuente').addEventListener('click', pasarAEvento);
+window.addEventListener('hashchange', function(){ var h = location.hash.replace('#', ''); if (h === 'evento' || h === 'tiempos') cambiarVista(h, true); });
+cambiarVista(vistaInicial(), !location.hash);
+pintarPuente();
 </script>
 </body>
 </html>
