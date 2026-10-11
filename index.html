@@ -147,7 +147,7 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
 body{--acc:var(--gold);--on-acc:var(--on-gold)}
 body[data-modo="evento"]{--acc:#8b5cf6;--on-acc:#ffffff}
 header.top{border-bottom-color:var(--acc)}
-.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .tab{position:relative;display:grid;gap:4px;align-content:start;text-align:left;padding:14px 16px;border:2px solid var(--line);border-radius:14px;background:var(--card)}
 .tab:hover{border-color:var(--acc)}
 .tab[aria-selected="true"]{background:color-mix(in srgb, var(--acc) 10%, var(--card))}
@@ -156,7 +156,7 @@ header.top{border-bottom-color:var(--acc)}
 .tab b{padding-right:110px}
 .tab b{font-size:16px}
 .tab small{font-size:13px;font-weight:500;color:var(--muted);line-height:1.35}
-@media (max-width:640px){ .tab[aria-selected="false"]::after{content:''} .tab b{padding-right:60px} }
+@media (max-width:640px){ .tab[aria-selected="false"]::after{content:''} .tab{padding-top:34px;min-width:0} .tab b{padding-right:0} .tab small{overflow-wrap:anywhere} }
 .tab[aria-selected="true"]{border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb, var(--acc) 30%, transparent)}
 .tab[aria-selected="true"] b{color:var(--fg)}
 #vistaEvento .num{background:var(--acc);color:var(--on-acc)}
@@ -251,6 +251,15 @@ body[data-modo="evento"] .bar{display:none!important}
 #vistaEvento .plan-form input{flex:1 1 200px;width:auto;padding:8px 12px}
 #vistaEvento .x{color:var(--danger)}
 #vistaEvento .side .btn-copy{display:block;width:100%}   /* en teléfono la barra de Cambio de tiempos no aplica: el botón se queda visible */
+.tab-cuenta{margin-left:8px;padding:1px 9px;border-radius:999px;font-size:13px;font-weight:800;background:#8b5cf6;color:#fff;vertical-align:2px;font-variant-numeric:tabular-nums}
+#vistaEvento .ayuda summary{display:inline-block;cursor:pointer;list-style:none;font-size:13px;font-weight:700;color:var(--sel-line)}
+#vistaEvento .ayuda summary::-webkit-details-marker{display:none}
+#vistaEvento .ayuda[open] summary{margin-bottom:6px}
+#vistaEvento .ayuda .hint{background:var(--sel);border-radius:10px;padding:8px 12px}
+/* lupa del buscador: más contraste en ambos temas */
+#buscar,#evBuscar{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.5' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E")}
+:root[data-theme="dark"] #buscar,:root[data-theme="dark"] #evBuscar{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e2e8f0' stroke-width='2.5' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E")}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) #buscar,:root:not([data-theme="light"]) #evBuscar{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e2e8f0' stroke-width='2.5' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E")} }
 #evOut{position:absolute;left:-9999px;top:0;width:10px;height:10px;opacity:0}
 select{font:inherit;font-size:16px;color:var(--fg);background:var(--field);border:2px solid var(--field-line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
 </style>
@@ -261,7 +270,7 @@ select{font:inherit;font-size:16px;color:var(--fg);background:var(--field);borde
   <header class="top"><button type="button" class="tema" id="btnTema">🌙 Oscuro</button><h1>Unidad Planeamiento Semafórico</h1><p id="subtitulo">Llena los pasos. Copia el reporte. Pégalo en WhatsApp.</p></header>
   <nav class="tabs" role="tablist" aria-label="Tipo de reporte">
     <button type="button" class="tab" role="tab" id="tabTiempos" aria-selected="true"><b>🚦 Cambio de tiempos</b><small>Para pocos semáforos. Reporta los segundos antes y después del cambio: accidentes, apoyos viales, eventos pequeños.</small></button>
-    <button type="button" class="tab" role="tab" id="tabEvento" aria-selected="false"><b>🎪 Evento con corredores</b><small>Para eventos grandes. Lleva la cuenta de intersecciones intervenidas por corredor: conciertos, partidos, desfiles, marchas.</small></button>
+    <button type="button" class="tab" role="tab" id="tabEvento" aria-selected="false"><b>🎪 Evento con corredores<span class="tab-cuenta" id="tabCuenta" hidden></span></b><small>Para eventos grandes. Lleva la cuenta de intersecciones intervenidas por corredor: conciertos, partidos, desfiles, marchas.</small></button>
   </nav>
 
   <div id="vistaTiempos">
@@ -378,7 +387,7 @@ select{font:inherit;font-size:16px;color:var(--fg);background:var(--field);borde
 
       <section class="card">
         <h2><span class="num">2</span>Semáforos del evento</h2>
-        <p class="hint"><b>Selección por área:</b> toca "Seleccionar área" y arrastra un recuadro sobre el mapa (o mantén Shift y arrastra). Clic en un punto lo agrega o lo quita. Clic derecho en un punto elegido lo marca como intervenido.</p>
+        <details class="ayuda"><summary>ⓘ ¿Cómo elegir?</summary><p class="hint"><b>Selección por área:</b> toca "Seleccionar área" y arrastra un recuadro sobre el mapa (o mantén Shift y arrastra). Clic en un punto lo agrega o lo quita. Clic derecho en un punto elegido lo marca como intervenido.</p></details>
         <div class="mapwrap">
           <div id="evMapa"></div>
           <div class="maptools">
@@ -1332,6 +1341,8 @@ function renderCorredores(){
   $('evTotalTxt').textContent = txt;
   $('evProgBar').style.width = (tot ? n * 100 / tot : 0) + '%';
   $('evBtnReagrupar').hidden = !S.sel.length;
+  var tc = document.getElementById('tabCuenta');   // contador en la pestaña "Evento"
+  if (tc){ tc.hidden = !tot; tc.textContent = n + '/' + tot; }
   $('evBtnPlegar').hidden = S.cor.length < 2;
   $('evBtnPlegar').textContent = S.cor.some(estaAbierto) ? 'Cerrar todos' : 'Abrir todos';
 }
@@ -1531,9 +1542,10 @@ function imagenMapa(){
   var dz = Math.max(0, Math.min(2, Math.round(Math.log(m) / Math.LN2), (BASE_MAPA === 'sat' ? 18 : 19) - z));
   var zz = z + dz, e = W / (tam.x * Math.pow(2, dz));
   var c = MAPA.project(v.centro, zz), ox = c.x - (W / e) / 2, oy = c.y - (H / e) / 2, n = Math.pow(2, zz);
-  var ley = leyendaMedida(W, Math.min(m, 1.6));
-  var cv = document.createElement('canvas'); cv.width = W; cv.height = H + ley.alto;
-  var g = cv.getContext('2d'); g.fillStyle = '#e5e7eb'; g.fillRect(0, 0, W, H);
+  var ley = leyendaMedida(W, Math.min(m, 1.6)), tit = tituloMedida(W, Math.min(m, 1.6));
+  var cv = document.createElement('canvas'); cv.width = W; cv.height = tit.alto + H + ley.alto;
+  var g = cv.getContext('2d'); g.translate(0, tit.alto);   // el mapa va debajo de la franja de título
+  g.fillStyle = '#e5e7eb'; g.fillRect(0, 0, W, H);
   var tareas = [];
   for (var tx = Math.floor(ox / 256); tx <= Math.floor((ox + W / e) / 256); tx++){
     for (var ty = Math.floor(oy / 256); ty <= Math.floor((oy + H / e) / 256); ty++){
@@ -1559,8 +1571,26 @@ function imagenMapa(){
     g.fillStyle = 'rgba(255,255,255,.8)'; g.fillRect(W - w, H - fa * 1.7, w, fa * 1.7);
     g.fillStyle = '#111827'; g.fillText(at, W - w + fa / 2, H - fa * .5);
     dibujarLeyenda(g, ley, H, W);
+    g.setTransform(1, 0, 0, 1, 0, 0); dibujarTitulo(g, tit, W);
     return new Promise(function(res, rej){ try { cv.toBlob(function(b){ if (b) res(b); else rej(new Error('sin imagen')); }, 'image/png'); } catch(err){ rej(err); } });
   });
+}
+// Franja superior de la imagen con el nombre del evento (sin nombre = sin franja).
+function tituloMedida(W, k){   // franja superior con el nombre del evento (la imagen se entiende sola en WhatsApp)
+  var t = limpiarWA(S.nombre); if (!t) return { alto:0 };
+  var fs = Math.round(22 * k), pad2 = Math.round(14 * k), g = document.createElement('canvas').getContext('2d'), f = '800 ' + fs + 'px sans-serif';
+  g.font = f; while (t.length > 1 && g.measureText(t + '…').width > W - pad2 * 2) t = t.slice(0, -1);
+  if (t !== limpiarWA(S.nombre)) t += '…';
+  return { alto:Math.round(fs * 1.5 + pad2 * 2), t:t, f:f, fs:fs, pad:pad2 };
+}
+// Pinta la franja de título calculada por tituloMedida().
+function dibujarTitulo(g, T, W){
+  if (!T.alto) return;
+  g.fillStyle = '#0b1120'; g.fillRect(0, 0, W, T.alto);
+  g.fillStyle = '#8b5cf6'; g.fillRect(0, T.alto - Math.max(3, Math.round(T.fs / 6)), W, Math.max(3, Math.round(T.fs / 6)));
+  g.font = T.f; g.fillStyle = '#ffffff'; g.textBaseline = 'middle'; g.textAlign = 'center';
+  g.fillText(T.t, W / 2, (T.alto - Math.max(3, Math.round(T.fs / 6))) / 2);
+  g.textAlign = 'left';
 }
 // Calcula la franja de leyenda bajo la imagen (filas que fluyen, nombres largos cortados con …).
 function leyendaMedida(W, k){   // franja inferior: título + corredores en filas que fluyen (no tapa el mapa)
