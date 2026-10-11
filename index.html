@@ -157,6 +157,8 @@ body[data-modo="evento"] .bar{display:none!important}
 #vistaEvento .mapwrap{position:relative}
 #evMapa{height:380px;border:1px solid var(--line);border-radius:12px;z-index:0;background:var(--bg)}
 #evMapa.modo-area{cursor:crosshair}
+#vistaEvento .evpin{background:none;border:0}
+#vistaEvento .evpin svg{display:block;overflow:visible;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
 #vistaEvento .maptools{position:absolute;top:10px;right:10px;z-index:500;display:flex;gap:6px}
 #vistaEvento .maptools button{padding:6px 12px;border-radius:999px;font-size:13px;box-shadow:0 1px 4px rgba(0,0,0,.3)}
 #vistaEvento .maptools button[aria-pressed="true"]{background:var(--acc);color:var(--on-acc);border-color:var(--acc)}
@@ -166,12 +168,9 @@ body[data-modo="evento"] .bar{display:none!important}
 #vistaEvento .list:empty{display:none}
 #vistaEvento .barra-sel{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
 #vistaEvento .cor{border:1px solid var(--line);border-left:6px solid var(--c);border-radius:12px;padding:10px 12px;display:grid;gap:8px}
-#vistaEvento .cor-head{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center}
+#vistaEvento .cor-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
 #vistaEvento .cor-head input{font-weight:700;padding:8px 10px}
 #vistaEvento .cuenta{font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
-#vistaEvento .estados{display:flex;gap:4px}
-#vistaEvento .estados button{padding:4px 8px;border-radius:999px;font-size:14px;line-height:1.2;opacity:.45}
-#vistaEvento .estados button[aria-pressed="true"]{opacity:1;border-color:var(--fg)}
 #vistaEvento .sem{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,150px) auto;gap:8px;align-items:center;font-size:14px}
 #vistaEvento .sem label{display:contents;cursor:pointer}
 #vistaEvento .sem input[type=checkbox]{accent-color:var(--ok);width:20px;height:20px}
@@ -343,7 +342,6 @@ select{font:inherit;font-size:16px;color:var(--fg);background:var(--field);borde
         <div class="opciones">
           <span class="f">Opciones del texto</span>
           <label><input type="checkbox" id="evOptBarra" checked> Barra de avance</label>
-          <label><input type="checkbox" id="evOptEstado" checked> Estado de carga por corredor (🟢🟡🔴)</label>
           <label><input type="checkbox" id="evOptDetalle"> Detalle de intersecciones intervenidas</label>
         </div>
         <textarea id="evOut" readonly tabindex="-1" aria-hidden="true"></textarea>
@@ -925,7 +923,6 @@ var MONITOREO = [
   'Carga vehicular alta en el sector.',
   'Se restablecen tiempos normales.'
 ];
-var ESTADOS = [ { e:'🟢', t:'Fluido' }, { e:'🟡', t:'Moderado' }, { e:'🔴', t:'Cargado' } ];
 var COLORES = ['#2563eb','#db2777','#7c3aed','#ea580c','#0891b2','#65a30d','#b45309','#4f46e5','#be123c','#0d9488'];
 var COLOR_OTRAS = '#64748b';
 var BASES = {
@@ -942,7 +939,7 @@ var S = nuevoEstado();
 var MAPA = null, CAPA = null, TILES = null, BASE_MAPA = 'calle', AREA = { activo:false, inicio:null, rect:null };
 function nuevoEstado(){
   return { nombre:'', zona:'', tipo:0, enc:0, hora:'', fase:0, monit:0, nota:'',
-           sel:[], cor:[], asig:{}, inter:{}, manual:false, barra:true, estado:true, detalle:false };
+           sel:[], cor:[], asig:{}, inter:{}, manual:false, barra:true, detalle:false };
 }
 
 /* ══ UTILIDADES ══ */
@@ -1090,7 +1087,6 @@ function renderCorredores(){
     var ks = semsDe(c), n = intervenidas(ks);
     h += '<div class="cor" style="--c:' + c.color + '" data-cor="' + c.id + '">' +
       '<div class="cor-head"><input type="text" value="' + esc(c.nombre) + '" data-nombre="' + c.id + '" aria-label="Nombre del corredor">' +
-      '<div class="estados">' + ESTADOS.map(function(e, i){ return '<button type="button" title="' + e.t + '" data-estado="' + c.id + '" data-i="' + i + '" aria-pressed="' + (c.estado === i) + '">' + e.e + '</button>'; }).join('') + '</div>' +
       '<span class="cuenta">' + n + '/' + ks.length + '</span></div>';
     ks.forEach(function(k){
       var s = porKey(k), on = !!S.inter[k];
@@ -1121,7 +1117,7 @@ function generar(){
   lin.push('');
   S.cor.forEach(function(c){
     var ks = semsDe(c); if (!ks.length) return;
-    lin.push('• ' + c.nombre + ': ' + intervenidas(ks) + '/' + ks.length + (S.estado && c.estado >= 0 ? ' ' + ESTADOS[c.estado].e : ''));
+    lin.push('• ' + c.nombre + ': ' + intervenidas(ks) + '/' + ks.length);
     if (S.detalle) ks.forEach(function(k){ if (S.inter[k]) lin.push('   ✅ ' + porKey(k).d); });
   });
   lin.push('');
@@ -1143,20 +1139,71 @@ function iniciarMapa(){
   MAPA = L.map('evMapa', { preferCanvas:true, boxZoom:false }).setView(MAPA_CENTRO, MAPA_ZOOM);
   TILES = L.tileLayer(BASES.calle.url, { maxZoom:19, attribution:BASES.calle.attr, crossOrigin:'anonymous' }).addTo(MAPA);
   CAPA = L.layerGroup().addTo(MAPA);
+  MAPA.on('zoomend', renderMapa);
   MAPA.on('mousedown', areaInicio); MAPA.on('mousemove', areaMover); MAPA.on('mouseup', areaFin);
+}
+/* Íconos de semáforo: solo los elegidos. Intervenido = a color con ✓ verde; pendiente = gris.
+   El aro exterior lleva el color del corredor. Tamaño según acercamiento y separación para que no se encimen. */
+var ICONO = { verde:'#16a34a', ambar:'#c27c0e', gris:'#9ca3af', grisCuerpo:'#4b5563', grisLuz:'#e5e7eb' };
+var OFF = {}, TAM = 30;
+function tamIcono(z){ return z >= 16 ? 30 : (z >= 14 ? 24 : 18); }
+function svgIcono(s, hecho, aro){
+  var f = s / 30, w = Math.round(36 * f), hh = Math.round(32 * f);
+  var cuerpo = hecho ? '#1f2937' : ICONO.grisCuerpo, fondo = hecho ? ICONO.ambar : ICONO.gris;
+  var luces = hecho ? ['#ef4444','#fbbf24','#22c55e'] : [ICONO.grisLuz, ICONO.grisLuz, ICONO.grisLuz];
+  var t = '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + hh + '" viewBox="0 0 36 32">' +
+    '<circle cx="15" cy="17" r="12" fill="' + fondo + '" stroke="' + aro + '" stroke-width="3"/>';
+  if (s >= 22){
+    t += '<rect x="11" y="8" width="8" height="18" rx="3" fill="' + cuerpo + '"/>' +
+         '<circle cx="15" cy="11.6" r="2.1" fill="' + luces[0] + '"/><circle cx="15" cy="17" r="2.1" fill="' + luces[1] + '"/><circle cx="15" cy="22.4" r="2.1" fill="' + luces[2] + '"/>';
+  }
+  if (hecho) t += '<circle cx="27" cy="8" r="7.5" fill="' + ICONO.verde + '" stroke="#ffffff" stroke-width="1.5"/><path d="M23.6 8.2l2.4 2.4 4.4-4.6" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+  return t + '</svg>';
+}
+function calcularSeparacion(){   // desplaza en pantalla los íconos que quedarían encimados
+  OFF = {}; TAM = tamIcono(MAPA.getZoom());
+  var min = TAM * 0.9, puestos = [];
+  S.sel.forEach(function(k){
+    var s = porKey(k); if (!tieneCoord(s)) return;
+    var p = MAPA.latLngToContainerPoint([s.la, s.lo]), pos = p;
+    function libre(q){ return puestos.every(function(o){ return Math.hypot(o.x - q.x, o.y - q.y) >= min; }); }
+    if (!libre(p)){
+      var hallado = false;
+      for (var r = 1; r <= 4 && !hallado; r++){
+        for (var i = 0; i < 8 && !hallado; i++){
+          var ang = (i / 8) * Math.PI * 2 - Math.PI / 2, q = L.point(p.x + Math.cos(ang) * min * r, p.y + Math.sin(ang) * min * r);
+          if (libre(q)){ pos = q; hallado = true; }
+        }
+      }
+    }
+    puestos.push(pos);
+    OFF[k] = [pos.x - p.x, pos.y - p.y];
+  });
 }
 function renderMapa(){
   if (!MAPA) return;
   CAPA.clearLayers();
-  todos().forEach(function(s){
-    if (!tieneCoord(s)) return;
-    var on = S.sel.indexOf(s.k) >= 0, c = on ? corPorId(S.asig[s.k]) : null, hecho = on && S.inter[s.k];
-    var m = on
-      ? L.circleMarker([s.la, s.lo], { radius:hecho ? 9 : 8, color:hecho ? '#ffffff' : (c ? c.color : COLOR_OTRAS), weight:3, fillColor:hecho ? (c ? c.color : COLOR_OTRAS) : '#ffffff', fillOpacity:1 })
-      : L.circleMarker([s.la, s.lo], { radius:4, color:'#ffffff', weight:1, fillColor:'#94a3b8', fillOpacity:.9 });
-    m.bindTooltip('<b>' + esc(s.id) + '</b> · ' + esc(s.d) + (c ? '<br>' + esc(c.nombre) + (hecho ? ' · ✅ intervenido' : ' · pendiente') + '<br><small>Clic derecho: marcar intervenido</small>' : ''));
+  calcularSeparacion();
+  var f = TAM / 30;
+  todos().forEach(function(s){   // puntos azules: todos los no elegidos
+    if (!tieneCoord(s) || S.sel.indexOf(s.k) >= 0) return;
+    var m = L.circleMarker([s.la, s.lo], { radius:5, color:'#ffffff', weight:1, fillColor:'#3b82f6', fillOpacity:.85 });
+    m.bindTooltip('<b>' + esc(s.id) + '</b> · ' + esc(s.d) + '<br><small>Clic: agregar al evento</small>');
     m.on('click', function(e){ L.DomEvent.stopPropagation(e); if (!AREA.activo) toggleSel(s.k); });
-    m.on('contextmenu', function(e){ if (e.originalEvent) L.DomEvent.preventDefault(e.originalEvent); if (on){ S.inter[s.k] = !S.inter[s.k]; todo(); } });
+    m.addTo(CAPA);
+  });
+  S.sel.forEach(function(k){   // íconos de semáforo: solo los elegidos
+    var s = porKey(k); if (!tieneCoord(s)) return;
+    var c = corPorId(S.asig[k]), col = c ? c.color : COLOR_OTRAS, hecho = !!S.inter[k], o = OFF[k] || [0, 0];
+    if (o[0] || o[1]){   // movido para no encimarse: línea guía al punto real
+      var real = MAPA.latLngToContainerPoint([s.la, s.lo]);
+      L.polyline([[s.la, s.lo], MAPA.containerPointToLatLng(L.point(real.x + o[0], real.y + o[1]))], { color:col, weight:2, opacity:.8, interactive:false }).addTo(CAPA);
+      L.circleMarker([s.la, s.lo], { radius:3, color:'#ffffff', weight:1, fillColor:col, fillOpacity:1, interactive:false }).addTo(CAPA);
+    }
+    var m = L.marker([s.la, s.lo], { icon:L.divIcon({ className:'evpin', html:svgIcono(TAM, hecho, col), iconSize:[Math.round(36 * f), Math.round(32 * f)], iconAnchor:[15 * f - o[0], 17 * f - o[1]], tooltipAnchor:[14 * f + o[0], o[1]] }), zIndexOffset:hecho ? 900 : 1000 });
+    m.bindTooltip('<b>' + esc(s.id) + '</b> · ' + esc(s.d) + '<br>' + esc(c ? c.nombre : '') + (hecho ? ' · ✅ intervenido' : ' · pendiente') + '<br><small>Clic derecho: marcar intervenido · Clic: quitar</small>');
+    m.on('click', function(e){ L.DomEvent.stopPropagation(e); if (!AREA.activo) toggleSel(k); });
+    m.on('contextmenu', function(e){ if (e.originalEvent) L.DomEvent.preventDefault(e.originalEvent); S.inter[k] = !S.inter[k]; todo(); });
     m.addTo(CAPA);
   });
 }
@@ -1225,10 +1272,9 @@ function imagenMapa(){
       var s = porKey(key); if (!tieneCoord(s)) return;
       var cor = corPorId(S.asig[key]), col = cor ? cor.color : COLOR_OTRAS, hecho = S.inter[key];
       var p = MAPA.project([s.la, s.lo], zz), x = (p.x - ox) * e, y = (p.y - oy) * e;
-      g.beginPath(); g.arc(x, y, 9 * k, 0, Math.PI * 2);
-      g.fillStyle = hecho ? col : '#ffffff'; g.fill();
-      g.lineWidth = 3 * k; g.strokeStyle = hecho ? '#ffffff' : col; g.stroke();
-      if (hecho){ g.strokeStyle = '#ffffff'; g.lineWidth = 2.2 * k; g.beginPath(); g.moveTo(x - 4 * k, y); g.lineTo(x - 1 * k, y + 3 * k); g.lineTo(x + 4.5 * k, y - 3.5 * k); g.stroke(); }
+      var o = OFF[key] || [0, 0], ix = x + o[0] * m, iy = y + o[1] * m;
+      if (o[0] || o[1]){ g.strokeStyle = col; g.lineWidth = 2 * m; g.beginPath(); g.moveTo(x, y); g.lineTo(ix, iy); g.stroke(); g.fillStyle = col; g.beginPath(); g.arc(x, y, 3 * m, 0, Math.PI * 2); g.fill(); }
+      dibujarIcono(g, ix, iy, TAM * m * 0.8, hecho, col);
     });
     // leyenda
     var cors = S.cor.filter(function(c){ return semsDe(c).length; });
@@ -1255,6 +1301,25 @@ function imagenMapa(){
     return new Promise(function(res, rej){ try { cv.toBlob(function(b){ if (b) res(b); else rej(new Error('sin imagen')); }, 'image/png'); } catch(err){ rej(err); } });
   });
 }
+function dibujarIcono(g, x, y, s, hecho, aro){   // mismo ícono del mapa, en la imagen
+  var f = s / 30;
+  function caja(px, py, w, hh, r){ g.beginPath(); g.moveTo(px + r, py); g.arcTo(px + w, py, px + w, py + hh, r); g.arcTo(px + w, py + hh, px, py + hh, r); g.arcTo(px, py + hh, px, py, r); g.arcTo(px, py, px + w, py, r); g.closePath(); }
+  function circ(cx, cy, r, fill){ g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fillStyle = fill; g.fill(); }
+  g.save(); g.translate(x - 15 * f, y - 17 * f); g.scale(f, f);
+  g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = 3; g.shadowOffsetY = 1;
+  circ(15, 17, 12, hecho ? ICONO.ambar : ICONO.gris);
+  g.shadowColor = 'transparent'; g.lineWidth = 3; g.strokeStyle = aro; g.stroke();
+  if (s >= 22){
+    caja(11, 8, 8, 18, 3); g.fillStyle = hecho ? '#1f2937' : ICONO.grisCuerpo; g.fill();
+    var luces = hecho ? ['#ef4444','#fbbf24','#22c55e'] : [ICONO.grisLuz, ICONO.grisLuz, ICONO.grisLuz];
+    circ(15, 11.6, 2.1, luces[0]); circ(15, 17, 2.1, luces[1]); circ(15, 22.4, 2.1, luces[2]);
+  }
+  if (hecho){
+    circ(27, 8, 7.5, ICONO.verde); g.lineWidth = 1.5; g.strokeStyle = '#ffffff'; g.stroke();
+    g.lineWidth = 2; g.lineCap = 'round'; g.lineJoin = 'round'; g.beginPath(); g.moveTo(23.6, 8.2); g.lineTo(26, 10.6); g.lineTo(30.4, 6); g.stroke();
+  }
+  g.restore();
+}
 function bajarBlob(b){ var u = URL.createObjectURL(b), a = document.createElement('a'); a.href = u; a.download = 'mapa-evento.png'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(u); }, 4000); }
 function copiarMapa(){
   var p = imagenMapa();
@@ -1276,7 +1341,7 @@ function copiar(){
 function campos(){
   $('evNombre').value = S.nombre; $('evZona').value = S.zona; $('evHora').value = S.hora; $('evNota').value = S.nota;
   $('evEncabezado').value = String(S.enc);
-  $('evOptBarra').checked = S.barra; $('evOptEstado').checked = S.estado; $('evOptDetalle').checked = S.detalle;
+  $('evOptBarra').checked = S.barra; $('evOptDetalle').checked = S.detalle;
 }
 function nuevoEvento(){
   var copia = JSON.stringify(S);
@@ -1290,7 +1355,7 @@ function eventos(){
   $('evEncabezado').innerHTML = ENCABEZADOS.map(function(e, i){ return '<option value="' + i + '">' + esc(e) + '</option>'; }).join('');
   [['evNombre','nombre'],['evZona','zona'],['evHora','hora'],['evNota','nota']].forEach(function(p){ $(p[0]).addEventListener('input', function(){ S[p[1]] = this.value; generar(); guardar(); }); });
   $('evEncabezado').addEventListener('change', function(){ S.enc = parseInt(this.value, 10) || 0; generar(); guardar(); });
-  [['evOptBarra','barra'],['evOptEstado','estado'],['evOptDetalle','detalle']].forEach(function(p){ $(p[0]).addEventListener('change', function(){ S[p[1]] = this.checked; generar(); guardar(); }); });
+  [['evOptBarra','barra'],['evOptDetalle','detalle']].forEach(function(p){ $(p[0]).addEventListener('change', function(){ S[p[1]] = this.checked; generar(); guardar(); }); });
   document.addEventListener('click', function(e){
     var b;
     if ((b = e.target.closest('[data-tipo]'))){ S.tipo = +b.getAttribute('data-tipo'); todo(); }
@@ -1329,8 +1394,7 @@ function eventos(){
   });
   cont.addEventListener('click', function(e){
     var b;
-    if ((b = e.target.closest('[data-estado]'))){ var c = corPorId(b.getAttribute('data-estado')), i = +b.getAttribute('data-i'); if (c){ c.estado = c.estado === i ? -1 : i; todo(); } }
-    else if ((b = e.target.closest('[data-quitar]'))){ quitarSel(b.getAttribute('data-quitar')); todo(); }
+    if ((b = e.target.closest('[data-quitar]'))){ quitarSel(b.getAttribute('data-quitar')); todo(); }
     else if ((b = e.target.closest('[data-todos]'))){ var c2 = corPorId(b.getAttribute('data-todos')), ks = semsDe(c2), marcar = intervenidas(ks) < ks.length; ks.forEach(function(k){ S.inter[k] = marcar; }); todo(); }
     else if ((b = e.target.closest('[data-borrar]'))){
       var id = b.getAttribute('data-borrar'), cb = corPorId(id), dentro = semsDe(cb);
