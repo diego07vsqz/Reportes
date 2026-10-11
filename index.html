@@ -51,10 +51,10 @@ header.top h1{margin:0;font-family:var(--f-display);font-size:21px;font-weight:8
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:12px;min-width:0}
 
 .opciones{display:grid;gap:6px}
-span.f{font-size:13px;font-weight:600;color:var(--muted)}
+span.f{font-size:14px;font-weight:700;color:var(--fg)}
 .card h2{margin:0;font-family:var(--f-display);font-size:19px;display:flex;align-items:center;gap:10px}
 .num{flex:none;width:28px;height:28px;border-radius:50%;background:var(--gold);color:var(--on-gold);display:grid;place-items:center;font-size:15px}
-label.f{display:grid;gap:4px;font-size:13px;font-weight:600;color:var(--muted);min-width:0}
+label.f{display:grid;gap:5px;font-size:14px;font-weight:700;color:var(--fg);min-width:0}
 input,textarea{font:inherit;font-size:16px;color:var(--fg);background:var(--field);border:2px solid var(--field-line);border-radius:10px;padding:10px 12px;width:100%;min-width:0;transition:border-color .15s,box-shadow .15s}
 input:hover,textarea:hover{border-color:var(--sel-line)}
 input:focus,textarea:focus{outline:none;border-color:var(--sel-line);box-shadow:0 0 0 4px color-mix(in srgb, var(--sel-line) 25%, transparent)}
@@ -89,7 +89,9 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
 
 /* ══ OPCIONES RÁPIDAS ══ */
 .opts{display:flex;flex-wrap:wrap;gap:8px}
-.opt{border-radius:999px;padding:8px 14px}
+.opt{border-radius:999px;padding:8px 14px;border:2px solid var(--field-line);background:var(--field)}
+.opt:hover{border-color:var(--sel-line)}
+[data-pista]::after{content:attr(data-pista);margin-left:8px;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:700;background:var(--sel);color:var(--sel-line);vertical-align:1px}
 .opt[aria-pressed="true"]{background:var(--sel-line);color:var(--card);border-color:var(--sel-line)}
 
 /* ══ MAPA ══ */
@@ -142,9 +144,15 @@ body{--acc:var(--gold);--on-acc:var(--on-gold)}
 body[data-modo="evento"]{--acc:#8b5cf6;--on-acc:#ffffff}
 header.top{border-bottom-color:var(--acc)}
 .tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.tab{display:grid;gap:2px;text-align:left;padding:12px 16px;border:2px solid var(--line);border-radius:14px;background:var(--card)}
+.tab{position:relative;display:grid;gap:4px;align-content:start;text-align:left;padding:14px 16px;border:2px solid var(--line);border-radius:14px;background:var(--card)}
+.tab:hover{border-color:var(--acc)}
+.tab[aria-selected="true"]{background:color-mix(in srgb, var(--acc) 10%, var(--card))}
+.tab[aria-selected="true"]::after{content:'En uso';position:absolute;top:10px;right:12px;padding:1px 9px;border-radius:999px;font-size:11px;font-weight:800;background:var(--acc);color:var(--on-acc)}
+.tab[aria-selected="false"]::after{content:'Toca para cambiar';position:absolute;top:10px;right:12px;font-size:11px;font-weight:600;color:var(--muted)}
+.tab b{padding-right:110px}
 .tab b{font-size:16px}
-.tab small{font-size:12px;font-weight:500;color:var(--muted)}
+.tab small{font-size:13px;font-weight:500;color:var(--muted);line-height:1.35}
+@media (max-width:640px){ .tab[aria-selected="false"]::after{content:''} .tab b{padding-right:60px} }
 .tab[aria-selected="true"]{border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb, var(--acc) 30%, transparent)}
 .tab[aria-selected="true"] b{color:var(--fg)}
 #vistaEvento .num{background:var(--acc);color:var(--on-acc)}
@@ -159,7 +167,7 @@ body[data-modo="evento"] .bar{display:none!important}
 #vistaEvento .mapwrap{position:relative}
 #evMapa{height:380px;border:1px solid var(--line);border-radius:12px;z-index:0;background:var(--bg)}
 #evMapa.modo-area{cursor:crosshair}
-#vistaEvento div.f{display:grid;gap:4px;font-size:13px;font-weight:600;color:var(--muted);min-width:0}
+#vistaEvento div.f{display:grid;gap:5px;font-size:14px;font-weight:700;color:var(--fg);min-width:0}
 #vistaEvento .lbl-row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:22px}
 #vistaEvento .row label.f, #vistaEvento .row div.f{grid-template-rows:24px auto;align-items:center;align-content:start}
 #vistaEvento .lbl-row{flex-wrap:nowrap;white-space:nowrap}
@@ -205,8 +213,8 @@ select{font:inherit;font-size:16px;color:var(--fg);background:var(--field);borde
 <div class="wrap">
   <header class="top"><button type="button" class="tema" id="btnTema">🌙 Oscuro</button><h1>Unidad Planeamiento Semafórico</h1><p id="subtitulo">Llena los pasos. Copia el reporte. Pégalo en WhatsApp.</p></header>
   <nav class="tabs" role="tablist" aria-label="Tipo de reporte">
-    <button type="button" class="tab" role="tab" id="tabTiempos" aria-selected="true"><b>🚦 Cambio de tiempos</b><small>Pocos semáforos, con segundos antes y después</small></button>
-    <button type="button" class="tab" role="tab" id="tabEvento" aria-selected="false"><b>🎪 Evento con corredores</b><small>Muchos semáforos, conteo de intervenidas por corredor</small></button>
+    <button type="button" class="tab" role="tab" id="tabTiempos" aria-selected="true"><b>🚦 Cambio de tiempos</b><small>Para pocos semáforos. Reporta los segundos antes y después del cambio: accidentes, apoyos viales, eventos pequeños.</small></button>
+    <button type="button" class="tab" role="tab" id="tabEvento" aria-selected="false"><b>🎪 Evento con corredores</b><small>Para eventos grandes. Lleva la cuenta de intersecciones intervenidas por corredor: conciertos, partidos, desfiles, marchas.</small></button>
   </nav>
 
   <div id="vistaTiempos">
@@ -262,10 +270,10 @@ select{font:inherit;font-size:16px;color:var(--fg);background:var(--field);borde
       <section class="card">
         <h2><span class="num">4</span>Notas</h2>
         <p class="hint">Toca motivo y sentido. La frase se arma sola. Opcional.</p>
-        <span class="f">¿Por qué?</span>
+        <span class="f" data-pista="Opcional · elige uno">¿Por qué?</span>
         <div class="opts" id="motivos"></div>
         <div class="puente" id="puente" hidden><span id="puenteTxt"></span><button type="button" id="btnPuente">Pasar a Evento con corredores →</button></div>
-        <span class="f">¿Hacia dónde?</span>
+        <span class="f" data-pista="Opcional · elige uno">¿Hacia dónde?</span>
         <div class="opts" id="sentidos"></div>
         <label class="f">Detalle adicional<textarea id="notas" rows="2" placeholder="Ej. registrado en Troncal del Norte, por 15 minutos."></textarea></label>
       </section>
@@ -299,16 +307,16 @@ select{font:inherit;font-size:16px;color:var(--fg);background:var(--field);borde
       <section class="card">
         <h2><span class="num">1</span>Evento</h2>
         <div class="row">
-          <label class="f">Nombre del evento<input type="text" id="evNombre" placeholder="Ej. Concierto Iron Maiden" autocomplete="off"></label>
+          <label class="f">Nombre del evento *<input type="text" id="evNombre" placeholder="Ej. Concierto Iron Maiden" autocomplete="off"></label>
           <label class="f">Zona o recinto (opcional)<input type="text" id="evZona" placeholder="Ej. Estadio Jorge &quot;El Mágico&quot; González" autocomplete="off"></label>
         </div>
-        <span class="f">Tipo</span>
+        <span class="f" data-pista="Elige uno">Tipo de evento</span>
         <div class="opts" id="evTipos"></div>
         <div class="row">
           <label class="f">Encabezado<select id="evEncabezado"></select></label>
           <div class="f"><span class="lbl-row"><label for="evHora">Hora de actualización</label><button type="button" class="hora-modo" id="evHoraModo"></button></span><input type="time" id="evHora"></div>
         </div>
-        <span class="f">Fase</span>
+        <span class="f" data-pista="Elige una">Fase</span>
         <div class="opts" id="evFases"></div>
       </section>
 
@@ -341,6 +349,7 @@ select{font:inherit;font-size:16px;color:var(--fg);background:var(--field);borde
 
       <section class="card">
         <h2><span class="num">4</span>Monitoreo</h2>
+        <span class="f" data-pista="Elige uno">Mensaje final</span>
         <div class="opts" id="evMonitoreos"></div>
         <label class="f">Nota adicional (opcional)<textarea id="evNota" rows="2" placeholder="Ej. Se coordina con PNC el cierre de carril."></textarea></label>
       </section>
