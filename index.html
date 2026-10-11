@@ -1118,7 +1118,9 @@ var PLANES_BUSCAR_DESDE = 8;            // con esta cantidad o más, aparece el 
 var ENCABEZADOS = ['🇸🇻 VMT Dirección General de Tránsito', '🚦 Unidad de Planeamiento Semafórico – CCM', '🇸🇻 VMT – Centro de Control y Monitoreo'];
 var TIPOS = [
   { b:'Concierto', e:'🎸' }, { b:'Partido', e:'⚽' }, { b:'Feria', e:'🎡' }, { b:'Maratón', e:'🏃' },
-  { b:'Procesión', e:'✝️' }, { b:'Marcha', e:'🪧' }, { b:'Desfile', e:'🎉' }, { b:'Otro', e:'📍' }
+  { b:'Procesión', e:'✝️' }, { b:'Marcha', e:'🪧' }, { b:'Desfile', e:'🎉' }, { b:'Otro', e:'📍' },
+  // nuevos SIEMPRE al final: el evento y los planes guardan la posición (S.tipo). "Otro" se muestra último igual.
+  { b:'15 de Septiembre', e:'🇸🇻' }, { b:'Evento deportivo', e:'🏅' }, { b:'Show aéreo', e:'✈️' }
 ];
 var FASES = ['Ingreso', 'Durante', 'Salida', 'Cierre'];
 var MONITOREO = [
@@ -1296,7 +1298,8 @@ function toggleSel(k){ if (S.sel.indexOf(k) >= 0) quitarSel(k); else agregarSel(
 function renderOpts(){
   var tp = TIPOS[S.tipo] || TIPOS[0];
   $('evTipoBtn').textContent = tp.e + ' ' + tp.b;
-  $('evTipos').innerHTML = TIPOS.map(function(t, i){ return '<button type="button" role="option" data-tipo="' + i + '" aria-selected="' + (S.tipo === i) + '">' + t.e + ' ' + esc(t.b) + '</button>'; }).join('');
+  var orden = TIPOS.map(function(t, i){ return i; }).filter(function(i){ return TIPOS[i].b !== 'Otro'; }).concat(TIPOS.map(function(t, i){ return i; }).filter(function(i){ return TIPOS[i].b === 'Otro'; }));   // "Otro" al final del menú
+  $('evTipos').innerHTML = orden.map(function(i){ var t = TIPOS[i]; return '<button type="button" role="option" data-tipo="' + i + '" aria-selected="' + (S.tipo === i) + '">' + t.e + ' ' + esc(t.b) + '</button>'; }).join('');
   $('evFases').innerHTML = FASES.map(function(f, i){ return '<button type="button" class="opt" data-fase="' + i + '" aria-pressed="' + (S.fase === i) + '">' + esc(f) + '</button>'; }).join('');
   $('evMonitoreos').innerHTML = MONITOREO.map(function(m, i){ return '<button type="button" class="opt" data-monit="' + i + '" aria-pressed="' + (S.monit === i) + '">' + esc(m) + '</button>'; }).join('');
 }
