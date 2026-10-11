@@ -230,13 +230,22 @@ body[data-modo="evento"] .bar{display:none!important}
 #vistaEvento .cor > summary .cuenta{text-align:right}
 #vistaEvento .total .cor-pie{flex-wrap:wrap}
 #evTotalTxt{white-space:nowrap}
-#vistaEvento .planes{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-#vistaEvento .planes select{flex:1 1 200px;width:auto}
-#vistaEvento .guardar-plan{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-#vistaEvento .planes-card{border-style:dashed;border-width:2px}
-#vistaEvento .planes-card .num{background:transparent;font-size:20px}
-#vistaEvento .opc{margin-left:auto;font-size:12px;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
-#vistaEvento .guardar-plan input{flex:1 1 200px;width:auto}
+#vistaEvento .planes-card{gap:10px;padding:14px 18px}
+#vistaEvento .plan-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+#vistaEvento .plan-head h2{font-size:17px}
+#vistaEvento .planes-card .num{background:transparent;font-size:20px;width:auto}
+#vistaEvento .solo-aqui{font-size:12px;font-weight:700;color:var(--fg);background:color-mix(in srgb, var(--gold) 18%, transparent);border:1px solid var(--gold);border-radius:999px;padding:3px 10px}
+#vistaEvento .chips-plan{display:flex;flex-wrap:wrap;gap:8px}
+#vistaEvento .chip-plan{display:inline-flex;align-items:stretch;max-width:100%;border:2px solid var(--field-line);border-radius:999px;overflow:hidden;background:var(--field)}
+#vistaEvento .chip-plan:hover{border-color:var(--sel-line)}
+#vistaEvento .chip-plan.activo{border-color:var(--sel-line);background:var(--sel)}
+#vistaEvento .chip-plan button{border:0;border-radius:0;background:transparent;padding:7px 12px;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#vistaEvento .chip-plan button small{color:var(--muted);font-weight:600;margin-left:6px}
+#vistaEvento .chip-plan .del{flex:none;padding:7px 11px;color:var(--muted);border-left:1px solid var(--line)}
+#vistaEvento .chip-plan .del:hover{color:var(--danger)}
+#vistaEvento .btn-plan-nuevo{border-style:dashed;border-radius:999px;padding:7px 14px}
+#vistaEvento .plan-form{display:flex;flex-wrap:wrap;gap:8px}
+#vistaEvento .plan-form input{flex:1 1 200px;width:auto;padding:8px 12px}
 #vistaEvento .x{color:var(--danger)}
 #vistaEvento .side .btn-copy{display:block;width:100%}   /* en teléfono la barra de Cambio de tiempos no aplica: el botón se queda visible */
 #evOut{position:absolute;left:-9999px;top:0;width:10px;height:10px;opacity:0}
@@ -342,11 +351,9 @@ select{font:inherit;font-size:16px;color:var(--fg);background:var(--field);borde
     <div class="form">
 
       <section class="card planes-card">
-        <h2><span class="num">📁</span>Planes guardados <span class="opc">opcional</span></h2>
-        <p class="hint">Para eventos que se repiten en el mismo lugar: carga semáforos y corredores ya armados, o guarda el evento actual como plan.</p>
-        <div class="planes" id="evPlanesFila" hidden><select id="evPlanSel" aria-label="Plan guardado"></select><button type="button" id="evBtnCargarPlan">Cargar</button><button type="button" class="btn-ghost x" id="evBtnBorrarPlan" title="Borrar este plan">Borrar</button></div>
-        <p class="hint" id="evPlanesVacio">Aún no hay planes. Arma el evento (pasos 1 a 3) y guárdalo aquí con un nombre.</p>
-        <div class="guardar-plan"><input type="text" id="evPlanNombre" placeholder="Nombre del plan. Ej. Estadio Cuscatlán" autocomplete="off" aria-label="Nombre del plan"><button type="button" id="evBtnGuardarPlan">💾 Guardar plan</button></div>
+        <div class="plan-head"><h2><span class="num">📁</span>Planes guardados</h2><span class="solo-aqui" title="Se guardan en este navegador. En otra PC, otro navegador o el teléfono no aparecen.">⚠️ Solo en este navegador, no en otros dispositivos</span></div>
+        <div class="chips-plan" id="evPlanesLista"></div>
+        <div class="plan-form" id="evPlanForm" hidden><input type="text" id="evPlanNombre" placeholder="Nombre del plan. Ej. Estadio Cuscatlán" autocomplete="off" aria-label="Nombre del plan"><button type="button" class="btn-blue" id="evBtnGuardarPlan">Guardar</button><button type="button" class="btn-ghost" id="evBtnCancelarPlan">Cancelar</button></div>
       </section>
 
       <section class="card">
@@ -1656,12 +1663,20 @@ function nuevoEvento(){
 function leerPlanes(){ try { var p = JSON.parse(localStorage.getItem(LS_PLANES) || '[]'); return Array.isArray(p) ? p.filter(function(x){ return x && x.nombre && Array.isArray(x.sel); }) : []; } catch(e){ return []; } }
 // Guarda la lista de planes. Devuelve false si el navegador no deja.
 function escribirPlanes(p){ try { localStorage.setItem(LS_PLANES, JSON.stringify(p)); return true; } catch(e){ return false; } }
-// Llena el selector de planes; oculto si no hay ninguno.
+var PLAN_ACTIVO = '';   // último plan cargado o guardado (se resalta)
+// Pinta los planes como pastillas (clic = cargar, × = borrar) + botón Guardar actual.
 function renderPlanes(){
-  var p = leerPlanes(), prev = $('evPlanSel').value;
-  $('evPlanesFila').hidden = !p.length; $('evPlanesVacio').hidden = !!p.length;
-  $('evPlanSel').innerHTML = p.map(function(x, i){ return '<option value="' + i + '">' + esc(x.nombre) + ' · ' + x.sel.length + ' semáforos</option>'; }).join('');
-  if (prev && +prev < p.length) $('evPlanSel').value = prev;
+  var h = leerPlanes().map(function(x, i){
+    return '<span class="chip-plan' + (norm(x.nombre) === norm(PLAN_ACTIVO) ? ' activo' : '') + '"><button type="button" data-plan-cargar="' + i + '" title="Cargar este plan">' + esc(x.nombre) + '<small>' + x.sel.length + '</small></button>' +
+      '<button type="button" class="del" data-plan-borrar="' + i + '" aria-label="Borrar plan ' + esc(x.nombre) + '" title="Borrar plan">×</button></span>';
+  }).join('');
+  $('evPlanesLista').innerHTML = h + '<button type="button" class="btn-plan-nuevo" data-plan-nuevo="1">+ Guardar actual</button>';
+}
+// Muestra u oculta el campo para nombrar y guardar el plan.
+function formPlan(abrir){
+  if (abrir && !S.sel.length){ aviso('Primero elige semáforos para el plan.'); return; }
+  $('evPlanForm').hidden = !abrir;
+  if (abrir){ $('evPlanNombre').value = PLAN_ACTIVO || S.zona.trim() || S.nombre.trim(); $('evPlanNombre').focus(); $('evPlanNombre').select(); }
 }
 // Guarda semáforos + corredores con un nombre. Mismo nombre = lo reemplaza.
 function guardarPlan(){
@@ -1672,12 +1687,12 @@ function guardarPlan(){
   var plan = { nombre:nom, zona:S.zona, tipo:S.tipo, sel:S.sel.slice(), cor:JSON.parse(JSON.stringify(S.cor)), asig:JSON.parse(JSON.stringify(S.asig)), fecha:Date.now() };
   if (i >= 0) p[i] = plan; else p.push(plan);
   if (!escribirPlanes(p)){ aviso('No se pudo guardar el plan en este navegador.'); return; }
-  $('evPlanNombre').value = ''; renderPlanes(); $('evPlanSel').value = String(i >= 0 ? i : p.length - 1);
+  PLAN_ACTIVO = nom; formPlan(false); renderPlanes();
   aviso(i >= 0 ? '✓ Plan "' + nom + '" actualizado.' : '✓ Plan "' + nom + '" guardado.');
 }
-// Carga un plan: corredores y semáforos, intervenidas en cero. Con Deshacer.
-function cargarPlan(){
-  var p = leerPlanes(), x = p[+$('evPlanSel').value]; if (!x) return;
+// Carga el plan número i: corredores y semáforos, intervenidas en cero. Con Deshacer.
+function cargarPlan(i){
+  var p = leerPlanes(), x = p[i]; if (!x) return;
   var copia = JSON.stringify(S);
   var sel = x.sel.filter(porKey), faltan = x.sel.length - sel.length;
   S.sel = sel; S.inter = {}; S.asig = {}; S.manual = true;
@@ -1686,15 +1701,15 @@ function cargarPlan(){
   limpiarVacios();
   if (x.zona && !S.zona.trim()) S.zona = x.zona;
   if (typeof x.tipo === 'number' && TIPOS[x.tipo]) S.tipo = x.tipo;
-  ABIERTO = {}; FIJA = null; pintarFijar();
+  ABIERTO = {}; FIJA = null; pintarFijar(); PLAN_ACTIVO = x.nombre; renderPlanes();
   campos(); todo(); encuadrar();
-  aviso('✓ Plan "' + x.nombre + '" cargado' + (faltan ? ' (' + faltan + (faltan === 1 ? ' semáforo ya no existe)' : ' semáforos ya no existen)') : '') + '.', { txt:'Deshacer', fn:function(){ S = JSON.parse(copia); campos(); todo(); encuadrar(); } });
+  aviso('✓ Plan "' + x.nombre + '" cargado' + (faltan ? ' (' + faltan + (faltan === 1 ? ' semáforo ya no existe)' : ' semáforos ya no existen)') : '') + '.', { txt:'Deshacer', fn:function(){ S = JSON.parse(copia); PLAN_ACTIVO = ''; renderPlanes(); campos(); todo(); encuadrar(); } });
 }
-// Borra el plan elegido. Con Deshacer.
-function borrarPlan(){
-  var p = leerPlanes(), i = +$('evPlanSel').value, x = p[i]; if (!x) return;
+// Borra el plan número i. Con Deshacer.
+function borrarPlan(i){
+  var p = leerPlanes(), x = p[i]; if (!x) return;
   p.splice(i, 1); escribirPlanes(p); renderPlanes();
-  aviso('Plan "' + x.nombre + '" borrado.', { txt:'Deshacer', fn:function(){ var q = leerPlanes(); q.splice(Math.min(i, q.length), 0, x); escribirPlanes(q); renderPlanes(); $('evPlanSel').value = String(Math.min(i, q.length - 1)); } });
+  aviso('Plan "' + x.nombre + '" borrado.', { txt:'Deshacer', fn:function(){ var q = leerPlanes(); q.splice(Math.min(i, q.length), 0, x); escribirPlanes(q); renderPlanes(); } });
 }
 
 /* ══ EVENTOS ══ */
@@ -1738,9 +1753,14 @@ function eventos(){
   cont.addEventListener('toggle', function(e){ var d = e.target; if (d.matches && d.matches('details.cor')){ ABIERTO[d.getAttribute('data-cor')] = d.open; $('evBtnPlegar').textContent = S.cor.some(estaAbierto) ? 'Cerrar todos' : 'Abrir todos'; } }, true);   // toggle no burbujea
   $('evBtnPlegar').addEventListener('click', function(){ var abrir = !S.cor.some(estaAbierto); S.cor.forEach(function(c){ ABIERTO[c.id] = abrir; }); renderCorredores(); });
   $('evBtnGuardarPlan').addEventListener('click', guardarPlan);
-  $('evPlanNombre').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); guardarPlan(); } });
-  $('evBtnCargarPlan').addEventListener('click', cargarPlan);
-  $('evBtnBorrarPlan').addEventListener('click', borrarPlan);
+  $('evPlanNombre').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); guardarPlan(); } else if (e.key === 'Escape') formPlan(false); });
+  $('evBtnCancelarPlan').addEventListener('click', function(){ formPlan(false); });
+  $('evPlanesLista').addEventListener('click', function(e){
+    var b;
+    if ((b = e.target.closest('[data-plan-cargar]'))) cargarPlan(+b.getAttribute('data-plan-cargar'));
+    else if ((b = e.target.closest('[data-plan-borrar]'))) borrarPlan(+b.getAttribute('data-plan-borrar'));
+    else if (e.target.closest('[data-plan-nuevo]')) formPlan($('evPlanForm').hidden);
+  });
   renderPlanes();
   cont.addEventListener('input', function(e){
     var t = e.target;
