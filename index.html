@@ -95,7 +95,9 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
 /* ══ MAPA ══ */
 .mapwrap{position:relative}
 .item .edit{color:var(--sel-line)}
-.mapsw{position:absolute;top:10px;right:10px;z-index:500;padding:6px 14px;border-radius:999px;font-size:13px;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.maptools2{position:absolute;top:10px;right:10px;z-index:500;display:flex;gap:6px}
+.maptools2 button{padding:6px 14px;border-radius:999px;font-size:13px;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.maptools2 button[aria-pressed="true"]{background:var(--gold);color:var(--on-gold);border-color:var(--gold)}
 .sempin{background:none;border:0}
 .sempin svg{display:block;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}
 #mapa{height:300px;border:1px solid var(--line);border-radius:12px;z-index:0;background:var(--bg)}
@@ -157,6 +159,8 @@ body[data-modo="evento"] .bar{display:none!important}
 #vistaEvento .mapwrap{position:relative}
 #evMapa{height:380px;border:1px solid var(--line);border-radius:12px;z-index:0;background:var(--bg)}
 #evMapa.modo-area{cursor:crosshair}
+#vistaEvento .hora-modo{justify-self:start;margin-top:2px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;background:var(--sel);border-color:var(--sel-line);color:var(--fg)}
+#vistaEvento .hora-modo.manual{background:transparent;border-style:dashed;color:var(--muted)}
 #vistaEvento .evpin{background:none;border:0}
 #vistaEvento .evpin svg{display:block;overflow:visible;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
 #vistaEvento .maptools{position:absolute;top:10px;right:10px;z-index:500;display:flex;gap:6px}
@@ -217,7 +221,7 @@ select{font:inherit;font-size:16px;color:var(--fg);background:var(--field);borde
         <h2><span class="num">2</span>¿Dónde?</h2>
         <p class="hint">Toca los semáforos del reporte. Puedes elegir varios.</p>
         <div class="chips" id="chips"></div>
-        <div id="mapaSlot"><div class="mapwrap" id="mapWrap"><div id="mapa"></div><button type="button" class="mapsw" id="btnBase">Satélite</button></div></div>
+        <div id="mapaSlot"><div class="mapwrap" id="mapWrap"><div id="mapa"></div><div class="maptools2"><button type="button" id="btnFijar" aria-pressed="false" title="Usar la vista actual para la imagen">📌 Fijar vista</button><button type="button" id="btnBase">Satélite</button></div></div></div>
         <p class="hint">Toca un punto del mapa para elegirlo o quitarlo. Semáforo con número = elegido, mismo orden que el reporte. Clic derecho en un punto: Google Maps con tráfico.</p>
         <input type="search" id="buscar" placeholder="Buscar semáforo: calle, ciudad o ID…" autocomplete="off">
         <div class="list" id="lista"></div>
@@ -276,7 +280,7 @@ select{font:inherit;font-size:16px;color:var(--fg);background:var(--field);borde
           <button type="button" class="btn-blue" id="btnMapaCopiar">Copiar mapa</button>
           <button type="button" id="btnMapaBajar">Descargar mapa</button>
         </div>
-        <p class="hint"><b>Copiar:</b> para pegar en WhatsApp Web. <b>Descargar:</b> si copiar no funciona. Pega primero el texto y luego la imagen.</p>
+        <p class="hint"><b>Copiar:</b> para pegar en WhatsApp Web. <b>Descargar:</b> si copiar no funciona. Pega primero el texto y luego la imagen. La imagen se centra sola en los semáforos elegidos, aunque muevas el mapa; usa 📌 Fijar vista para otro encuadre.</p>
         <button type="button" class="btn-ghost" id="btnReset">Empezar otro reporte</button>
       </section>
     </aside>
@@ -296,7 +300,7 @@ select{font:inherit;font-size:16px;color:var(--fg);background:var(--field);borde
         <div class="opts" id="evTipos"></div>
         <div class="row">
           <label class="f">Encabezado<select id="evEncabezado"></select></label>
-          <label class="f">Hora de actualización<input type="time" id="evHora"></label>
+          <label class="f">Hora de actualización<input type="time" id="evHora"><button type="button" class="hora-modo" id="evHoraModo"></button></label>
         </div>
         <span class="f">Fase</span>
         <div class="opts" id="evFases"></div>
@@ -309,6 +313,7 @@ select{font:inherit;font-size:16px;color:var(--fg);background:var(--field);borde
           <div id="evMapa"></div>
           <div class="maptools">
             <button type="button" id="evBtnArea" aria-pressed="false">▭ Seleccionar área</button>
+            <button type="button" id="evBtnFijar" aria-pressed="false" title="Usar la vista actual para la imagen">📌 Fijar vista</button>
             <button type="button" id="evBtnBase">Satélite</button>
           </div>
         </div>
@@ -350,6 +355,7 @@ select{font:inherit;font-size:16px;color:var(--fg);background:var(--field);borde
           <button type="button" class="btn-blue" id="evBtnMapaCopiar">Copiar mapa</button>
           <button type="button" id="evBtnMapaBajar">Descargar mapa</button>
         </div>
+        <p class="hint">La imagen se centra sola en los semáforos del evento, aunque muevas el mapa. Usa 📌 Fijar vista si quieres otro encuadre.</p>
         <p class="hint">El evento se guarda solo en este navegador mientras trabajas.</p>
         <button type="button" class="btn-ghost" id="evBtnNuevoEvento">Empezar otro evento</button>
       </section>
@@ -362,6 +368,21 @@ select{font:inherit;font-size:16px;color:var(--fg);background:var(--field);borde
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
+/* ═══════════════════════════════════════════════════════════════════════════════
+   REPORTE PLANEAMIENTO SEMAFÓRICO · UPS – CCM
+   Un solo archivo, sin servidor. Dos pestañas:
+     1) "Cambio de tiempos"  → este bloque de código (variables globales: S, MAPA, BASE…)
+     2) "Evento con corredores" → módulo aislado EV, en el siguiente <script>
+   Flujo de Cambio de tiempos:
+     formulario → S (estado) → generar() arma el texto WhatsApp → copiar()
+     mapa Leaflet → renderMapa() · imagen 1200 px → imagenMapa() (canvas propio, no captura de pantalla)
+   Guardado en el navegador (localStorage):
+     ups_semaforos_nuevos (agregados por el usuario) · ups_tema · ups_vista · ups_evento_actual (módulo EV)
+   Reglas para modificar sin romper:
+     · Todo texto del usuario que va a innerHTML pasa por esc().
+     · Las claves de semáforo (k) son únicas: oficiales = código, agregados = 'N' + fecha.
+     · porKey(k) puede devolver null (semáforo eliminado): siempre validar.
+   ═══════════════════════════════════════════════════════════════════════════════ */
 /* ══ CONFIG ══ */
 var LS_KEY = 'ups_semaforos_nuevos';
 var LS_TEMA = 'ups_tema';
@@ -398,34 +419,48 @@ var S = { sel:[], custom:[], act:[], nue:[], motivo:-1, sentido:-1, aviso:false,
 var MAPA = null, CAPA = null, PIN = null, TILES = null;
 
 /* ══ UTILIDADES ══ */
+// Atajo de document.getElementById.
 function $(id){ return document.getElementById(id); }
+// Texto sin acentos y en minúsculas, para buscar sin importar tildes.
 function norm(t){ return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(); }
+// Escapa HTML. Usar SIEMPRE antes de meter texto del usuario en innerHTML.
 function esc(t){ return String(t || '').replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+// Número a dos dígitos (7 → "07").
 function pad(n){ return (n < 10 ? '0' : '') + n; }
+// Listado completo: semáforos agregados por el usuario + oficiales (BASE).
 function todos(){ return S.custom.concat(BASE); }
+// Busca un semáforo por su clave. Devuelve null si no existe (validar siempre).
 function porKey(k){ var a = todos(); for (var i = 0; i < a.length; i++){ if (a[i].k === k) return a[i]; } return null; }
+// "2026-10-07" → "07/10/2026".
 function fmtFecha(v){ var p = String(v || '').split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : ''; }
+// "09:05" → "9:05".
 function fmtHora(v){ var p = String(v || '').split(':'); return p.length >= 2 ? (parseInt(p[0],10) + ':' + p[1]) : ''; }
 
 /* ══ CARGA / GUARDADO LOCAL ══ */
+// Lee del navegador los semáforos agregados por el usuario.
 function cargarCustom(){
   try { var raw = localStorage.getItem(LS_KEY); var a = raw ? JSON.parse(raw) : []; if (Array.isArray(a)) S.custom = a.filter(function(x){ return x && x.k && x.d; }); } catch(e){ S.custom = []; }
 }
+// Guarda en el navegador los semáforos agregados por el usuario.
 function guardarCustom(){ try { localStorage.setItem(LS_KEY, JSON.stringify(S.custom)); } catch(e){} }
 
 /* ══ TEMA CLARO / OSCURO ══ */
+// Tema en uso: el elegido con el botón o, si no hay, el del sistema.
 function temaActual(){
   var t = document.documentElement.getAttribute('data-theme');
   if (t === 'dark' || t === 'light') return t;
   return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
 }
+// Texto del botón de tema según el tema actual.
 function pintarTema(){ $('btnTema').textContent = (temaActual() === 'dark' ? '☀️ Claro' : '🌙 Oscuro'); }
+// Alterna claro/oscuro y lo recuerda.
 function cambiarTema(){
   var t = (temaActual() === 'dark' ? 'light' : 'dark');
   document.documentElement.setAttribute('data-theme', t);
   try { localStorage.setItem(LS_TEMA, t); } catch(e){}
   pintarTema();
 }
+// Aplica el tema guardado al abrir la página.
 function cargarTema(){
   var t = null; try { t = localStorage.getItem(LS_TEMA); } catch(e){}
   if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
@@ -433,11 +468,13 @@ function cargarTema(){
 }
 
 /* ══ UBICACIÓN ══ */
+// Elige o quita un semáforo del reporte y refresca todo.
 function toggleSel(k){
   var i = S.sel.indexOf(k);
   if (i >= 0) S.sel.splice(i,1); else S.sel.push(k);
   renderChips(); renderLista(); renderMapa(true); generar();
 }
+// Botón "Agregar a la lista": crea un semáforo nuevo o guarda la edición. Nombre y coordenada obligatorios.
 function agregarNuevo(){   // agrega o, en modo edición, guarda cambios
   var d = $('nuevoDir').value.trim(); var c = $('nuevoCiudad').value.trim().toUpperCase();
   if (!d){ aviso('Falta el nombre del semáforo.'); $('nuevoDir').focus(); return; }
@@ -456,7 +493,9 @@ function agregarNuevo(){   // agrega o, en modo edición, guarda cambios
   guardarCustom(); $('buscar').value = '';
   renderChips(); renderLista(); renderMapa(true); generar();
 }
+// Vacía el formulario de semáforo nuevo.
 function limpiarNuevo(){ $('nuevoDir').value = ''; $('nuevoCiudad').value = ''; quitarPin(); }
+// Carga un semáforo agregado en el formulario para editarlo.
 function editarCustom(k){
   var x = porKey(k); if (!x) return;
   S.editK = k;
@@ -466,16 +505,19 @@ function editarCustom(k){
   $('nuevoDir').focus();
   try { $('nuevoDir').scrollIntoView({ behavior:'smooth', block:'center' }); } catch(e){}
 }
+// Termina el modo edición y deja el formulario como "agregar".
 function salirEdicion(){
   S.editK = null; limpiarNuevo();
   $('btnNuevo').textContent = '+ Agregar a la lista'; $('btnCancelEd').hidden = true;
 }
+// Elimina un semáforo agregado (también de la selección). Sin deshacer.
 function borrarCustom(k){
   S.custom = S.custom.filter(function(x){ return x.k !== k; });
   S.sel = S.sel.filter(function(x){ return x !== k; });
   if (S.editK === k) salirEdicion();
   guardarCustom(); renderChips(); renderLista(); renderMapa(true); generar();
 }
+// Pastillas numeradas de los semáforos elegidos.
 function renderChips(){
   var h = '';
   S.sel.forEach(function(k, i){
@@ -484,6 +526,7 @@ function renderChips(){
   });
   $('chips').innerHTML = h;
 }
+// Resultados del buscador. Sin búsqueda: solo los elegidos.
 function renderLista(){
   var q = norm($('buscar').value).split(/\s+/).filter(Boolean);
   var a = q.length
@@ -504,7 +547,9 @@ function renderLista(){
 }
 
 /* ══ MAPA ══ */
+// true si el semáforo tiene latitud y longitud numéricas.
 function tieneCoord(s){ return s && typeof s.la === 'number' && typeof s.lo === 'number'; }
+// Crea el mapa Leaflet. Si la librería no cargó, muestra aviso y la web sigue funcionando.
 function iniciarMapa(){
   if (typeof L === 'undefined'){ $('mapa').innerHTML = '<div class="empty">Mapa no disponible. Revisa conexión a internet.</div>'; return; }
   MAPA = L.map('mapa', { preferCanvas:true }).setView(MAPA_CENTRO, MAPA_ZOOM);
@@ -515,6 +560,7 @@ function iniciarMapa(){
     ponerPin(e.latlng.lat, e.latlng.lng); $('nuevoCoord').value = S.pin[0] + ', ' + S.pin[1];
   });
 }
+// Alterna mapa de calles / satélite.
 function cambiarBase(){
   if (!MAPA || !TILES) return;
   var antes = BASES[S.base].attr;
@@ -523,6 +569,7 @@ function cambiarBase(){
   if (MAPA.attributionControl){ MAPA.attributionControl.removeAttribution(antes); MAPA.attributionControl.addAttribution(BASES[S.base].attr); }
   $('btnBase').textContent = (S.base === 'calle' ? 'Satélite' : 'Calles');
 }
+// Interpreta coordenadas pegadas (decimal o grados). null si no son válidas o están fuera de El Salvador.
 function leerCoord(t){   // acepta 13.697066, -89.249963 · 13.697066 -89.249963 · 13°41'49.4"N 89°14'59.9"O
   t = String(t || '').trim();
   if (!t) return null;
@@ -540,6 +587,7 @@ function leerCoord(t){   // acepta 13.697066, -89.249963 · 13.697066 -89.249963
   if (!(la > 12.5 && la < 14.8 && lo > -90.5 && lo < -87.3)) return null;   // fuera de El Salvador
   return [Math.round(la * 1e6) / 1e6, Math.round(lo * 1e6) / 1e6];
 }
+// Al escribir coordenadas: valida, marca el lugar y centra el mapa.
 function coordEscrita(){
   var t = $('nuevoCoord').value.trim();
   if (!t){ quitarPin(); return; }
@@ -552,6 +600,7 @@ function coordEscrita(){
   ponerPin(c[0], c[1]);
   if (MAPA) MAPA.setView(c, Math.max(MAPA.getZoom(), 16), { animate:false });
 }
+// Marca naranja del semáforo nuevo. Guarda la ubicación aunque el mapa no haya cargado.
 function ponerPin(la, lo){   // guarda la ubicación aunque el mapa no haya cargado
   S.pin = [Math.round(la * 1e6) / 1e6, Math.round(lo * 1e6) / 1e6];
   if (MAPA){
@@ -560,6 +609,7 @@ function ponerPin(la, lo){   // guarda la ubicación aunque el mapa no haya carg
   }
   $('pinTxt').textContent = 'Ubicación lista (' + S.pin[0] + ', ' + S.pin[1] + '). Escribe el nombre y agrega.';
 }
+// Quita la marca naranja y limpia el campo de coordenadas.
 function quitarPin(){
   S.pin = null;
   if (PIN && MAPA) MAPA.removeLayer(PIN);
@@ -567,6 +617,7 @@ function quitarPin(){
   $('nuevoCoord').value = '';
   $('pinTxt').textContent = 'Escribe el nombre; luego pega coordenadas de Google Maps o toca el lugar en el mapa.';
 }
+// Ícono de semáforo con número (mapa en pantalla).
 function svgSemaforo(num){   // círculo con semáforo dentro, centrado en la ubicación; número en pastilla azul
   return '<svg xmlns="http://www.w3.org/2000/svg" width="36" height="32" viewBox="0 0 36 32">' +
     '<circle cx="15" cy="17" r="12" fill="#c27c0e" stroke="#ffffff" stroke-width="2.5"/>' +
@@ -575,6 +626,7 @@ function svgSemaforo(num){   // círculo con semáforo dentro, centrado en la ub
     '<circle cx="27" cy="8" r="7" fill="#0033a0" stroke="#ffffff" stroke-width="1.5"/>' +
     '<text x="27" y="11.6" text-anchor="middle" font-family="sans-serif" font-size="' + (num > 9 ? 8 : 10) + '" font-weight="800" fill="#ffffff">' + num + '</text></svg>';
 }
+// El mismo ícono, dibujado en la imagen (canvas).
 function dibujarSemaforo(g, x, y, m, num){   // mismo ícono, en la imagen
   var k = m * MAPA_IMG_ICONO;
   function caja(px, py, w, h, r){
@@ -593,6 +645,7 @@ function dibujarSemaforo(g, x, y, m, num){   // mismo ícono, en la imagen
   g.fillText(String(num), 27, 11.6);
   g.restore();
 }
+// Redibuja puntos azules e íconos. encuadrar=true centra en los elegidos.
 function renderMapa(encuadrar){
   if (!MAPA) return;
   CAPA.clearLayers();
@@ -611,12 +664,14 @@ function renderMapa(encuadrar){
   });
   if (encuadrar && pts.length) MAPA.fitBounds(pts, { paddingTopLeft:[40,45], paddingBottomRight:[50,35], maxZoom:MAPA_ZOOM_MAX_AJUSTE, animate:false });
 }
+// Clic derecho en un punto: abre Google Maps con tráfico en otra pestaña.
 function abrirGoogle(la, lo){
   var u = 'https://www.google.com/maps/@?api=1&map_action=map&center=' + la + ',' + lo + '&zoom=18&layer=traffic';
   var w = window.open(u, '_blank');   // sin 'noopener': con él, window.open siempre devuelve null
   if (w){ try { w.opener = null; } catch(e){} }
   else aviso('El navegador bloqueó la ventana. Permite ventanas emergentes para esta página.');
 }
+// Descarga una pieza del mapa para la imagen. Si falla devuelve null (queda gris).
 function cargarTile(url){
   return new Promise(function(res){
     var im = new Image(); im.crossOrigin = 'anonymous';
@@ -624,14 +679,33 @@ function cargarTile(url){
     im.src = url;
   });
 }
+var FIJA = null;
+// Encuadre de la imagen: vista fijada o, si no hay, centrado en los elegidos. No depende de cómo quedó el mapa.
+function vistaCaptura(){   // la imagen no depende de dónde quedó el mapa: fija o centrada en los elegidos
+  if (FIJA) return FIJA;
+  var pts = S.sel.map(porKey).filter(tieneCoord).map(function(s){ return [s.la, s.lo]; });
+  if (!pts.length) return { centro:MAPA.getCenter(), z:Math.round(MAPA.getZoom()) };
+  var b = L.latLngBounds(pts);
+  return { centro:b.getCenter(), z:Math.max(10, Math.min(MAPA_ZOOM_MAX_AJUSTE, Math.floor(MAPA.getBoundsZoom(b, false, L.point(110, 100))))) };
+}
+// Botón 📌: fija o libera el encuadre de la imagen.
+function fijarVista(){
+  if (!MAPA) return;
+  if (FIJA){ FIJA = null; aviso('Vista liberada. La imagen se centra sola en los semáforos.'); }
+  else { FIJA = { centro:MAPA.getCenter(), z:Math.round(MAPA.getZoom()) }; aviso('📌 Vista fijada. La imagen usará este encuadre aunque muevas el mapa.'); }
+  pintarFijar();
+}
+// Texto y estado del botón 📌.
+function pintarFijar(){ $('btnFijar').setAttribute('aria-pressed', !!FIJA); $('btnFijar').textContent = FIJA ? '📌 Vista fijada · Quitar' : '📌 Fijar vista'; }
+// Arma la imagen PNG de 1200 px pieza por pieza (canvas). Devuelve una promesa con el archivo.
 function imagenMapa(){
   if (!MAPA) return Promise.reject(new Error('sin mapa'));
-  var vis = MAPA.getSize(), z = Math.round(MAPA.getZoom());
-  var ys = S.sel.map(porKey).filter(tieneCoord).map(function(s){ return MAPA.latLngToContainerPoint([s.la, s.lo]).y; });
+  var vis = MAPA.getSize(), v = vistaCaptura(), z = v.z, cP = MAPA.project(v.centro, z);
+  var ys = S.sel.map(porKey).filter(tieneCoord).map(function(s){ return MAPA.project([s.la, s.lo], z).y - cP.y + vis.y / 2; });
   var alto = Math.min(vis.y, Math.max(Math.round(vis.x * 0.75), ys.length ? Math.max.apply(null, ys) - Math.min.apply(null, ys) + 140 : 0));
   var cy = ys.length ? (Math.max.apply(null, ys) + Math.min.apply(null, ys)) / 2 : vis.y / 2;
   cy = Math.max(alto / 2, Math.min(vis.y - alto / 2, cy));
-  var tam = { x:vis.x, y:alto }, centro = MAPA.containerPointToLatLng([vis.x / 2, cy]);
+  var tam = { x:vis.x, y:alto }, centro = MAPA.unproject(L.point(cP.x, cP.y - vis.y / 2 + cy), z);
   var W = MAPA_IMG_ANCHO, H = Math.round(tam.y * W / tam.x), m = W / tam.x;      // m = aumento respecto a pantalla
   var zMax = (S.base === 'sat' ? 18 : 19);
   var dz = Math.max(0, Math.min(2, Math.round(Math.log(m) / Math.LN2), zMax - z)); // niveles extra de detalle
@@ -668,15 +742,18 @@ function imagenMapa(){
     });
   });
 }
+// Descarga un archivo generado en el navegador.
 function bajarBlob(b){
   var u = URL.createObjectURL(b), a = document.createElement('a');
   a.href = u; a.download = 'mapa-semaforos.png'; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(function(){ URL.revokeObjectURL(u); }, 4000);
 }
+// Botón "Descargar mapa".
 function bajarMapa(){
   imagenMapa().then(function(b){ bajarBlob(b); aviso('✓ Mapa descargado.'); })
               .catch(function(){ aviso('No se pudo crear el mapa.'); });
 }
+// Botón "Copiar mapa". Si el navegador no deja copiar imágenes, la descarga.
 function copiarMapa(){
   var p = imagenMapa();
   if (navigator.clipboard && navigator.clipboard.write && typeof ClipboardItem !== 'undefined'){
@@ -691,6 +768,7 @@ function copiarMapa(){
 }
 
 /* ══ TIEMPOS ══ */
+// Filas de segundos + vía (actuales o nuevos).
 function renderTiempos(cual){
   var arr = S[cual]; var cont = $(cual === 'act' ? 'tAct' : 'tNue'); var h = '';
   arr.forEach(function(r, i){
@@ -701,11 +779,13 @@ function renderTiempos(cual){
   });
   cont.innerHTML = h;
 }
+// Convierte las filas con segundos en líneas del reporte. Ignora filas sin segundos.
 function lineasTiempo(arr){
   return arr.filter(function(r){ return String(r.s || '').trim() !== ''; })
             .map(function(r){ return '* *' + (String(r.s || '').trim() + ' segundos ' + String(r.d || '').trim()).trim() + '*'; });
 }
 
+// Aviso "¿Seguro?" si hay segundos fuera de SEG_MIN–SEG_MAX. No bloquea.
 function revisarSegundos(){
   var raros = [];
   ['act','nue'].forEach(function(c){
@@ -721,6 +801,7 @@ function revisarSegundos(){
 }
 
 /* ══ NOTAS ══ */
+// Botones de motivo y sentido.
 function renderOpts(){
   function pinta(arr, cual, id){
     var h = '';
@@ -729,6 +810,7 @@ function renderOpts(){
   }
   pinta(MOTIVOS, 'motivo', 'motivos'); pinta(SENTIDOS, 'sentido', 'sentidos');
 }
+// Arma la frase automática ("Se aplican tiempos de… por…") + detalle libre.
 function textoNotas(){
   var m = MOTIVOS[S.motivo], s = SENTIDOS[S.sentido], libre = $('notas').value.trim(), f = '';
   if (m || s) f = 'Se aplican tiempos' + (s ? ' ' + s.t : '') + (m ? ' ' + m.t : '') + '.';
@@ -736,11 +818,13 @@ function textoNotas(){
 }
 
 /* ══ PLANTILLA ══ */
+// Nombre del semáforo en el texto (con código y/o enlace si están marcados).
 function nombre(s){
   var t = ($('conId').checked && s.id && s.id !== 'NUEVO' ? s.id + ' - ' : '') + (s.d || '');
   if ($('conLink').checked && tieneCoord(s)) t += '\n📍 https://maps.google.com/?q=' + s.la + ',' + s.lo;
   return t;
 }
+// Arma el texto del reporte y actualiza la vista previa. Se llama en cada cambio.
 function generar(){
   var sems = S.sel.map(porKey).filter(Boolean).map(nombre);
   var act = lineasTiempo(S.act), nue = lineasTiempo(S.nue);
@@ -767,6 +851,7 @@ function generar(){
   revisarSegundos();
   if (S.aviso) pintarFaltantes();
 }
+// Vista previa estilo WhatsApp (negritas y viñetas).
 function pintarBurbuja(txt){
   var h = '';
   String(txt || '').split('\n').forEach(function(l){
@@ -780,6 +865,7 @@ function pintarBurbuja(txt){
 }
 
 /* ══ FALTANTES ══ */
+// Lista de datos que faltan para un reporte completo.
 function faltantes(){
   var f = [];
   function conSeg(arr){ return arr.some(function(r){ return String(r.s || '').trim() !== ''; }); }
@@ -791,6 +877,7 @@ function faltantes(){
   if (!conSeg(S.nue)) f.push({ c:'cardTiempos', t:'Segundos en nuevos tiempos' });
   return f;
 }
+// Marca en rojo los pasos con datos faltantes (solo después de copiar).
 function pintarFaltantes(){
   var f = S.aviso ? faltantes() : [];
   ['cardCuando','cardDonde','cardTiempos'].forEach(function(id){ $(id).classList.remove('falta'); });
@@ -801,6 +888,7 @@ function pintarFaltantes(){
 }
 
 /* ══ ACCIONES ══ */
+// Pone fecha y horas actuales.
 function ahora(){
   var d = new Date();
   $('fecha').value = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
@@ -808,12 +896,14 @@ function ahora(){
   $('hora2').value = $('hora').value;
 }
 var avisoT = 0;
+// Mensaje flotante. accion opcional agrega un botón (ej. Deshacer, 7 s).
 function aviso(t, accion){   // accion opcional: { txt:'Deshacer', fn:function(){} }
   var e = $('toast');
   e.innerHTML = esc(t) + (accion ? '<button type="button" class="toast-btn" id="toastBtn">' + esc(accion.txt) + '</button>' : '');
   if (accion) $('toastBtn').addEventListener('click', function(){ e.hidden = true; accion.fn(); });
   e.hidden = false; clearTimeout(avisoT); avisoT = setTimeout(function(){ e.hidden = true; }, accion ? 7000 : 3500);
 }
+// Copia el reporte. Siempre copia; si faltan datos, avisa.
 function copiar(){
   var falta = faltantes().length > 0;
   S.aviso = falta; pintarFaltantes();
@@ -824,6 +914,7 @@ function copiar(){
     navigator.clipboard.writeText(ta.value).then(function(){ aviso(MSG_OK); }).catch(plan);
   } else plan();
 }
+// Deja el formulario en blanco (también al abrir la página).
 function reset(){
   S.sel = []; S.motivo = -1; S.sentido = -1; S.aviso = false;
   S.act = [{s:'',d:'sobre Principal'},{s:'',d:'en secundarias'}];
@@ -832,13 +923,16 @@ function reset(){
   if (S.editK) salirEdicion();
   quitarPin();
   ahora(); renderOpts(); renderChips(); renderLista(); renderTiempos('act'); renderTiempos('nue'); generar();
+  FIJA = null; pintarFijar();
   if (MAPA){ MAPA.setView(MAPA_CENTRO, MAPA_ZOOM); renderMapa(false); }
 }
 
+// Copia en memoria del reporte, para Deshacer.
 function foto(){
   return { sel:S.sel.slice(), act:JSON.parse(JSON.stringify(S.act)), nue:JSON.parse(JSON.stringify(S.nue)),
            motivo:S.motivo, sentido:S.sentido, campos:['fecha','hora','hora2','notas'].map(function(id){ return $(id).value; }) };
 }
+// Deshacer: vuelve a cargar la copia.
 function restaurar(f){
   S.sel = f.sel.filter(function(k){ return porKey(k); }); S.act = f.act; S.nue = f.nue; S.motivo = f.motivo; S.sentido = f.sentido;
   ['fecha','hora','hora2','notas'].forEach(function(id, i){ $(id).value = f.campos[i]; });
@@ -846,6 +940,7 @@ function restaurar(f){
   if (typeof renderMapa === 'function') renderMapa(true);
   aviso('✓ Reporte recuperado.');
 }
+// Botón "Empezar otro reporte": guarda copia, limpia y ofrece Deshacer.
 function borrarReporte(){
   var f = foto();
   reset();
@@ -853,11 +948,13 @@ function borrarReporte(){
 }
 
 /* ══ EVENTOS ══ */
+// Conecta botones y campos con sus funciones (una sola vez al iniciar).
 function eventos(){
   ['fecha','hora','hora2','notas'].forEach(function(id){ $(id).addEventListener('input', generar); });
   $('conId').addEventListener('change', generar);
   $('conLink').addEventListener('change', generar);
   $('btnBase').addEventListener('click', cambiarBase);
+  $('btnFijar').addEventListener('click', fijarVista);
   $('nuevoCoord').addEventListener('input', coordEscrita);
   $('nuevoCoord').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); agregarNuevo(); } });
   $('btnCancelEd').addEventListener('click', salirEdicion);
@@ -906,6 +1003,16 @@ reset();
 </script>
 <script>
 /* ══════════ MODO EVENTO ══════════ */
+/* ═══════════════════════════════════════════════════════════════════════════════
+   MÓDULO EVENTO (EV) — pestaña "Evento con corredores"
+   Aislado en una función (IIFE): sus variables (S, MAPA, renderMapa…) NO chocan con las de
+   Cambio de tiempos. Usa de la página principal: todos(), porKey(), aviso(), BASE, S.custom.
+   Estado propio guardado en localStorage 'ups_evento_actual' en cada cambio (guardar()).
+   Flujo: elegir semáforos → agrupar en corredores (por calle en común) → marcar intervenidos
+          → generar() arma el texto → copiar(). Imagen: imagenMapa() con íconos y leyenda.
+   Expone: EV.mostrar() al abrir la pestaña · EV.importar(claves) para el puente ·
+           EV.encuadrar() · EV.mapa() y EV.estado() solo lectura (pruebas / consola).
+   ═══════════════════════════════════════════════════════════════════════════════ */
 var EV = (function(){
 
 /* ══ CONFIG ══ */
@@ -937,22 +1044,32 @@ var PALABRAS_VACIAS = ['boulevard','bulevar','blvd','avenida','av','alameda','al
 /* ══ ESTADO ══ */
 var S = nuevoEstado();
 var MAPA = null, CAPA = null, TILES = null, BASE_MAPA = 'calle', AREA = { activo:false, inicio:null, rect:null };
+// Estado vacío de un evento.
 function nuevoEstado(){
   return { nombre:'', zona:'', tipo:0, enc:0, hora:'', fase:0, monit:0, nota:'',
-           sel:[], cor:[], asig:{}, inter:{}, manual:false, barra:true, detalle:false };
+           sel:[], cor:[], asig:{}, inter:{}, manual:false, barra:true, detalle:false, horaAuto:true };
 }
 
 /* ══ UTILIDADES ══ */
+// Utilidades locales del módulo (mismas que en Cambio de tiempos): $, norm, esc, pad, tieneCoord, fmtHora.
 function $(id){ return document.getElementById(id); }
+// Texto sin acentos y en minúsculas.
 function norm(t){ return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(); }
+// Escapa HTML antes de innerHTML.
 function esc(t){ return String(t == null ? '' : t).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+// Número a dos dígitos.
 function pad(n){ return (n < 10 ? '0' : '') + n; }
+// true si tiene latitud y longitud.
 function tieneCoord(s){ return s && typeof s.la === 'number' && typeof s.lo === 'number'; }
+// "09:05" → "9:05".
 function fmtHora(v){ var p = String(v || '').split(':'); return p.length >= 2 ? (parseInt(p[0],10) + ':' + p[1]) : ''; }
+// Hora actual "HH:MM".
 function horaAhora(){ var d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
 
 /* ══ GUARDADO LOCAL (evento en curso) ══ */
+// Guarda el evento en el navegador (sobrevive a recargar).
 function guardar(){ try { localStorage.setItem(LS_EVENTO, JSON.stringify(S)); } catch(e){} }
+// Recupera el evento guardado; descarta semáforos que ya no existen.
 function cargar(){
   try {
     var raw = localStorage.getItem(LS_EVENTO); if (!raw) return;
@@ -963,28 +1080,37 @@ function cargar(){
 }
 
 /* ══ CORREDORES: agrupación automática por calle en común ══ */
+// Acorta nombres de calle: Boulevard → Blvd., Avenida → Av., Alameda → Alam.
 function abreviar(t){
   return String(t || '').trim()
     .replace(/\b(Boulevard|Bulevar)\b\.?/gi, 'Blvd.').replace(/\bAvenida\b/gi, 'Av.').replace(/\bAlameda\b/gi, 'Alam.')
     .replace(/\bCarretera\b/gi, 'Carr.').replace(/\bAutopista\b/gi, 'Autop.').replace(/\s+/g, ' ');
 }
+// Separa una dirección en sus calles ("Blvd. X - Calle Y" → [Blvd. X, Calle Y]).
 function partes(d){   // tramos de la dirección: "Blvd. Del Ejercito - Calle San Bartolo" → 2 calles
   return String(d || '').split(/\s+-\s+|\s*-\s*(?=[A-ZÁÉÍÓÚ0-9])|\s+y\s+|\s*_\s*|\s*\/\s*|,/).map(function(p){ return p.replace(/[().]+$/,'').trim(); }).filter(Boolean);
 }
+// Clave de agrupación de una calle: sin tipo de vía ni palabras comunes.
 function clave(p){
   var w = norm(p).replace(/[^a-z0-9ñ ]/g, ' ').split(/\s+/).filter(function(x){ return x && PALABRAS_VACIAS.indexOf(x) < 0; });
   w = w.map(function(x){ return x.replace(/^(\d+)(a|ª|o|º)?$/, '$1'); });
   return w.join(' ');
 }
+// Claves de todas las calles de un semáforo.
 function clavesDe(s){ var v = []; partes(s.d).forEach(function(p){ var c = clave(p); if (c && v.indexOf(c) < 0) v.push(c); }); return v; }
+// Busca un corredor por id.
 function corPorId(id){ for (var i = 0; i < S.cor.length; i++){ if (S.cor[i].id === id) return S.cor[i]; } return null; }
+// Id único para corredores.
 function nuevoId(){ return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+// Siguiente color de corredor no usado.
 function colorLibre(){ var usados = S.cor.map(function(c){ return c.color; }); for (var i = 0; i < COLORES.length; i++){ if (usados.indexOf(COLORES[i]) < 0) return COLORES[i]; } return COLORES[S.cor.length % COLORES.length]; }
+// Corredor "Otras intersecciones" (lo crea si no existe).
 function corOtras(){
   for (var i = 0; i < S.cor.length; i++){ if (S.cor[i].otras) return S.cor[i]; }
   var c = { id:nuevoId(), nombre:'Otras intersecciones', color:COLOR_OTRAS, clave:'', estado:-1, otras:true };
   S.cor.push(c); return c;
 }
+// Rehace todos los corredores por calle en común. Borra ediciones manuales.
 function agruparTodo(){
   var cuenta = {}, nombreDe = {};
   S.sel.forEach(function(k){
@@ -1018,16 +1144,21 @@ function agruparTodo(){
   if (o){ S.cor = S.cor.filter(function(c){ return !c.otras; }); S.cor.push(o); }
   S.manual = false;
 }
+// Tras editar a mano: el semáforo nuevo va al corredor de su calle o a "Otras".
 function asignarNuevo(k){   // ya editado a mano: el nuevo va al corredor de su calle o a "Otras"
-  var s = porKey(k), ks = clavesDe(s);
+  var s = porKey(k), ks = s ? clavesDe(s) : [];
   var cor = S.cor.filter(function(c){ return c.clave && ks.indexOf(c.clave) >= 0; })[0] || corOtras();
   S.asig[k] = cor.id;
 }
+// Quita corredores sin semáforos (salvo los creados a mano).
 function limpiarVacios(){ S.cor = S.cor.filter(function(c){ return S.sel.some(function(k){ return S.asig[k] === c.id; }) || c.manualVacio; }); }
+// Semáforos de un corredor, en orden de selección.
 function semsDe(c){ return S.sel.filter(function(k){ return S.asig[k] === c.id; }); }
+// Cuántos de la lista están marcados como intervenidos.
 function intervenidas(lista){ return lista.filter(function(k){ return S.inter[k]; }).length; }
 
 /* ══ SELECCIÓN ══ */
+// Agrega semáforos al evento y los agrupa. Devuelve cuántos eran nuevos.
 function agregarSel(ks){
   var nuevos = ks.filter(function(k){ return S.sel.indexOf(k) < 0; });
   if (!nuevos.length) return 0;
@@ -1035,12 +1166,13 @@ function agregarSel(ks){
   if (!S.manual) agruparTodo(); else { nuevos.forEach(asignarNuevo); agruparOtras(); }
   return nuevos.length;
 }
+// En "Otras", los que comparten calle forman su propio corredor.
 function agruparOtras(){   // en "Otras", los que comparten calle forman su propio corredor
   var o = S.cor.filter(function(c){ return c.otras; })[0]; if (!o) return;
   for (;;){
     var ks = semsDe(o), cuenta = {}, nombres = {}, mejor = null;
     ks.forEach(function(k){
-      var s = porKey(k);
+      var s = porKey(k); if (!s) return;
       partes(s.d).forEach(function(p){ var c = clave(p); if (!c) return; if (!nombres[c]) nombres[c] = {}; nombres[c][p] = (nombres[c][p] || 0) + 1; });
       clavesDe(s).forEach(function(c){ cuenta[c] = (cuenta[c] || 0) + 1; });
     });
@@ -1049,23 +1181,27 @@ function agruparOtras(){   // en "Otras", los que comparten calle forman su prop
     var vv = nombres[mejor], nom = Object.keys(vv).sort(function(a, b){ return vv[b] - vv[a]; })[0];
     var cor = { id:nuevoId(), nombre:abreviar(nom), color:colorLibre(), clave:mejor, estado:-1 };
     S.cor.splice(S.cor.indexOf(o), 0, cor);
-    ks.forEach(function(k){ if (clavesDe(porKey(k)).indexOf(mejor) >= 0) S.asig[k] = cor.id; });
+    ks.forEach(function(k){ var s = porKey(k); if (s && clavesDe(s).indexOf(mejor) >= 0) S.asig[k] = cor.id; });
   }
   limpiarVacios();
 }
+// Quita un semáforo del evento.
 function quitarSel(k){
   S.sel = S.sel.filter(function(x){ return x !== k; });
   delete S.asig[k]; delete S.inter[k];
   limpiarVacios();
 }
+// Agrega o quita un semáforo y refresca todo.
 function toggleSel(k){ if (S.sel.indexOf(k) >= 0) quitarSel(k); else agregarSel([k]); todo(); }
 
 /* ══ RENDER ══ */
+// Botones de tipo, fase y monitoreo.
 function renderOpts(){
   $('evTipos').innerHTML = TIPOS.map(function(t, i){ return '<button type="button" class="opt" data-tipo="' + i + '" aria-pressed="' + (S.tipo === i) + '">' + t.e + ' ' + esc(t.b) + '</button>'; }).join('');
   $('evFases').innerHTML = FASES.map(function(f, i){ return '<button type="button" class="opt" data-fase="' + i + '" aria-pressed="' + (S.fase === i) + '">' + esc(f) + '</button>'; }).join('');
   $('evMonitoreos').innerHTML = MONITOREO.map(function(m, i){ return '<button type="button" class="opt" data-monit="' + i + '" aria-pressed="' + (S.monit === i) + '">' + esc(m) + '</button>'; }).join('');
 }
+// Resultados del buscador del evento.
 function renderLista(){
   var q = norm($('evBuscar').value).split(/\s+/).filter(Boolean), h = '';
   if (q.length){
@@ -1080,6 +1216,7 @@ function renderLista(){
   $('evCuentaSel').textContent = S.sel.length ? S.sel.length + ' semáforos en el evento' : 'Ningún semáforo elegido todavía.';
   $('evBtnQuitarTodos').hidden = !S.sel.length;
 }
+// Tarjetas de corredores con casillas de intervenido, selector para mover y totales.
 function renderCorredores(){
   var h = '';
   if (!S.sel.length) h = '<div class="vacio">Elige semáforos en el mapa o con el buscador. Los corredores aparecen aquí solos.</div>';
@@ -1089,7 +1226,7 @@ function renderCorredores(){
       '<div class="cor-head"><input type="text" value="' + esc(c.nombre) + '" data-nombre="' + c.id + '" aria-label="Nombre del corredor">' +
       '<span class="cuenta">' + n + '/' + ks.length + '</span></div>';
     ks.forEach(function(k){
-      var s = porKey(k), on = !!S.inter[k];
+      var s = porKey(k), on = !!S.inter[k]; if (!s) return;
       h += '<div class="sem' + (on ? ' hecho' : '') + '"><label><input type="checkbox" data-inter="' + esc(k) + '"' + (on ? ' checked' : '') + '><span class="nom">' + esc(s.d) + '<small>' + esc(s.id) + '</small></span></label>' +
         '<select data-mover="' + esc(k) + '" aria-label="Mover a otro corredor">' + S.cor.map(function(o){ return '<option value="' + o.id + '"' + (o.id === c.id ? ' selected' : '') + '>' + esc(o.nombre) + '</option>'; }).join('') + '<option value="__nuevo">+ Nuevo corredor…</option></select>' +
         '<button type="button" class="x" data-quitar="' + esc(k) + '" aria-label="Quitar del evento">×</button></div>';
@@ -1104,13 +1241,15 @@ function renderCorredores(){
   $('evProgBar').style.width = (tot ? n * 100 / tot : 0) + '%';
   $('evBtnReagrupar').hidden = !S.sel.length;
 }
+// Barra de avance en texto: ▰▰▱▱▱▱▱▱▱▱ 20 %.
 function barraTexto(n, tot){ var b = tot ? Math.round(n * 10 / tot) : 0; return Array(b + 1).join('▰') + Array(10 - b + 1).join('▱') + ' ' + (tot ? Math.round(n * 100 / tot) : 0) + ' %'; }
+// Arma el texto del evento y la vista previa.
 function generar(){
   var t = TIPOS[S.tipo] || TIPOS[0], tot = S.sel.length, n = intervenidas(S.sel), lin = [];
-  lin.push('*' + ENCABEZADOS[S.enc] + '*');
+  lin.push('*' + (ENCABEZADOS[S.enc] || ENCABEZADOS[0]) + '*');
   var titulo = (S.nombre || 'Evento') + (S.zona ? '* – ' + S.zona : '*');
   lin.push(t.e + ' *' + titulo + ' ' + t.e);
-  lin.push('⏱️ Fase: ' + FASES[S.fase] + (S.hora ? ' · Actualización ' + fmtHora(S.hora) : ''));
+  lin.push('⏱️ Fase: ' + (FASES[S.fase] || FASES[0]) + (S.hora ? ' · Actualización ' + fmtHora(S.hora) : ''));
   lin.push('');
   lin.push('🚦 *Intersecciones intervenidas: ' + n + '/' + tot + '* 🚦');
   if (S.barra) lin.push(barraTexto(n, tot));
@@ -1118,7 +1257,7 @@ function generar(){
   S.cor.forEach(function(c){
     var ks = semsDe(c); if (!ks.length) return;
     lin.push('• ' + c.nombre + ': ' + intervenidas(ks) + '/' + ks.length);
-    if (S.detalle) ks.forEach(function(k){ if (S.inter[k]) lin.push('   ✅ ' + porKey(k).d); });
+    if (S.detalle) ks.forEach(function(k){ var s = porKey(k); if (S.inter[k] && s) lin.push('   ✅ ' + s.d); });
   });
   lin.push('');
   lin.push(MONITOREO[S.monit] || '');
@@ -1126,14 +1265,26 @@ function generar(){
   $('evOut').value = lin.join('\n').replace(/\n{3,}/g, '\n\n').trim();
   pintarBurbuja($('evOut').value);
 }
+// Vista previa estilo WhatsApp.
 function pintarBurbuja(txt){
   $('evBurbuja').innerHTML = String(txt).split('\n').map(function(l){
     return '<div>' + esc(l).replace(/\*_([^*_]+?)_\*/g, '<b><i>$1</i></b>').replace(/\*([^*]+?)\*/g, '<b>$1</b>').replace(/^( +)/, function(m){ return Array(m.length + 1).join('&nbsp;'); }) + '</div>';
   }).join('');
 }
-function todo(){ renderOpts(); renderLista(); renderCorredores(); renderMapa(); generar(); guardar(); }
+// Quita del evento semáforos que ya no existen (p. ej. eliminados en la otra pestaña).
+function depurar(){   // quita del evento los semáforos que ya no existen en el listado
+  var antes = S.sel.length;
+  S.sel = S.sel.filter(function(k){ return porKey(k); });
+  if (S.sel.length === antes) return;
+  Object.keys(S.asig).forEach(function(k){ if (!porKey(k)) delete S.asig[k]; });
+  Object.keys(S.inter).forEach(function(k){ if (!porKey(k)) delete S.inter[k]; });
+  limpiarVacios();
+}
+// Refresca todo el evento y lo guarda. Llamar tras cualquier cambio de estado.
+function todo(){ depurar(); renderOpts(); renderLista(); renderCorredores(); renderMapa(); generar(); guardar(); }
 
 /* ══ MAPA ══ */
+// Crea el mapa del evento (al abrir la pestaña por primera vez).
 function iniciarMapa(){
   if (typeof L === 'undefined'){ $('evMapa').innerHTML = '<div class="hint" style="padding:16px">Mapa no disponible. Revisa conexión a internet. Puedes elegir semáforos con el buscador.</div>'; return; }
   MAPA = L.map('evMapa', { preferCanvas:true, boxZoom:false }).setView(MAPA_CENTRO, MAPA_ZOOM);
@@ -1145,8 +1296,10 @@ function iniciarMapa(){
 /* Íconos de semáforo: solo los elegidos. Intervenido = a color con ✓ verde; pendiente = gris.
    El aro exterior lleva el color del corredor. Tamaño según acercamiento y separación para que no se encimen. */
 var ICONO = { verde:'#16a34a', ambar:'#c27c0e', gris:'#9ca3af', grisCuerpo:'#4b5563', grisLuz:'#e5e7eb' };
-var OFF = {}, TAM = 30;
+var OFF = {}, TAM = 30, FIJA = null;
+// Tamaño del ícono según acercamiento: 30 / 24 / 18 px.
 function tamIcono(z){ return z >= 16 ? 30 : (z >= 14 ? 24 : 18); }
+// Ícono de semáforo: a color con ✓ verde si está intervenido, gris si está pendiente. Aro = color del corredor.
 function svgIcono(s, hecho, aro){
   var f = s / 30, w = Math.round(36 * f), hh = Math.round(32 * f);
   var cuerpo = hecho ? '#1f2937' : ICONO.grisCuerpo, fondo = hecho ? ICONO.ambar : ICONO.gris;
@@ -1160,12 +1313,12 @@ function svgIcono(s, hecho, aro){
   if (hecho) t += '<circle cx="27" cy="8" r="7.5" fill="' + ICONO.verde + '" stroke="#ffffff" stroke-width="1.5"/><path d="M23.6 8.2l2.4 2.4 4.4-4.6" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
   return t + '</svg>';
 }
-function calcularSeparacion(){   // desplaza en pantalla los íconos que quedarían encimados
-  OFF = {}; TAM = tamIcono(MAPA.getZoom());
-  var min = TAM * 0.9, puestos = [];
+// Calcula desplazamientos para que los íconos no se encimen al nivel de zoom z.
+function separacion(z){   // posiciones sin encimarse, en píxeles del nivel de zoom z
+  var tam = tamIcono(z), min = tam * 0.9, puestos = [], off = {};
   S.sel.forEach(function(k){
     var s = porKey(k); if (!tieneCoord(s)) return;
-    var p = MAPA.latLngToContainerPoint([s.la, s.lo]), pos = p;
+    var p = MAPA.project([s.la, s.lo], z), pos = p;
     function libre(q){ return puestos.every(function(o){ return Math.hypot(o.x - q.x, o.y - q.y) >= min; }); }
     if (!libre(p)){
       var hallado = false;
@@ -1177,9 +1330,29 @@ function calcularSeparacion(){   // desplaza en pantalla los íconos que quedar�
       }
     }
     puestos.push(pos);
-    OFF[k] = [pos.x - p.x, pos.y - p.y];
+    off[k] = [pos.x - p.x, pos.y - p.y];
   });
+  return { OFF:off, TAM:tam };
 }
+// Separación para el zoom actual de pantalla.
+function calcularSeparacion(){ var r = separacion(Math.round(MAPA.getZoom())); OFF = r.OFF; TAM = r.TAM; }
+// Encuadre de la imagen: vista fijada o centrado en los semáforos del evento.
+function vistaCaptura(){   // la imagen no depende de dónde quedó el mapa: fija o centrada en los elegidos
+  if (FIJA) return FIJA;
+  var pts = S.sel.map(porKey).filter(tieneCoord).map(function(s){ return [s.la, s.lo]; });
+  if (!pts.length) return { centro:MAPA.getCenter(), z:Math.round(MAPA.getZoom()) };
+  var b = L.latLngBounds(pts);
+  return { centro:b.getCenter(), z:Math.max(10, Math.min(16, Math.floor(MAPA.getBoundsZoom(b, false, L.point(120, 110))))) };
+}
+// Botón 📌: fija o libera el encuadre de la imagen.
+function fijarVista(){
+  if (FIJA){ FIJA = null; aviso('Vista liberada. La imagen se centra sola en los semáforos.'); }
+  else { FIJA = { centro:MAPA.getCenter(), z:Math.round(MAPA.getZoom()) }; aviso('📌 Vista fijada. La imagen usará este encuadre aunque muevas el mapa.'); }
+  pintarFijar();
+}
+// Texto y estado del botón 📌.
+function pintarFijar(){ $('evBtnFijar').setAttribute('aria-pressed', !!FIJA); $('evBtnFijar').textContent = FIJA ? '📌 Vista fijada · Quitar' : '📌 Fijar vista'; }
+// Puntos azules (no elegidos) + íconos de semáforo (elegidos) con líneas guía si se apartaron.
 function renderMapa(){
   if (!MAPA) return;
   CAPA.clearLayers();
@@ -1188,7 +1361,7 @@ function renderMapa(){
   todos().forEach(function(s){   // puntos azules: todos los no elegidos
     if (!tieneCoord(s) || S.sel.indexOf(s.k) >= 0) return;
     var m = L.circleMarker([s.la, s.lo], { radius:5, color:'#ffffff', weight:1, fillColor:'#3b82f6', fillOpacity:.85 });
-    m.bindTooltip('<b>' + esc(s.id) + '</b> · ' + esc(s.d) + '<br><small>Clic: agregar al evento</small>');
+    m.bindTooltip('<b>' + esc(s.id === 'NUEVO' ? 'Nuevo' : s.id) + '</b> · ' + esc(s.d) + '<br><small>Clic: agregar al evento</small>');
     m.on('click', function(e){ L.DomEvent.stopPropagation(e); if (!AREA.activo) toggleSel(s.k); });
     m.addTo(CAPA);
   });
@@ -1201,23 +1374,26 @@ function renderMapa(){
       L.circleMarker([s.la, s.lo], { radius:3, color:'#ffffff', weight:1, fillColor:col, fillOpacity:1, interactive:false }).addTo(CAPA);
     }
     var m = L.marker([s.la, s.lo], { icon:L.divIcon({ className:'evpin', html:svgIcono(TAM, hecho, col), iconSize:[Math.round(36 * f), Math.round(32 * f)], iconAnchor:[15 * f - o[0], 17 * f - o[1]], tooltipAnchor:[14 * f + o[0], o[1]] }), zIndexOffset:hecho ? 900 : 1000 });
-    m.bindTooltip('<b>' + esc(s.id) + '</b> · ' + esc(s.d) + '<br>' + esc(c ? c.nombre : '') + (hecho ? ' · ✅ intervenido' : ' · pendiente') + '<br><small>Clic derecho: marcar intervenido · Clic: quitar</small>');
+    m.bindTooltip('<b>' + esc(s.id === 'NUEVO' ? 'Nuevo' : s.id) + '</b> · ' + esc(s.d) + '<br>' + esc(c ? c.nombre : '') + (hecho ? ' · ✅ intervenido' : ' · pendiente') + '<br><small>Clic derecho: marcar intervenido · Clic: quitar</small>');
     m.on('click', function(e){ L.DomEvent.stopPropagation(e); if (!AREA.activo) toggleSel(k); });
     m.on('contextmenu', function(e){ if (e.originalEvent) L.DomEvent.preventDefault(e.originalEvent); S.inter[k] = !S.inter[k]; todo(); });
     m.addTo(CAPA);
   });
 }
+// Centra el mapa en los semáforos del evento.
 function encuadrar(){
   if (!MAPA) return;
   var pts = S.sel.map(porKey).filter(tieneCoord).map(function(s){ return [s.la, s.lo]; });
   if (pts.length) MAPA.fitBounds(pts, { padding:[40,40], maxZoom:16, animate:false });
 }
+// Activa o desactiva la selección por recuadro (el mapa deja de moverse mientras tanto).
 function modoArea(on){
   AREA.activo = on;
   $('evBtnArea').setAttribute('aria-pressed', on);
   $('evMapa').classList.toggle('modo-area', on);
   if (MAPA){ if (on) MAPA.dragging.disable(); else MAPA.dragging.enable(); }
 }
+// Inicio del recuadro (botón activo o Shift + arrastrar).
 function areaInicio(e){
   var shift = e.originalEvent && e.originalEvent.shiftKey;
   if (!AREA.activo && !shift) return;
@@ -1225,17 +1401,20 @@ function areaInicio(e){
   AREA.inicio = e.latlng;
   AREA.rect = L.rectangle([e.latlng, e.latlng], { color:'#f59e0b', weight:2, dashArray:'6 4', fillOpacity:.12, interactive:false }).addTo(MAPA);
 }
-function areaMover(e){ if (AREA.rect) AREA.rect.setBounds(L.latLngBounds(AREA.inicio, e.latlng)); }
+// Dibuja el recuadro mientras se arrastra.
+function areaMover(e){ if (AREA.rect){ AREA.ultimo = e.latlng; AREA.rect.setBounds(L.latLngBounds(AREA.inicio, e.latlng)); } }
+// Suelta el recuadro: agrega los semáforos de adentro.
 function areaFin(e){
   if (!AREA.rect) return;
   var b = L.latLngBounds(AREA.inicio, e.latlng);
-  MAPA.removeLayer(AREA.rect); AREA.rect = null; AREA.inicio = null;
+  MAPA.removeLayer(AREA.rect); AREA.rect = null; AREA.inicio = null; AREA.ultimo = null;
   var dentro = todos().filter(function(s){ return tieneCoord(s) && b.contains([s.la, s.lo]); }).map(function(s){ return s.k; });
   var n = agregarSel(dentro);
   modoArea(false); AREA.porShift = false;
   todo();
   aviso(n ? '✓ ' + n + ' semáforos agregados al evento.' : (dentro.length ? 'Esos semáforos ya estaban en el evento.' : 'No hay semáforos dentro del recuadro.'));
 }
+// Alterna mapa de calles / satélite.
 function cambiarBase(){
   if (!TILES) return;
   var antes = BASES[BASE_MAPA].attr;
@@ -1246,14 +1425,16 @@ function cambiarBase(){
 }
 
 /* ══ IMAGEN DEL MAPA (con leyenda de corredores) ══ */
+// Descarga una pieza del mapa para la imagen.
 function cargarTile(url){ return new Promise(function(res){ var im = new Image(); im.crossOrigin = 'anonymous'; im.onload = function(){ res(im); }; im.onerror = function(){ res(null); }; im.src = url; }); }
+// Imagen PNG de 1200 px con íconos, líneas guía y leyenda de corredores.
 function imagenMapa(){
   if (!MAPA) return Promise.reject(new Error('sin mapa'));
-  var tam = MAPA.getSize(), z = Math.round(MAPA.getZoom());
+  var tam = MAPA.getSize(), v = vistaCaptura(), z = v.z, sep = separacion(z);
   var W = MAPA_IMG_ANCHO, H = Math.round(tam.y * W / tam.x), m = W / tam.x;
   var dz = Math.max(0, Math.min(2, Math.round(Math.log(m) / Math.LN2), (BASE_MAPA === 'sat' ? 18 : 19) - z));
   var zz = z + dz, e = W / (tam.x * Math.pow(2, dz));
-  var c = MAPA.project(MAPA.getCenter(), zz), ox = c.x - (W / e) / 2, oy = c.y - (H / e) / 2, n = Math.pow(2, zz);
+  var c = MAPA.project(v.centro, zz), ox = c.x - (W / e) / 2, oy = c.y - (H / e) / 2, n = Math.pow(2, zz);
   var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   var g = cv.getContext('2d'); g.fillStyle = '#e5e7eb'; g.fillRect(0, 0, W, H);
   var tareas = [];
@@ -1272,9 +1453,9 @@ function imagenMapa(){
       var s = porKey(key); if (!tieneCoord(s)) return;
       var cor = corPorId(S.asig[key]), col = cor ? cor.color : COLOR_OTRAS, hecho = S.inter[key];
       var p = MAPA.project([s.la, s.lo], zz), x = (p.x - ox) * e, y = (p.y - oy) * e;
-      var o = OFF[key] || [0, 0], ix = x + o[0] * m, iy = y + o[1] * m;
+      var o = sep.OFF[key] || [0, 0], ix = x + o[0] * m, iy = y + o[1] * m;
       if (o[0] || o[1]){ g.strokeStyle = col; g.lineWidth = 2 * m; g.beginPath(); g.moveTo(x, y); g.lineTo(ix, iy); g.stroke(); g.fillStyle = col; g.beginPath(); g.arc(x, y, 3 * m, 0, Math.PI * 2); g.fill(); }
-      dibujarIcono(g, ix, iy, TAM * m * 0.8, hecho, col);
+      dibujarIcono(g, ix, iy, sep.TAM * m * 0.8, hecho, col);
     });
     // leyenda
     var cors = S.cor.filter(function(c){ return semsDe(c).length; });
@@ -1301,6 +1482,7 @@ function imagenMapa(){
     return new Promise(function(res, rej){ try { cv.toBlob(function(b){ if (b) res(b); else rej(new Error('sin imagen')); }, 'image/png'); } catch(err){ rej(err); } });
   });
 }
+// El ícono del mapa, dibujado en la imagen.
 function dibujarIcono(g, x, y, s, hecho, aro){   // mismo ícono del mapa, en la imagen
   var f = s / 30;
   function caja(px, py, w, hh, r){ g.beginPath(); g.moveTo(px + r, py); g.arcTo(px + w, py, px + w, py + hh, r); g.arcTo(px + w, py + hh, px, py + hh, r); g.arcTo(px, py + hh, px, py, r); g.arcTo(px, py, px + w, py, r); g.closePath(); }
@@ -1320,7 +1502,9 @@ function dibujarIcono(g, x, y, s, hecho, aro){   // mismo ícono del mapa, en la
   }
   g.restore();
 }
+// Descarga un archivo generado en el navegador.
 function bajarBlob(b){ var u = URL.createObjectURL(b), a = document.createElement('a'); a.href = u; a.download = 'mapa-evento.png'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(u); }, 4000); }
+// Botón "Copiar mapa"; si no se puede copiar, descarga.
 function copiarMapa(){
   var p = imagenMapa();
   if (navigator.clipboard && navigator.clipboard.write && typeof ClipboardItem !== 'undefined'){
@@ -1331,35 +1515,55 @@ function copiarMapa(){
 }
 
 /* ══ ACCIONES ══ */
+// Copia el reporte del evento (actualiza la hora si está en automática).
 function copiar(){
+  tickHora();
   generar();
   var ta = $('evOut'), falta = !S.sel.length ? 'Aún no hay semáforos en el evento.' : (!S.nombre.trim() ? 'Falta el nombre del evento.' : '');
   var ok = falta ? '⚠️ Copiado, pero ' + falta.charAt(0).toLowerCase() + falta.slice(1) : '✓ Copiado. Pégalo en WhatsApp.';
   function plan(){ ta.focus(); ta.select(); var r = false; try { r = document.execCommand('copy'); } catch(e){} aviso(r ? ok : 'No se pudo copiar. Intenta de nuevo.'); }
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(function(){ aviso(ok); }).catch(plan); else plan();
 }
+// Etiqueta "⏱ Automática" / "Manual".
+function pintarHoraModo(){
+  var b = $('evHoraModo'); b.classList.toggle('manual', !S.horaAuto);
+  b.textContent = S.horaAuto ? '⏱ Automática' : 'Manual · volver a automática';
+  b.title = S.horaAuto ? 'Sigue al reloj; se actualiza sola' : 'Toca para que vuelva a seguir al reloj';
+}
+// Con hora automática, la iguala al reloj (cada 30 s y al copiar).
+function tickHora(forzar){   // con hora automática, sigue al reloj
+  if (!S.horaAuto) return;
+  var h = horaAhora();
+  if (h !== S.hora || forzar){ S.hora = h; $('evHora').value = h; generar(); guardar(); }
+}
+// Pasa el estado a los campos del formulario.
 function campos(){
   $('evNombre').value = S.nombre; $('evZona').value = S.zona; $('evHora').value = S.hora; $('evNota').value = S.nota;
-  $('evEncabezado').value = String(S.enc);
+  $('evEncabezado').value = String(S.enc); pintarHoraModo();
   $('evOptBarra').checked = S.barra; $('evOptDetalle').checked = S.detalle;
 }
+// Botón "Empezar otro evento", con Deshacer.
 function nuevoEvento(){
   var copia = JSON.stringify(S);
-  S = nuevoEstado(); S.hora = horaAhora();
+  S = nuevoEstado(); S.hora = horaAhora(); FIJA = null; pintarFijar();
   campos(); todo(); if (MAPA) MAPA.setView(MAPA_CENTRO, MAPA_ZOOM);
   aviso('Evento borrado.', { txt:'Deshacer', fn:function(){ S = JSON.parse(copia); campos(); todo(); encuadrar(); aviso('✓ Evento recuperado.'); } });
 }
 
 /* ══ EVENTOS ══ */
+// Conecta botones y campos del evento (una sola vez).
 function eventos(){
   $('evEncabezado').innerHTML = ENCABEZADOS.map(function(e, i){ return '<option value="' + i + '">' + esc(e) + '</option>'; }).join('');
-  [['evNombre','nombre'],['evZona','zona'],['evHora','hora'],['evNota','nota']].forEach(function(p){ $(p[0]).addEventListener('input', function(){ S[p[1]] = this.value; generar(); guardar(); }); });
+  [['evNombre','nombre'],['evZona','zona'],['evNota','nota']].forEach(function(p){ $(p[0]).addEventListener('input', function(){ S[p[1]] = this.value; generar(); guardar(); }); });
+  $('evHora').addEventListener('input', function(){ S.hora = this.value; S.horaAuto = false; pintarHoraModo(); generar(); guardar(); });
+  $('evHoraModo').addEventListener('click', function(e){ e.preventDefault(); S.horaAuto = !S.horaAuto; pintarHoraModo(); tickHora(true); guardar(); if (S.horaAuto) aviso('⏱ La hora sigue al reloj.'); });
+  setInterval(tickHora, 30000); tickHora();
   $('evEncabezado').addEventListener('change', function(){ S.enc = parseInt(this.value, 10) || 0; generar(); guardar(); });
   [['evOptBarra','barra'],['evOptDetalle','detalle']].forEach(function(p){ $(p[0]).addEventListener('change', function(){ S[p[1]] = this.checked; generar(); guardar(); }); });
   document.addEventListener('click', function(e){
     var b;
     if ((b = e.target.closest('[data-tipo]'))){ S.tipo = +b.getAttribute('data-tipo'); todo(); }
-    else if ((b = e.target.closest('[data-fase]'))){ S.fase = +b.getAttribute('data-fase'); S.hora = horaAhora(); $('evHora').value = S.hora; if (FASES[S.fase] === 'Cierre') S.monit = MONITOREO.length - 1; todo(); }
+    else if ((b = e.target.closest('[data-fase]'))){ S.fase = +b.getAttribute('data-fase'); if (S.horaAuto){ S.hora = horaAhora(); $('evHora').value = S.hora; } if (FASES[S.fase] === 'Cierre') S.monit = MONITOREO.length - 1; todo(); }
     else if ((b = e.target.closest('[data-monit]'))){ S.monit = +b.getAttribute('data-monit'); todo(); }
   });
   $('evBuscar').addEventListener('input', renderLista);
@@ -1371,6 +1575,7 @@ function eventos(){
   });
   $('evBtnArea').addEventListener('click', function(){ modoArea(!AREA.activo); if (AREA.activo) aviso('Arrastra un recuadro sobre el mapa.'); });
   $('evBtnBase').addEventListener('click', cambiarBase);
+  $('evBtnFijar').addEventListener('click', function(){ if (MAPA) fijarVista(); });
   $('evBtnReagrupar').addEventListener('click', function(){ agruparTodo(); todo(); aviso('✓ Corredores reagrupados por calle.'); });
   $('evBtnNuevoCor').addEventListener('click', function(){
     S.cor.splice(S.cor.filter(function(c){ return !c.otras; }).length, 0, { id:nuevoId(), nombre:'Corredor ' + (S.cor.length + 1), color:colorLibre(), clave:'', estado:-1, manualVacio:true });
@@ -1408,6 +1613,7 @@ function eventos(){
   $('evBtnMapaCopiar').addEventListener('click', copiarMapa);
   $('evBtnMapaBajar').addEventListener('click', function(){ imagenMapa().then(function(b){ bajarBlob(b); aviso('✓ Mapa descargado.'); }).catch(function(){ aviso('No se pudo crear el mapa.'); }); });
   $('evBtnNuevoEvento').addEventListener('click', nuevoEvento);
+  document.addEventListener('mouseup', function(){ if (AREA.rect) areaFin({ latlng:AREA.ultimo || AREA.inicio }); });   // soltó fuera del mapa
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && AREA.activo){ if (AREA.rect){ MAPA.removeLayer(AREA.rect); AREA.rect = null; } modoArea(false); } });
 }
 
@@ -1421,12 +1627,12 @@ var listo = false;
 return {
   mostrar: function(){
     if (!listo){ iniciarMapa(); listo = true; todo(); encuadrar(); }
-    else if (MAPA){ MAPA.invalidateSize(); }
+    else { if (MAPA) MAPA.invalidateSize(); todo(); }   // refleja cambios hechos en la otra pestaña
   },
   importar: function(ks){   // puente desde "Cambio de tiempos"
     var antes = S.sel.length, n = agregarSel(ks);
-    if (!S.tipo) S.tipo = 0;
-    S.hora = horaAhora(); campos(); todo();
+    if (S.horaAuto) S.hora = horaAhora();
+    campos(); todo();
     return { nuevos:n, habia:antes };
   },
   encuadrar: function(){ encuadrar(); },
@@ -1439,6 +1645,7 @@ return {
 var LS_VISTA = 'ups_vista';
 var PUENTE_MIN = 6;                                  // con motivo Evento y esta cantidad de semáforos, sugiere el modo Evento
 var SUBTITULOS = { tiempos:'Llena los pasos. Copia el reporte. Pégalo en WhatsApp.', evento:'Elige semáforos, revisa corredores, marca intervenidos y copia.' };
+// Muestra una pestaña, la recuerda y actualiza el enlace (#tiempos / #evento).
 function cambiarVista(v, sinHash){
   if (v !== 'evento') v = 'tiempos';
   document.body.setAttribute('data-modo', v);
@@ -1451,6 +1658,7 @@ function cambiarVista(v, sinHash){
   if (!sinHash && history.replaceState) history.replaceState(null, '', '#' + v);
   if (v === 'evento') EV.mostrar(); else if (MAPA) MAPA.invalidateSize();
 }
+// Pestaña al abrir: la del enlace, si no la última usada, si no Cambio de tiempos.
 function vistaInicial(){
   var h = (location.hash || '').replace('#', '');
   if (h === 'evento' || h === 'tiempos') return h;
@@ -1459,12 +1667,15 @@ function vistaInicial(){
 }
 
 /* ══ PUENTE: Cambio de tiempos → Evento ══ */
+// Posición del motivo "Evento" en MOTIVOS.
 function indiceEvento(){ for (var i = 0; i < MOTIVOS.length; i++){ if (norm(MOTIVOS[i].b) === 'evento') return i; } return -1; }
+// Muestra la sugerencia de pasar a Evento (motivo Evento + PUENTE_MIN semáforos o más).
 function pintarPuente(){
   var ver = S.motivo === indiceEvento() && S.sel.length >= PUENTE_MIN;
   $('puente').hidden = !ver;
   if (ver) $('puenteTxt').textContent = '¿Es un evento grande? Tienes ' + S.sel.length + ' semáforos.';
 }
+// Puente: pasa los semáforos elegidos a la pestaña Evento.
 function pasarAEvento(){
   var r = EV.importar(S.sel.slice());
   cambiarVista('evento');
