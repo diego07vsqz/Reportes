@@ -510,7 +510,7 @@ var LS_KEY = 'ups_semaforos_nuevos';
 var LS_TEMA = 'ups_tema';
 var MAX_LISTA = 60;
 var BASES = {                                                        // mapas base (gratis, sin clave)
-  calle: { url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attr:'© OpenStreetMap · © CARTO' },
+  calle: { url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attr:'© OpenStreetMap' },
   sat:   { url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attr:'© Esri' }
 };
 var MAPA_CENTRO = [13.6989, -89.1914];                              // San Salvador
@@ -695,6 +695,7 @@ function tieneCoord(s){ return s && typeof s.la === 'number' && typeof s.lo === 
 function iniciarMapa(){
   if (typeof L === 'undefined'){ $('mapa').innerHTML = '<div class="empty">Mapa no disponible. Revisa conexión a internet.</div>'; return; }
   MAPA = L.map('mapa', { preferCanvas:true }).setView(MAPA_CENTRO, MAPA_ZOOM);
+  registrarBases(BASES);
   TILES = reintentarTiles(L.tileLayer(BASES[S.base].url, { maxZoom:19, attribution:BASES[S.base].attr, crossOrigin:'anonymous' })).addTo(MAPA);
   CAPA_FL = L.layerGroup().addTo(MAPA);   // flechas debajo de los íconos
   CAPA = L.layerGroup().addTo(MAPA);
@@ -815,33 +816,92 @@ function abrirGoogle(la, lo){
   if (w){ try { w.opener = null; } catch(e){} }
   else aviso('El navegador bloqueó la ventana. Permite ventanas emergentes para esta página.');
 }
-// Descarga una pieza del mapa para la imagen. Si falla prueba el respaldo y reintenta; si todo falla devuelve null (queda gris).
+/* ══ PROVEEDORES DEL MAPA DE CALLES ══ */
+var CALLE_PROV = [                                 // en orden de preferencia; todos gratis y sin clave
+  { n:'OpenStreetMap', url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attr:'© OpenStreetMap' },
+  { n:'CARTO', url:'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', attr:'© OpenStreetMap · © CARTO' },
+  { n:'Esri', url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', attr:'© Esri' }
+];
+var CALLE_I = 0;                                   // proveedor en uso (sube si el actual falla)
+var CALLE_FALLAS = 4;                              // cuadros fallidos seguidos para cambiar de proveedor
+var BASES_REG = [];                                // tablas BASES de cada pestaña (se actualizan juntas)
+var ATR_EXTRA = [];                                // créditos de respaldos usados en la imagen en curso
+// Registra una tabla BASES y le pone el proveedor de calles en uso.
+function registrarBases(B){ if (BASES_REG.indexOf(B) < 0) BASES_REG.push(B); B.calle.url = CALLE_PROV[CALLE_I].url; B.calle.attr = CALLE_PROV[CALLE_I].attr; }
+// Proveedor, z, x, y de un cuadro de calles; null si no es de calles (ej. satélite).
+function coordsTile(url){
+  var u = String(url).split('?')[0];
+  for (var i = 0; i < CALLE_PROV.length; i++){
+    var re = new RegExp('^' + CALLE_PROV[i].url.replace(/[.?]/g, '\\$&').replace('{z}', '(\\d+)').replace('{x}', '(\\d+)').replace('{y}', '(\\d+)') + '$');
+    var m = u.match(re); if (!m) continue;
+    var ord = CALLE_PROV[i].url.match(/\{[zxy]\}/g), c = { i:i };
+    ord.forEach(function(k, j){ c[k.charAt(1)] = m[j + 1]; });
+    return c;
+  }
+  return null;
+}
+// El mismo cuadro en el siguiente proveedor; null si no hay más.
+function respaldoTile(url){
+  var c = coordsTile(url); if (!c || c.i + 1 >= CALLE_PROV.length) return null;
+  return CALLE_PROV[c.i + 1].url.replace('{z}', c.z).replace('{x}', c.x).replace('{y}', c.y);
+}
+// Descarga una pieza del mapa para la imagen. Si falla prueba los respaldos y reintenta; si todo falla devuelve null (queda gris).
 function cargarTile(url){ return cargarTileSeguro(url); }
-// Servidor de respaldo para un cuadro de OpenStreetMap (CARTO Voyager, mismos datos). null si no hay respaldo.
-function respaldoTile(url){ return /^https:\/\/tile\.openstreetmap\.org\//.test(url) ? url.replace('https://tile.openstreetmap.org/', 'https://basemaps.cartocdn.com/rastertiles/voyager/') : null; }
-// Carga un cuadro probando: original → respaldo → original otra vez (por si fue un corte momentáneo).
+// Carga un cuadro probando: original → proveedores siguientes → original otra vez.
 function cargarTileSeguro(url){
-  var intentos = [url, respaldoTile(url), url + (url.indexOf('?') < 0 ? '?' : '&') + 'r=' + Date.now()].filter(Boolean);
+  var intentos = [url], r = url;
+  while ((r = respaldoTile(r))) intentos.push(r);
+  intentos.push(url + (url.indexOf('?') < 0 ? '?' : '&') + 'r=' + Date.now());
   function probar(i){
     if (i >= intentos.length) return Promise.resolve(null);
     return new Promise(function(res){
       var im = new Image(); im.crossOrigin = 'anonymous';
       im.onload = function(){ res(im); }; im.onerror = function(){ res(null); };
       im.src = intentos[i];
-    }).then(function(im){ return im || probar(i + 1); });
+    }).then(function(im){
+      if (im){ var c = coordsTile(intentos[i]); if (c && ATR_EXTRA.indexOf(CALLE_PROV[c.i].attr) < 0) ATR_EXTRA.push(CALLE_PROV[c.i].attr); return im; }
+      return probar(i + 1);
+    });
   }
   return probar(0);
 }
-// Mapa en pantalla: si un cuadro falla, lo pide al respaldo; si también falla, reintenta una vez más.
+// Crédito de la imagen: el del mapa + el de cualquier respaldo que se haya usado (y limpia el registro).
+function atribucionImg(base){
+  var partes = base.split(' · ');
+  ATR_EXTRA.forEach(function(a){ a.split(' · ').forEach(function(x){ if (partes.indexOf(x) < 0) partes.push(x); }); });
+  ATR_EXTRA = [];
+  return partes.join(' · ');
+}
+// Pasa todo el mapa de calles al siguiente proveedor (las dos pestañas y la imagen).
+function cambiarProveedor(capa){
+  if (CALLE_I + 1 >= CALLE_PROV.length) return false;
+  var antes = CALLE_PROV[CALLE_I].attr;
+  CALLE_I++;
+  BASES_REG.forEach(function(B){ B.calle.url = CALLE_PROV[CALLE_I].url; B.calle.attr = CALLE_PROV[CALLE_I].attr; });
+  var m = capa._map;
+  if (m && m.attributionControl){ m.attributionControl.removeAttribution(antes); m.attributionControl.addAttribution(CALLE_PROV[CALLE_I].attr); }
+  if (m && m.attributionControl) (capa._extraAtr || []).forEach(function(a){ m.attributionControl.removeAttribution(a); });
+  capa._extraAtr = [];
+  capa.options.attribution = CALLE_PROV[CALLE_I].attr;
+  capa.setUrl(CALLE_PROV[CALLE_I].url);
+  return true;
+}
+// Mapa en pantalla: cuadro que falla → siguiente proveedor; proveedor que falla seguido → cambio de todo el mapa.
 function reintentarTiles(capa){
+  var malas = 0;
+  capa.on('tileload', function(e){ if (coordsTile(e.tile.src)) malas = 0; });
   capa.on('tileerror', function(e){
-    var t = e.tile, n = +(t.getAttribute('data-intento') || 0); if (n >= 2) return;
+    var t = e.tile, c = coordsTile(t.src), n = +(t.getAttribute('data-intento') || 0);
+    if (c && c.i === CALLE_I && ++malas >= CALLE_FALLAS){ malas = 0; if (cambiarProveedor(capa)) return; }
+    if (n >= (c ? CALLE_PROV.length : 1)) return;    // ya probó todo (satélite: un solo reintento)
     t.setAttribute('data-intento', n + 1);
-    var base = String(t.src).split('?')[0], alt = n === 0 ? respaldoTile(base) : null;
-    if (n === 1 && /cartocdn/.test(base)) base = base.replace('https://basemaps.cartocdn.com/rastertiles/voyager/', 'https://tile.openstreetmap.org/');
+    var alt = c ? respaldoTile(t.src) : null, base = String(t.src).split('?')[0];
+    if (alt){   // acredita al proveedor de respaldo (una sola vez por capa)
+      var at = CALLE_PROV[c.i + 1].attr, mp = capa._map; capa._extraAtr = capa._extraAtr || [];
+      if (mp && mp.attributionControl && at !== CALLE_PROV[CALLE_I].attr && capa._extraAtr.indexOf(at) < 0){ capa._extraAtr.push(at); mp.attributionControl.addAttribution(at); }
+    }
     setTimeout(function(){ t.src = alt || (base + '?r=' + Date.now()); }, alt ? 0 : 1200);
   });
-  capa.on('tileloadstart', function(e){ if (!e.tile.getAttribute('data-intento')) e.tile.setAttribute('data-intento', 0); });
   return capa;
 }
 var FIJA = null;
@@ -901,7 +961,7 @@ function imagenMapa(){
       dibujarSemaforo(g, x, y, m, i + 1);
     });
     dibujarSentidoImg(g, H, m);
-    var fa = Math.round(11 * Math.min(m, 1.5)), at = BASES[S.base].attr;
+    var fa = Math.round(11 * Math.min(m, 1.5)), at = atribucionImg(BASES[S.base].attr);
     g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.font = fa + 'px sans-serif';
     var w = g.measureText(at).width + fa;
     g.fillStyle = 'rgba(255,255,255,.8)'; g.fillRect(W - w, H - fa * 1.7, w, fa * 1.7);
@@ -1417,7 +1477,7 @@ var MONITOREO = [
 var COLORES = ['#2563eb','#db2777','#7c3aed','#ea580c','#0891b2','#65a30d','#b45309','#4f46e5','#be123c','#0d9488'];
 var COLOR_OTRAS = '#64748b';
 var BASES = {
-  calle: { url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attr:'© OpenStreetMap · © CARTO' },
+  calle: { url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attr:'© OpenStreetMap' },
   sat:   { url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attr:'© Esri' }
 };
 var MAPA_CENTRO = [13.6989, -89.1914], MAPA_ZOOM = 12, MAPA_IMG_ANCHO = 1200;
@@ -1703,6 +1763,7 @@ function todo(){ depurar(); renderOpts(); renderLista(); renderCorredores(); ren
 function iniciarMapa(){
   if (typeof L === 'undefined'){ $('evMapa').innerHTML = '<div class="hint" style="padding:16px">Mapa no disponible. Revisa conexión a internet. Puedes elegir semáforos con el buscador.</div>'; return; }
   MAPA = L.map('evMapa', { preferCanvas:true, boxZoom:false }).setView(MAPA_CENTRO, MAPA_ZOOM);
+  registrarBases(BASES);
   TILES = reintentarTiles(L.tileLayer(BASES.calle.url, { maxZoom:19, attribution:BASES.calle.attr, crossOrigin:'anonymous' })).addTo(MAPA);
   CAPA = L.layerGroup().addTo(MAPA);
   MAPA.on('zoomend', renderMapa);
@@ -1874,7 +1935,7 @@ function imagenMapa(){
       if (o[0] || o[1]){ g.strokeStyle = col; g.lineWidth = 2 * m; g.beginPath(); g.moveTo(x, y); g.lineTo(ix, iy); g.stroke(); g.fillStyle = col; g.beginPath(); g.arc(x, y, 3 * m, 0, Math.PI * 2); g.fill(); }
       dibujarIcono(g, ix, iy, sep.TAM * m * 0.8, hecho, col);
     });
-    var fa = Math.round(11 * k), at = BASES[BASE_MAPA].attr;
+    var fa = Math.round(11 * k), at = atribucionImg(BASES[BASE_MAPA].attr);
     g.font = fa + 'px sans-serif'; g.textBaseline = 'alphabetic'; var w = g.measureText(at).width + fa;
     g.fillStyle = 'rgba(255,255,255,.8)'; g.fillRect(W - w, H - fa * 1.7, w, fa * 1.7);
     g.fillStyle = '#111827'; g.fillText(at, W - w + fa / 2, H - fa * .5);
