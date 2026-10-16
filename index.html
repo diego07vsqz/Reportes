@@ -35,12 +35,10 @@
 :root[data-theme="light"]{color-scheme:light}
 *{box-sizing:border-box}
 html{color-scheme:light dark}
-body{margin:0}
 [hidden]{display:none!important}
-body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.4;padding-inline:16px;padding-block:16px 40px}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.4;padding-inline:16px;padding-block:16px 40px;--acc:var(--gold);--on-acc:var(--on-gold)}
 .wrap{max-width:1120px;margin:0 auto;display:grid;gap:16px}
-header.top{background:var(--navy);color:var(--on-navy);border-bottom:4px solid var(--gold);border-radius:16px;padding:16px;text-align:center}
-header.top{position:relative;padding-inline:16px}
+header.top{position:relative;background:var(--navy);color:var(--on-navy);border-bottom:4px solid var(--acc);border-radius:16px;padding:16px;text-align:center}
 .tema{position:absolute;top:10px;right:10px;background:transparent;color:var(--on-navy);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:6px 12px;font-size:13px}
 @media (max-width:640px){ header.top{padding-top:48px} }
 header.top p{margin:4px 0 0;font-size:14px;opacity:.85}
@@ -128,9 +126,8 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
 .bubble .li::before{content:"•";position:absolute;left:5px}
 #out{position:absolute;left:-9999px;top:0;width:10px;height:10px;opacity:0}
 .btn-copy{background:var(--ok);color:var(--on-ok);border-color:var(--ok);font-size:16px;padding:14px;border-radius:999px}
-.btn-reset{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;border:2px solid var(--danger);border-radius:12px;background:color-mix(in srgb, var(--danger) 8%, transparent);color:var(--danger);font-weight:800;font-size:15px}
+.btn-reset{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;border:2px solid var(--danger);border-radius:12px;background:color-mix(in srgb, var(--danger) 8%, transparent);color:var(--danger);font-weight:800;font-size:15px;flex-wrap:wrap;row-gap:2px}
 .btn-reset:hover{background:color-mix(in srgb, var(--danger) 16%, transparent);border-color:var(--danger)}
-.btn-reset{flex-wrap:wrap;row-gap:2px}
 .btn-reset small{flex-basis:100%;font-weight:600;font-size:12px;opacity:.85}
 .btn-ghost{background:transparent;color:var(--muted);border-color:transparent}
 .bar{display:none}
@@ -151,20 +148,16 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
 #mapWrap .leaflet-bottom.leaflet-right{max-width:45%}
 
 /* ══ PESTAÑAS ══ */
-body{--acc:var(--gold);--on-acc:var(--on-gold)}
 body[data-modo="evento"]{--acc:#8b5cf6;--on-acc:#ffffff}
-header.top{border-bottom-color:var(--acc)}
 .tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .tab{position:relative;display:grid;gap:4px;align-content:start;text-align:left;padding:14px 16px;border:2px solid var(--line);border-radius:14px;background:var(--card)}
 .tab:hover{border-color:var(--acc)}
-.tab[aria-selected="true"]{background:color-mix(in srgb, var(--acc) 10%, var(--card))}
 .tab[aria-selected="true"]::after{content:'En uso';position:absolute;top:10px;right:12px;padding:1px 9px;border-radius:999px;font-size:11px;font-weight:800;background:var(--acc);color:var(--on-acc)}
 .tab[aria-selected="false"]::after{content:'Toca para cambiar';position:absolute;top:10px;right:12px;font-size:11px;font-weight:600;color:var(--muted)}
-.tab b{padding-right:110px}
-.tab b{font-size:16px}
+.tab b{padding-right:110px;font-size:16px}
 .tab small{font-size:13px;font-weight:500;color:var(--muted);line-height:1.35}
 @media (max-width:640px){ .tab[aria-selected="false"]::after{content:''} .tab{padding-top:34px;min-width:0} .tab b{padding-right:0} .tab small{overflow-wrap:anywhere} }
-.tab[aria-selected="true"]{border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb, var(--acc) 30%, transparent)}
+.tab[aria-selected="true"]{background:color-mix(in srgb, var(--acc) 10%, var(--card));border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb, var(--acc) 30%, transparent)}
 .tab[aria-selected="true"] b{color:var(--fg)}
 #vistaEvento .num{background:var(--acc);color:var(--on-acc)}
 body[data-modo="evento"] .bar{display:none!important}
@@ -187,9 +180,8 @@ body[data-modo="evento"] .bar{display:none!important}
 #vistaEvento .dd-menu button:hover,#vistaEvento .dd-menu button[aria-selected="true"]{background:var(--sel)}
 #vistaEvento .opt{border:2px solid var(--field-line)}
 #vistaEvento div.f{display:grid;gap:5px;font-size:14px;font-weight:700;color:var(--fg);min-width:0}
-#vistaEvento .lbl-row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:22px}
+#vistaEvento .lbl-row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:22px;flex-wrap:nowrap;white-space:nowrap}
 #vistaEvento .row label.f, #vistaEvento .row div.f{grid-template-rows:24px auto;align-items:center;align-content:start}
-#vistaEvento .lbl-row{flex-wrap:nowrap;white-space:nowrap}
 @media (max-width:560px){ #vistaEvento .row > *{flex-basis:100%} }
 #vistaEvento .row select, #vistaEvento .row input{height:48px}
 #vistaEvento .hora-modo{padding:2px 9px;line-height:1.4;border-radius:999px;font-size:12px;font-weight:700;background:var(--sel);border-color:var(--sel-line);color:var(--fg)}
@@ -522,7 +514,7 @@ function $(id){ return document.getElementById(id); }
 // Texto sin acentos y en minúsculas, para buscar sin importar tildes.
 function norm(t){ return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(); }
 // Escapa HTML. Usar SIEMPRE antes de meter texto del usuario en innerHTML.
-function esc(t){ return String(t || '').replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function esc(t){ return String(t == null ? '' : t).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 // Número a dos dígitos (7 → "07").
 function pad(n){ return (n < 10 ? '0' : '') + n; }
 // Listado completo: semáforos agregados por el usuario + oficiales (BASE).
@@ -948,14 +940,8 @@ function copiarMapa(){
 }
 
 /* ══ DESCRIPCIÓN EN EL MAPA ══ */
-// Texto breve con lo elegido en Notas (sentido, motivo, duración). Vacío si no hay nada elegido.
-function descMapa(){
-  var p = [], s = SENTIDOS[S.sentido], m = MOTIVOS[S.motivo], d = DURACIONES[S.duracion];
-  if (s) p.push('Sentido: ' + s.b);
-  if (m) p.push('Motivo: ' + m.b);
-  if (d) p.push('Duración: ' + d.b);
-  return p.join(' · ');
-}
+// Texto breve del sentido elegido en Notas (ej. "Sentido: Sur → Norte"). Vacío si no hay sentido.
+function descMapa(){ var s = SENTIDOS[S.sentido]; return s ? 'Sentido: ' + s.b : ''; }
 // Actualiza la etiqueta sobre el mapa en pantalla.
 function pintarDescMapa(){ var e = $('descMapa'); if (e) e.textContent = descMapa(); }
 // La misma etiqueta en la imagen, abajo a la izquierda; achica la letra si no cabe junto al crédito del mapa.
@@ -1211,7 +1197,8 @@ reset();
 /* ═══════════════════════════════════════════════════════════════════════════════
    MÓDULO EVENTO (EV) — pestaña "Evento con corredores"
    Aislado en una función (IIFE): sus variables (S, MAPA, renderMapa…) NO chocan con las de
-   Cambio de tiempos. Usa de la página principal: todos(), porKey(), aviso(), BASE, S.custom.
+   Cambio de tiempos. Usa de la página principal: todos(), porKey(), aviso(), BASE, S.custom y las utilidades
+   $, norm, esc, pad, tieneCoord, fmtHora, limpiarWA, cargarTile (una sola copia).
    Estado propio guardado en localStorage 'ups_evento_actual' en cada cambio (guardar()).
    Flujo: elegir semáforos → agrupar en corredores (por calle en común) → marcar intervenidos
           → generar() arma el texto → copiar(). Imagen: imagenMapa() con íconos y leyenda.
@@ -1262,18 +1249,6 @@ function nuevoEstado(){
 }
 
 /* ══ UTILIDADES ══ */
-// Utilidades locales del módulo (mismas que en Cambio de tiempos): $, norm, esc, pad, tieneCoord, fmtHora.
-function $(id){ return document.getElementById(id); }
-// Texto sin acentos y en minúsculas.
-function norm(t){ return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(); }
-// Escapa HTML antes de innerHTML.
-function esc(t){ return String(t == null ? '' : t).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
-// Número a dos dígitos.
-function pad(n){ return (n < 10 ? '0' : '') + n; }
-// true si tiene latitud y longitud.
-function tieneCoord(s){ return s && typeof s.la === 'number' && typeof s.lo === 'number'; }
-// "09:05" → "9:05".
-function fmtHora(v){ var p = String(v || '').split(':'); return p.length >= 2 ? (parseInt(p[0],10) + ':' + p[1]) : ''; }
 // Hora actual "HH:MM".
 function horaAhora(){ var d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
 
@@ -1338,7 +1313,7 @@ function colorLibre(){ var usados = S.cor.map(function(c){ return c.color; }); f
 // Corredor "Otras intersecciones" (lo crea si no existe).
 function corOtras(){
   for (var i = 0; i < S.cor.length; i++){ if (S.cor[i].otras) return S.cor[i]; }
-  var c = { id:nuevoId(), nombre:'Otras intersecciones', color:COLOR_OTRAS, clave:'', estado:-1, otras:true };
+  var c = { id:nuevoId(), nombre:'Otras intersecciones', color:COLOR_OTRAS, clave:'', otras:true };
   S.cor.push(c); return c;
 }
 // Rehace todos los corredores por calle en común. Borra ediciones manuales.
@@ -1365,7 +1340,7 @@ function agruparTodo(){
       if (!cor){
         var vv = nombreDe[mejor], nom = Object.keys(vv).sort(function(a, b){ return vv[b] - vv[a]; })[0];
         var prev = viejos[mejor];
-        cor = { id:nuevoId(), nombre:abreviar(nom), color:prev ? prev.color : colorLibre(), clave:mejor, estado:prev ? prev.estado : -1 };
+        cor = { id:nuevoId(), nombre:abreviar(nom), color:prev ? prev.color : colorLibre(), clave:mejor };
         S.cor.push(cor);
       }
     } else cor = corOtras();
@@ -1410,7 +1385,7 @@ function agruparOtras(){   // en "Otras", los que comparten calle forman su prop
     Object.keys(cuenta).forEach(function(c){ if (cuenta[c] >= 2 && (!mejor || cuenta[c] > cuenta[mejor])) mejor = c; });
     if (!mejor) break;
     var vv = nombres[mejor], nom = Object.keys(vv).sort(function(a, b){ return vv[b] - vv[a]; })[0];
-    var cor = { id:nuevoId(), nombre:abreviar(nom), color:colorLibre(), clave:mejor, estado:-1 };
+    var cor = { id:nuevoId(), nombre:abreviar(nom), color:colorLibre(), clave:mejor };
     S.cor.splice(S.cor.indexOf(o), 0, cor);
     ks.forEach(function(k){ var s = porKey(k); if (s && clavesDe(s).indexOf(mejor) >= 0) S.asig[k] = cor.id; });
   }
@@ -1481,8 +1456,6 @@ function renderCorredores(){
   $('evBtnPlegar').hidden = S.cor.length < 2;
   $('evBtnPlegar').textContent = S.cor.some(estaAbierto) ? 'Cerrar todos' : 'Abrir todos';
 }
-// Quita espacios sobrantes y * _ ~ del texto del usuario, para que las negritas de WhatsApp no se rompan.
-function limpiarWA(t){ return String(t || '').replace(/[*_~]/g, ' ').replace(/\s+/g, ' ').trim(); }   // sin espacios sobrantes ni símbolos de formato de WhatsApp
 // Barra de avance en texto: ▰▰▱▱▱▱▱▱▱▱ 20 %.
 function barraTexto(n, tot){ var b = tot ? Math.round(n * 10 / tot) : 0; return Array(b + 1).join('▰') + Array(10 - b + 1).join('▱') + ' ' + (tot ? Math.round(n * 100 / tot) : 0) + ' %'; }
 // Arma el texto del evento y la vista previa.
@@ -1640,7 +1613,7 @@ function modoArea(on){
 function areaInicio(e){
   var shift = e.originalEvent && e.originalEvent.shiftKey;
   if (!AREA.activo && !shift) return;
-  if (shift && !AREA.activo){ AREA.porShift = true; modoArea(true); }
+  if (shift && !AREA.activo) modoArea(true);
   AREA.inicio = e.latlng;
   AREA.rect = L.rectangle([e.latlng, e.latlng], { color:'#f59e0b', weight:2, dashArray:'6 4', fillOpacity:.12, interactive:false }).addTo(MAPA);
 }
@@ -1653,7 +1626,7 @@ function areaFin(e){
   MAPA.removeLayer(AREA.rect); AREA.rect = null; AREA.inicio = null; AREA.ultimo = null;
   var dentro = todos().filter(function(s){ return tieneCoord(s) && b.contains([s.la, s.lo]); }).map(function(s){ return s.k; });
   var n = agregarSel(dentro);
-  modoArea(false); AREA.porShift = false;
+  modoArea(false);
   todo();
   aviso(n ? '✓ ' + n + ' semáforos agregados al evento.' : (dentro.length ? 'Esos semáforos ya estaban en el evento.' : 'No hay semáforos dentro del recuadro.'));
 }
@@ -1668,8 +1641,6 @@ function cambiarBase(){
 }
 
 /* ══ IMAGEN DEL MAPA (leyenda de corredores en franja inferior) ══ */
-// Descarga una pieza del mapa para la imagen.
-function cargarTile(url){ return cargarTileSeguro(url); }   // con respaldo y reintento (definido en Cambio de tiempos)
 // Imagen PNG de 1200 px con íconos, líneas guía y leyenda de corredores.
 function imagenMapa(){
   if (!MAPA) return Promise.reject(new Error('sin mapa'));
@@ -1929,7 +1900,7 @@ function eventos(){
   $('evBtnReagrupar').addEventListener('click', function(){ agruparTodo(); todo(); aviso('✓ Corredores reagrupados por calle.'); });
   $('evBtnNuevoCor').addEventListener('click', function(){
     var ncId = nuevoId(); ABIERTO[ncId] = true;
-    S.cor.splice(S.cor.filter(function(c){ return !c.otras; }).length, 0, { id:ncId, nombre:'Corredor ' + (S.cor.length + 1), color:colorLibre(), clave:'', estado:-1, manualVacio:true });
+    S.cor.splice(S.cor.filter(function(c){ return !c.otras; }).length, 0, { id:ncId, nombre:'Corredor ' + (S.cor.length + 1), color:colorLibre(), clave:'', manualVacio:true });
     S.manual = true; todo();
     var ins = $('evCorredores').querySelectorAll('[data-nombre]'); var ult = ins[S.cor.filter(function(c){ return !c.otras; }).length - 1]; if (ult){ ult.focus(); ult.select(); }
   });
@@ -1958,7 +1929,7 @@ function eventos(){
     else if (t.hasAttribute('data-inter')){ S.inter[t.getAttribute('data-inter')] = t.checked; todo(); }
     else if (t.hasAttribute('data-mover')){
       var k = t.getAttribute('data-mover'), dest = t.value;
-      if (dest === '__nuevo'){ var nc = { id:nuevoId(), nombre:'Corredor ' + (S.cor.length + 1), color:colorLibre(), clave:'', estado:-1 }; ABIERTO[nc.id] = true; S.cor.splice(S.cor.filter(function(c){ return !c.otras; }).length, 0, nc); dest = nc.id; }
+      if (dest === '__nuevo'){ var nc = { id:nuevoId(), nombre:'Corredor ' + (S.cor.length + 1), color:colorLibre(), clave:'' }; ABIERTO[nc.id] = true; S.cor.splice(S.cor.filter(function(c){ return !c.otras; }).length, 0, nc); dest = nc.id; }
       S.asig[k] = dest; S.manual = true; limpiarVacios(); todo();
     }
   });
