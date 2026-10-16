@@ -510,7 +510,7 @@ var LS_KEY = 'ups_semaforos_nuevos';
 var LS_TEMA = 'ups_tema';
 var MAX_LISTA = 60;
 var BASES = {                                                        // mapas base (gratis, sin clave)
-  calle: { url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attr:'© OpenStreetMap' },
+  calle: { url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attr:'© OpenStreetMap · © CARTO' },
   sat:   { url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attr:'© Esri' }
 };
 var MAPA_CENTRO = [13.6989, -89.1914];                              // San Salvador
@@ -694,7 +694,7 @@ function tieneCoord(s){ return s && typeof s.la === 'number' && typeof s.lo === 
 function iniciarMapa(){
   if (typeof L === 'undefined'){ $('mapa').innerHTML = '<div class="empty">Mapa no disponible. Revisa conexión a internet.</div>'; return; }
   MAPA = L.map('mapa', { preferCanvas:true }).setView(MAPA_CENTRO, MAPA_ZOOM);
-  TILES = L.tileLayer(BASES[S.base].url, { maxZoom:19, attribution:BASES[S.base].attr, crossOrigin:'anonymous' }).addTo(MAPA);
+  TILES = reintentarTiles(L.tileLayer(BASES[S.base].url, { maxZoom:19, attribution:BASES[S.base].attr, crossOrigin:'anonymous' })).addTo(MAPA);
   CAPA_FL = L.layerGroup().addTo(MAPA);   // flechas debajo de los íconos
   CAPA = L.layerGroup().addTo(MAPA);
   MAPA.on('zoomend', function(){ pintarFlechas(true); });
@@ -814,13 +814,34 @@ function abrirGoogle(la, lo){
   if (w){ try { w.opener = null; } catch(e){} }
   else aviso('El navegador bloqueó la ventana. Permite ventanas emergentes para esta página.');
 }
-// Descarga una pieza del mapa para la imagen. Si falla devuelve null (queda gris).
-function cargarTile(url){
-  return new Promise(function(res){
-    var im = new Image(); im.crossOrigin = 'anonymous';
-    im.onload = function(){ res(im); }; im.onerror = function(){ res(null); };
-    im.src = url;
+// Descarga una pieza del mapa para la imagen. Si falla prueba el respaldo y reintenta; si todo falla devuelve null (queda gris).
+function cargarTile(url){ return cargarTileSeguro(url); }
+// Servidor de respaldo para un cuadro de OpenStreetMap (CARTO Voyager, mismos datos). null si no hay respaldo.
+function respaldoTile(url){ return /^https:\/\/tile\.openstreetmap\.org\//.test(url) ? url.replace('https://tile.openstreetmap.org/', 'https://basemaps.cartocdn.com/rastertiles/voyager/') : null; }
+// Carga un cuadro probando: original → respaldo → original otra vez (por si fue un corte momentáneo).
+function cargarTileSeguro(url){
+  var intentos = [url, respaldoTile(url), url + (url.indexOf('?') < 0 ? '?' : '&') + 'r=' + Date.now()].filter(Boolean);
+  function probar(i){
+    if (i >= intentos.length) return Promise.resolve(null);
+    return new Promise(function(res){
+      var im = new Image(); im.crossOrigin = 'anonymous';
+      im.onload = function(){ res(im); }; im.onerror = function(){ res(null); };
+      im.src = intentos[i];
+    }).then(function(im){ return im || probar(i + 1); });
+  }
+  return probar(0);
+}
+// Mapa en pantalla: si un cuadro falla, lo pide al respaldo; si también falla, reintenta una vez más.
+function reintentarTiles(capa){
+  capa.on('tileerror', function(e){
+    var t = e.tile, n = +(t.getAttribute('data-intento') || 0); if (n >= 2) return;
+    t.setAttribute('data-intento', n + 1);
+    var base = String(t.src).split('?')[0], alt = n === 0 ? respaldoTile(base) : null;
+    if (n === 1 && /cartocdn/.test(base)) base = base.replace('https://basemaps.cartocdn.com/rastertiles/voyager/', 'https://tile.openstreetmap.org/');
+    setTimeout(function(){ t.src = alt || (base + '?r=' + Date.now()); }, alt ? 0 : 1200);
   });
+  capa.on('tileloadstart', function(e){ if (!e.tile.getAttribute('data-intento')) e.tile.setAttribute('data-intento', 0); });
+  return capa;
 }
 var FIJA = null;
 // Encuadre de la imagen: vista fijada o, si no hay, centrado en los elegidos. No depende de cómo quedó el mapa.
@@ -1350,7 +1371,7 @@ var MONITOREO = [
 var COLORES = ['#2563eb','#db2777','#7c3aed','#ea580c','#0891b2','#65a30d','#b45309','#4f46e5','#be123c','#0d9488'];
 var COLOR_OTRAS = '#64748b';
 var BASES = {
-  calle: { url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attr:'© OpenStreetMap' },
+  calle: { url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attr:'© OpenStreetMap · © CARTO' },
   sat:   { url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attr:'© Esri' }
 };
 var MAPA_CENTRO = [13.6989, -89.1914], MAPA_ZOOM = 12, MAPA_IMG_ANCHO = 1200;
@@ -1636,7 +1657,7 @@ function todo(){ depurar(); renderOpts(); renderLista(); renderCorredores(); ren
 function iniciarMapa(){
   if (typeof L === 'undefined'){ $('evMapa').innerHTML = '<div class="hint" style="padding:16px">Mapa no disponible. Revisa conexión a internet. Puedes elegir semáforos con el buscador.</div>'; return; }
   MAPA = L.map('evMapa', { preferCanvas:true, boxZoom:false }).setView(MAPA_CENTRO, MAPA_ZOOM);
-  TILES = L.tileLayer(BASES.calle.url, { maxZoom:19, attribution:BASES.calle.attr, crossOrigin:'anonymous' }).addTo(MAPA);
+  TILES = reintentarTiles(L.tileLayer(BASES.calle.url, { maxZoom:19, attribution:BASES.calle.attr, crossOrigin:'anonymous' })).addTo(MAPA);
   CAPA = L.layerGroup().addTo(MAPA);
   MAPA.on('zoomend', renderMapa);
   MAPA.on('mousedown', areaInicio); MAPA.on('mousemove', areaMover); MAPA.on('mouseup', areaFin);
@@ -1774,7 +1795,7 @@ function cambiarBase(){
 
 /* ══ IMAGEN DEL MAPA (leyenda de corredores en franja inferior) ══ */
 // Descarga una pieza del mapa para la imagen.
-function cargarTile(url){ return new Promise(function(res){ var im = new Image(); im.crossOrigin = 'anonymous'; im.onload = function(){ res(im); }; im.onerror = function(){ res(null); }; im.src = url; }); }
+function cargarTile(url){ return cargarTileSeguro(url); }   // con respaldo y reintento (definido en Cambio de tiempos)
 // Imagen PNG de 1200 px con íconos, líneas guía y leyenda de corredores.
 function imagenMapa(){
   if (!MAPA) return Promise.reject(new Error('sin mapa'));
