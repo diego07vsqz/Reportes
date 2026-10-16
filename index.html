@@ -549,6 +549,7 @@ var RUTEO = [                                      // forma de la calle entre se
 var FL_COLOR = '#dc2626';                          // color de las flechas (rojo: se distingue del ámbar de los semáforos)
 var FL_TAM = 15;                                   // tamaño de la flecha en pantalla (px)
 var FL_LIBRE = 16;                                 // espacio sin flechas alrededor de cada semáforo (px)
+var FL_SOLO = 250;                                 // con un solo semáforo: metros de calle con flechas antes y después
 var FL_DESVIO = 2.2;                               // si la ruta mide más de 2,2 veces la distancia directa, ese tramo va en recta
 
 /* ══ CATÁLOGO ══ */
@@ -962,6 +963,42 @@ function pedirRuta(a, b){
   }
   return intento(0).then(function(l){ RUTAS[k] = l; return l; });
 }
+// Punto a d metros de s en la dirección del ángulo a (0 = Norte, 90 = Oriente).
+function desplazar(s, a, d){
+  var r = a * Math.PI / 180;
+  return { la:s.la + d * Math.cos(r) / 111320, lo:s.lo + d * Math.sin(r) / (111320 * Math.cos(s.la * Math.PI / 180)) };
+}
+// Un solo semáforo: forma de la calle que lo cruza en el sentido elegido (rumbo ±45°), recortada a FL_SOLO m antes y después.
+function pedirRutaSolo(s, a){
+  var k = 'solo:' + s.la.toFixed(6) + ',' + s.lo.toFixed(6) + ':' + a;
+  if (RUTAS[k] !== undefined) return Promise.resolve(RUTAS[k]);
+  if (typeof L === 'undefined' || typeof fetch === 'undefined') return Promise.resolve(null);
+  var A = desplazar(s, a + 180, FL_SOLO * 2), B = desplazar(s, a, FL_SOLO * 2);
+  var q = A.lo + ',' + A.la + ';' + s.lo + ',' + s.la + ';' + B.lo + ',' + B.la + '?overview=full&geometries=geojson' +
+          '&bearings=;' + (((a % 360) + 360) % 360) + ',45;&radiuses=unlimited;60;unlimited';
+  function intento(i){
+    if (i >= RUTEO.length) return Promise.resolve(null);
+    var ctl = typeof AbortController !== 'undefined' ? new AbortController() : null, t = setTimeout(function(){ if (ctl) ctl.abort(); }, 6000);
+    return fetch(RUTEO[i] + q, ctl ? { signal:ctl.signal } : {}).then(function(r){ clearTimeout(t); return r.ok ? r.json() : null; })
+      .then(function(j){
+        var g = j && j.routes && j.routes[0] && j.routes[0].geometry && j.routes[0].geometry.coordinates;
+        if (!g || g.length < 2) return intento(i + 1);
+        return recortarCerca(g.map(function(c){ return [c[1], c[0]]; }), s, FL_SOLO);
+      }).catch(function(){ clearTimeout(t); return intento(i + 1); });
+  }
+  return intento(0).then(function(l){ RUTAS[k] = l; return l; });
+}
+// Parte continua de la línea que queda a menos de r metros del semáforo (la que pasa más cerca de él). null si no pasa por ahí.
+function recortarCerca(linea, s, r){
+  var c = L.latLng(s.la, s.lo), d = linea.map(function(p){ return c.distanceTo(p); });
+  var m = 0; d.forEach(function(v, i){ if (v < d[m]) m = i; });
+  if (d[m] > 60) return null;
+  var i0 = m, i1 = m;
+  while (i0 > 0 && d[i0 - 1] <= r) i0--;
+  while (i1 < linea.length - 1 && d[i1 + 1] <= r) i1++;
+  var parte = linea.slice(i0, i1 + 1);
+  return parte.length >= 2 ? parte : null;
+}
 // Semáforos elegidos con ubicación, en el orden del sentido (ej. Norte → Sur: del más al norte al más al sur).
 function ordenSentido(){
   var sen = SENTIDOS[S.sentido], lista = S.sel.map(porKey).filter(tieneCoord);
@@ -974,6 +1011,14 @@ function flechasActivas(){ return !!(S.flechas && SENTIDOS[S.sentido]); }
 // Tramos entre semáforos seguidos, con su línea: real (calle), recta o ninguna (oculto / apagado).
 function tramosFl(){
   var o = ordenSentido(), pares = [];
+  if (o.length === 1 && SENTIDOS[S.sentido]){   // un solo semáforo: flechas de entrada y salida por su calle
+    var s1 = o[0], a = SENTIDOS[S.sentido].a, k1 = 'solo:' + claveTramo(s1, s1), modo1 = S.ajuste[k1] || S.forma;
+    var t1 = { k:k1, a:s1, b:s1, solo:true, modo:modo1, ajustado:!!S.ajuste[k1], linea:null, real:false, fallo:false };
+    var rectaSolo = [desplazar(s1, a + 180, FL_SOLO), desplazar(s1, a, FL_SOLO)].map(function(p){ return [p.la, p.lo]; });
+    if (!flechasActivas() || modo1 === 'nada') return Promise.resolve([t1]);
+    if (modo1 === 'recta'){ t1.linea = rectaSolo; return Promise.resolve([t1]); }
+    return pedirRutaSolo(s1, a).then(function(l){ t1.linea = l || rectaSolo; t1.real = !!l; t1.fallo = !l; return [t1]; });
+  }
   for (var i = 0; i < o.length - 1; i++) pares.push([o[i], o[i + 1]]);
   function recta(p){ return [[p[0].la, p[0].lo], [p[1].la, p[1].lo]]; }
   return Promise.all(pares.map(function(p){
@@ -1051,13 +1096,14 @@ function pintarEstadoFl(t, mal){ $('estadoFl').textContent = t; $('estadoFl').cl
 function pintarPanelFl(lista){
   if (!flechasActivas()) return;
   if (!MAPA){ pintarEstadoFl('⚠️ Mapa no disponible: sin flechas.', true); $('tramosFl').innerHTML = ''; return; }
-  if (!lista.length){ pintarEstadoFl('Elige al menos 2 semáforos con ubicación para ver flechas.', false); $('ajustesTit').textContent = 'Ajustar tramos'; $('tramosFl').innerHTML = ''; return; }
+  if (!lista.length){ pintarEstadoFl('Elige un semáforo con ubicación para ver flechas.', false); $('ajustesTit').textContent = 'Ajustar tramos'; $('tramosFl').innerHTML = ''; return; }
   var calle = lista.filter(function(t){ return t.modo === 'calle'; }), reales = calle.filter(function(t){ return t.real; }).length;
   var fallas = calle.length - reales, aj = lista.filter(function(t){ return t.ajustado; }).length;
   var txtAj = aj ? ' · ' + aj + ' ajustado' + (aj > 1 ? 's' : '') + ' a mano' : '';
-  if (fallas && !reales) pintarEstadoFl('⚠️ No se pudo consultar la forma de la calle (sin internet o servicio caído). Esos tramos van en recta.', true);
+  if (fallas && !reales && !lista[0].solo) pintarEstadoFl('⚠️ No se pudo consultar la forma de la calle (sin internet o servicio caído). Esos tramos van en recta.', true);
+  else if (fallas && lista[0].solo) pintarEstadoFl('⚠️ No se encontró la calle del semáforo en ese sentido: flechas en recta. Puedes cambiarlo en "Ajustar tramos".', true);
   else if (fallas) pintarEstadoFl('⚠️ ' + fallas + ' tramo' + (fallas > 1 ? 's' : '') + ' sin forma de calle: van en recta. Revisa en "Ajustar tramos".', true);
-  else if (calle.length) pintarEstadoFl('✓ ' + reales + ' de ' + lista.length + ' tramos siguen la calle' + txtAj + '.', false);
+  else if (calle.length) pintarEstadoFl(lista[0].solo ? '✓ Las flechas siguen la calle del semáforo' + txtAj + '.' : '✓ ' + reales + ' de ' + lista.length + ' tramos siguen la calle' + txtAj + '.', false);
   else pintarEstadoFl('Flechas en línea recta' + txtAj + '.', false);
   $('ajustesTit').textContent = 'Ajustar tramos (' + lista.length + ')' + (fallas ? ' · ⚠️ ' + fallas : '');
   if (fallas) $('ajustesFl').open = true;
@@ -1065,7 +1111,7 @@ function pintarPanelFl(lista){
   $('tramosFl').innerHTML = lista.map(function(t){
     var info = t.modo === 'nada' ? 'Sin flechas' : (t.modo === 'recta' ? 'En recta' : (t.real ? '✓ Sigue la calle' : '⚠️ Sin forma de calle: recta'));
     function b(m, txt){ return '<button type="button" data-tramo="' + t.k + '" data-m="' + m + '" aria-pressed="' + (t.modo === m) + '">' + txt + '</button>'; }
-    return '<div class="tramo-fl"><span class="par">' + num(t.a) + ' → ' + num(t.b) + '</span><span class="info' + (t.fallo && t.modo === 'calle' ? ' mal' : '') + '">' + info + '</span>' +
+    return '<div class="tramo-fl"><span class="par">' + (t.solo ? num(t.a) + ' · entrada y salida' : num(t.a) + ' → ' + num(t.b)) + '</span><span class="info' + (t.fallo && t.modo === 'calle' ? ' mal' : '') + '">' + info + '</span>' +
       '<span class="seg-fl">' + b('calle', 'Calle') + b('recta', 'Recta') + b('nada', 'Ocultar') + '</span></div>';
   }).join('') + (aj ? '<button type="button" class="btn-mini-fl" data-restaurar="1">↺ Quitar ajustes</button>' : '');
 }
