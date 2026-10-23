@@ -1972,11 +1972,11 @@ function campos(){
 }
 // Botón "Empezar otro evento", con Deshacer.
 function nuevoEvento(){
-  var copia = JSON.stringify(S);
+  var copia = JSON.stringify(S), fijaAntes = FIJA;
   S = nuevoEstado(); S.hora = horaAhora(); FIJA = null; pintarFijar(); PLAN_ACTIVO = ''; renderPlanes();
   $('evBuscar').value = '';   // el buscador no guarda texto del evento anterior
-  campos(); todo(); if (MAPA) MAPA.setView(MAPA_CENTRO, MAPA_ZOOM);
-  aviso('Evento borrado.', { txt:'Deshacer', fn:function(){ S = JSON.parse(copia); campos(); todo(); encuadrar(); aviso('✓ Evento recuperado.'); } });
+  campos(); todo(); if (MAPA) MAPA.setView(MAPA_CENTRO, MAPA_ZOOM, { animate:false });   // sin animación: no pisa una carga inmediata
+  aviso('Evento borrado.', { txt:'Deshacer', fn:function(){ S = JSON.parse(copia); FIJA = fijaAntes; pintarFijar(); campos(); todo(); if (FIJA && MAPA) MAPA.setView(FIJA.centro, FIJA.z, { animate:false }); else encuadrar(); aviso('✓ Evento recuperado.'); } });
 }
 
 /* ══ PLANES GUARDADOS (semáforos + corredores reutilizables) ══ */
@@ -2007,13 +2007,16 @@ function formPlan(abrir){
   $('evPlanForm').hidden = !abrir;
   if (abrir){ $('evPlanNombre').value = PLAN_ACTIVO || S.zona.trim() || S.nombre.trim(); $('evPlanNombre').focus(); $('evPlanNombre').select(); }
 }
-// Guarda semáforos + corredores con un nombre. Mismo nombre = lo reemplaza.
+// Guarda semáforos, corredores y datos del evento (título, zona, tipo, encabezado, mensaje final, nota, opciones, vista fijada). Mismo nombre = lo reemplaza.
 function guardarPlan(){
   if (!S.sel.length){ aviso('Primero elige semáforos para el plan.'); return; }
   var nom = $('evPlanNombre').value.trim() || S.zona.trim() || S.nombre.trim() || ('Plan ' + new Date().toLocaleDateString('es-SV'));
   var p = leerPlanes(), i = -1;
   p.forEach(function(x, j){ if (norm(x.nombre) === norm(nom)) i = j; });
-  var plan = { nombre:nom, zona:S.zona, tipo:S.tipo, sel:S.sel.slice(), cor:JSON.parse(JSON.stringify(S.cor)), asig:JSON.parse(JSON.stringify(S.asig)), fecha:Date.now(), uso:Date.now() };
+  var plan = { nombre:nom, sel:S.sel.slice(), cor:JSON.parse(JSON.stringify(S.cor)), asig:JSON.parse(JSON.stringify(S.asig)), fecha:Date.now(), uso:Date.now(),
+    // datos del evento: título, zona, tipo, encabezado, mensaje final, nota, opciones del texto y vista fijada (la fase y la hora no: cada evento empieza en Ingreso y con la hora actual)
+    evento:{ nombre:S.nombre, zona:S.zona, tipo:S.tipo, enc:S.enc, monit:S.monit, nota:S.nota, barra:S.barra, detalle:S.detalle },
+    vista:FIJA ? { la:FIJA.centro.lat, lo:FIJA.centro.lng, z:FIJA.z } : null, zona:S.zona, tipo:S.tipo };
   var viejo = i >= 0 ? p[i] : null;
   if (i >= 0) p[i] = plan; else p.push(plan);
   if (!escribirPlanes(p)){ aviso('No se pudo guardar el plan en este navegador.'); return; }
@@ -2021,7 +2024,7 @@ function guardarPlan(){
   if (viejo) aviso('✓ Plan "' + nom + '" reemplazado.', { txt:'Deshacer', fn:function(){ var q = leerPlanes(); q.forEach(function(x, j){ if (norm(x.nombre) === norm(viejo.nombre)) q[j] = viejo; }); escribirPlanes(q); renderPlanes(); aviso('✓ Plan anterior recuperado.'); } });
   else aviso('✓ Plan "' + nom + '" guardado.');
 }
-// Carga el plan número i: corredores y semáforos, intervenidas en cero. Con Deshacer.
+// Carga el plan número i: semáforos, corredores y datos del evento; intervenidas en cero, fase Ingreso. Con Deshacer.
 function cargarPlan(i){
   var p = leerPlanes(), x = p[i]; if (!x) return;
   x.uso = Date.now(); escribirPlanes(p); VER_TODOS = false; $('evPlanBuscar').value = '';
@@ -2031,11 +2034,21 @@ function cargarPlan(i){
   S.cor = (Array.isArray(x.cor) ? x.cor : []).filter(function(c){ return esObjeto(c) && typeof c.id === 'string'; }).map(function(c){ var o = JSON.parse(JSON.stringify(c)); delete o.manualVacio; if (typeof o.nombre !== 'string') o.nombre = 'Corredor'; if (typeof o.color !== 'string') o.color = COLOR_OTRAS; return o; });
   sel.forEach(function(k){ var id = esObjeto(x.asig) && x.asig[k]; S.asig[k] = corPorId(id) ? id : corOtras().id; });
   limpiarVacios();
-  if (x.zona && !S.zona.trim()) S.zona = x.zona;
-  if (typeof x.tipo === 'number' && TIPOS[x.tipo]) S.tipo = x.tipo;
-  ABIERTO = {}; FIJA = null; pintarFijar(); PLAN_ACTIVO = x.nombre; renderPlanes(); $('evBuscar').value = '';
-  campos(); todo(); encuadrar();
-  aviso('✓ Plan "' + x.nombre + '" cargado' + (faltan ? ' (' + faltan + (faltan === 1 ? ' semáforo ya no existe)' : ' semáforos ya no existen)') : '') + '.', { txt:'Deshacer', fn:function(){ S = JSON.parse(copia); ABIERTO = abiertoAntes; FIJA = fijaAntes; pintarFijar(); PLAN_ACTIVO = ''; renderPlanes(); campos(); todo(); encuadrar(); } });
+  var ev = esObjeto(x.evento) ? x.evento : { zona:x.zona, tipo:x.tipo };   // planes viejos: solo zona y tipo
+  function indice(v, lista){ return (typeof v === 'number' && v >= 0 && v < lista.length && v % 1 === 0) ? v : null; }
+  if (typeof ev.nombre === 'string') S.nombre = ev.nombre;
+  if (typeof ev.zona === 'string') S.zona = ev.zona;
+  if (indice(ev.tipo, TIPOS) !== null) S.tipo = ev.tipo;
+  if (indice(ev.enc, ENCABEZADOS) !== null) S.enc = ev.enc;
+  if (indice(ev.monit, MONITOREO) !== null) S.monit = ev.monit;
+  if (typeof ev.nota === 'string') S.nota = ev.nota;
+  if (typeof ev.barra === 'boolean') S.barra = ev.barra;
+  if (typeof ev.detalle === 'boolean') S.detalle = ev.detalle;
+  if (esObjeto(x.evento)){ S.fase = 0; if (S.horaAuto) S.hora = horaAhora(); }   // evento nuevo: empieza en Ingreso
+  var vf = esObjeto(x.vista) && typeof x.vista.la === 'number' && typeof x.vista.lo === 'number' && typeof x.vista.z === 'number' ? x.vista : null;
+  ABIERTO = {}; FIJA = vf && typeof L !== 'undefined' ? { centro:L.latLng(vf.la, vf.lo), z:vf.z } : null; pintarFijar(); PLAN_ACTIVO = x.nombre; renderPlanes(); $('evBuscar').value = '';
+  campos(); todo(); if (MAPA) MAPA.stop(); if (FIJA && MAPA) MAPA.setView(FIJA.centro, FIJA.z, { animate:false }); else encuadrar();
+  aviso('✓ Plan "' + x.nombre + '" cargado' + (faltan ? ' (' + faltan + (faltan === 1 ? ' semáforo ya no existe)' : ' semáforos ya no existen)') : '') + '.', { txt:'Deshacer', fn:function(){ S = JSON.parse(copia); ABIERTO = abiertoAntes; FIJA = fijaAntes; pintarFijar(); PLAN_ACTIVO = ''; renderPlanes(); campos(); todo(); if (FIJA && MAPA) MAPA.setView(FIJA.centro, FIJA.z, { animate:false }); else encuadrar(); } });
 }
 // Borra el plan número i. Con Deshacer.
 function borrarPlan(i){
