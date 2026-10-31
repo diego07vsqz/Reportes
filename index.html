@@ -2317,10 +2317,10 @@ function generar(){
   var fecha = fmtFecha($('faFecha').value), hora = fmtHora($('faHora').value);
   lin.push('🚦 *PLANEAMIENTO SEMAFÓRICO* 🚦');
   lin.push('⚠️ *REPORTE DE FALLA*');
-  lin.push('*Fecha:* ' + fecha + (fecha && hora ? ' · ' : '') + hora);
-  lin.push('*Semáforo:* ' + (s && s.id && s.id !== 'NUEVO' ? s.id : (s ? 'sin código' : '')));
-  lin.push('*Ubicación:* ' + (s ? limpiarWA(s.d) + (s.c ? ', ' + municipio(s.c) : '') : ''));
-  if (tieneCoord(s)) lin.push('📍 https://maps.google.com/?q=' + s.la + ',' + s.lo);
+  lin.push('📅 *Fecha:* ' + fecha + (fecha && hora ? ' · ' : '') + hora);
+  lin.push('🚥 *Semáforo:* ' + (s && s.id && s.id !== 'NUEVO' ? s.id : (s ? 'sin código' : '')));
+  lin.push('📍 *Ubicación:* ' + (s ? limpiarWA(s.d) + (s.c ? ', ' + municipio(s.c) : '') : ''));
+  if (tieneCoord(s)) lin.push('🔗 https://maps.google.com/?q=' + s.la + ',' + s.lo);
   if (S.falla >= 0) lin.push(FALLAS[S.falla].e + ' *' + f.toUpperCase() + '*');
   else lin.push('*Falla:* ');
   var seg = [];
