@@ -202,13 +202,13 @@ body[data-modo="evento"] .bar,body[data-modo="fallas"] .bar{display:none!importa
 #vistaEvento .dd-menu button{border:0;text-align:left;padding:9px 10px;border-radius:8px;background:transparent;font-weight:600}
 #vistaEvento .dd-menu button:hover,#vistaEvento .dd-menu button[aria-selected="true"]{background:var(--sel)}
 #vistaEvento .opt{border:2px solid var(--field-line)}
-#vistaEvento div.f{display:grid;gap:5px;font-size:14px;font-weight:700;color:var(--fg);min-width:0}
-#vistaEvento .lbl-row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:22px;flex-wrap:nowrap;white-space:nowrap}
-#vistaEvento .row label.f, #vistaEvento .row div.f{grid-template-rows:24px auto;align-items:center;align-content:start}
-@media (max-width:560px){ #vistaEvento .row > *{flex-basis:100%} }
-#vistaEvento .row select, #vistaEvento .row input{height:48px}
-#vistaEvento .hora-modo{padding:2px 9px;line-height:1.4;border-radius:999px;font-size:12px;font-weight:700;background:var(--sel);border-color:var(--sel-line);color:var(--fg)}
-#vistaEvento .hora-modo.manual{background:transparent;border-style:dashed;color:var(--muted)}
+#vistaEvento div.f,#vistaFallas div.f{display:grid;gap:5px;font-size:14px;font-weight:700;color:var(--fg);min-width:0}
+#vistaEvento .lbl-row,#vistaFallas .lbl-row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:22px;flex-wrap:nowrap;white-space:nowrap}
+#vistaEvento .row label.f, #vistaEvento .row div.f, #vistaFallas .row label.f, #vistaFallas .row div.f{grid-template-rows:24px auto;align-items:center;align-content:start}
+@media (max-width:560px){ #vistaEvento .row > *, #vistaFallas .row > *{flex-basis:100%} }
+#vistaEvento .row select, #vistaEvento .row input, #vistaFallas .row input{height:48px}
+#vistaEvento .hora-modo,#vistaFallas .hora-modo{padding:2px 9px;line-height:1.4;border-radius:999px;font-size:12px;font-weight:700;background:var(--sel);border-color:var(--sel-line);color:var(--fg)}
+#vistaEvento .hora-modo.manual,#vistaFallas .hora-modo.manual{background:transparent;border-style:dashed;color:var(--muted)}
 #vistaEvento .evpin{background:none;border:0}
 #vistaEvento .evpin svg{display:block;overflow:visible;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
 #vistaEvento .maptools{position:absolute;top:10px;right:10px;z-index:500;display:flex;gap:6px}
@@ -486,10 +486,10 @@ body[data-modo="fallas"]{--acc:#ea580c;--on-acc:#ffffff}
     <div class="form">
       <section class="card" id="faCardCuando">
         <h2><span class="num">1</span>¿Cuándo se detectó?</h2>
-        <p class="hint">Ya vienen con la fecha y hora actual.</p>
+        <p class="hint">Siguen al reloj solas. Si escribes otra fecha u hora, queda fija (Manual).</p>
         <div class="row">
-          <label class="f">Fecha<input type="date" id="faFecha"></label>
-          <label class="f">Hora de detección<input type="time" id="faHora"></label>
+          <div class="f"><span class="lbl-row"><label for="faFecha">Fecha</label></span><input type="date" id="faFecha"></div>
+          <div class="f"><span class="lbl-row"><label for="faHora">Hora de detección</label><button type="button" class="hora-modo" id="faHoraModo"></button></span><input type="time" id="faHora"></div>
         </div>
       </section>
 
@@ -2266,7 +2266,7 @@ var MAPA_CENTRO = [13.6989, -89.1914], MAPA_ZOOM = 12, MAPA_IMG_ANCHO = 1200, ZO
 /* ══ ESTADO ══ */
 var S = nuevoEstado();
 var MAPA = null, CAPA = null, TILES = null, BASE_MAPA = 'calle', FIJA = null;
-function nuevoEstado(){ return { k:null, falla:-1, aviso:false }; }
+function nuevoEstado(){ return { k:null, falla:-1, aviso:false, horaAuto:true }; }
 
 /* ══ UTILIDADES ══ */
 function sem(){ return S.k ? porKey(S.k) : null; }
@@ -2277,6 +2277,18 @@ function textoFalla(){
 }
 function colorFalla(){ return S.falla >= 0 ? FALLAS[S.falla].c : COLOR_SIN; }
 function ahora(){ var d = new Date(); $('faFecha').value = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); $('faHora').value = pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+// Botón ⏱ Automática / ✎ Manual (igual que en Evento).
+function pintarHoraModo(){
+  var b = $('faHoraModo'); b.classList.toggle('manual', !S.horaAuto);
+  b.textContent = S.horaAuto ? '⏱ Automática' : '✎ Manual';
+  b.title = S.horaAuto ? 'Sigue al reloj; se actualiza sola. Escribe una hora para fijarla.' : 'Hora fija. Toca para que vuelva a seguir al reloj.';
+}
+// Con hora automática, fecha y hora siguen al reloj (cada 30 s, al abrir la pestaña y al copiar).
+function tickHora(){
+  if (!S.horaAuto) return;
+  var f = $('faFecha').value, h = $('faHora').value; ahora();
+  if (f !== $('faFecha').value || h !== $('faHora').value) generar();
+}
 
 /* ══ SEMÁFORO ══ */
 function elegir(k){ S.k = (S.k === k ? null : k); $('faBuscar').value = ''; todo(); encuadrar(); }
@@ -2510,6 +2522,7 @@ function copiarMapa(){
 
 /* ══ ACCIONES ══ */
 function copiar(){
+  tickHora();
   var falta = faltantes().length > 0;
   S.aviso = falta; pintarFaltantes();
   var ok = falta ? '⚠️ Copiado, pero faltan datos. Revisa lo marcado en rojo.' : '✓ Copiado. Ahora pégalo en WhatsApp.', ta = $('faOut');
@@ -2522,7 +2535,7 @@ function foto(){ return { S:JSON.parse(JSON.stringify(S)), FIJA:FIJA, v:CAMPOS.m
 function restaurar(f){
   S = f.S; S.aviso = false; FIJA = f.FIJA; pintarFijar();
   CAMPOS.forEach(function(id, i){ $(id).value = f.v[i]; }); MARCAS.forEach(function(id, i){ $(id).checked = f.m[i]; });
-  todo(); if (FIJA && MAPA) MAPA.setView(FIJA.centro, FIJA.z, { animate:false }); else encuadrar();
+  todo(); tickHora(); if (FIJA && MAPA) MAPA.setView(FIJA.centro, FIJA.z, { animate:false }); else encuadrar();
   aviso('✓ Reporte recuperado.');
 }
 function reset(){
@@ -2532,11 +2545,14 @@ function reset(){
   if (MAPA) MAPA.setView(MAPA_CENTRO, MAPA_ZOOM, { animate:false });
 }
 function borrarReporte(){ var f = foto(); reset(); aviso('Reporte borrado.', { txt:'Deshacer', fn:function(){ restaurar(f); } }); }
-function todo(){ if (S.k && !porKey(S.k)) S.k = null; renderChip(); renderLista(); renderFallas(); renderMapa(); generar(); }
+function todo(){ if (S.k && !porKey(S.k)) S.k = null; pintarHoraModo(); renderChip(); renderLista(); renderFallas(); renderMapa(); generar(); }
 
 /* ══ EVENTOS ══ */
 function eventos(){
-  ['faFecha','faHora','faOtro','faNotas'].forEach(function(id){ $(id).addEventListener('input', generar); });
+  ['faOtro','faNotas'].forEach(function(id){ $(id).addEventListener('input', generar); });
+  ['faFecha','faHora'].forEach(function(id){ $(id).addEventListener('input', function(){ S.horaAuto = false; pintarHoraModo(); generar(); }); });   // escribir = hora fija
+  $('faHoraModo').addEventListener('click', function(e){ e.preventDefault(); S.horaAuto = !S.horaAuto; pintarHoraModo(); tickHora(); if (S.horaAuto) aviso('⏱ La fecha y hora siguen al reloj.'); });
+  setInterval(tickHora, 30000);
   ['faGestores','faCuadrilla'].forEach(function(id){ $(id).addEventListener('change', generar); });
   $('faOtro').addEventListener('change', renderMapa);
   $('faBuscar').addEventListener('input', renderLista);
@@ -2563,6 +2579,7 @@ reset();
 var listo = false;
 return {
   mostrar: function(){
+    tickHora();
     if (!listo){ iniciarMapa(); listo = true; todo(); encuadrar(); }
     else { if (MAPA) MAPA.invalidateSize(); todo(); }   // refleja semáforos agregados en otra pestaña
   },
