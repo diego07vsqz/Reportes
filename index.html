@@ -669,9 +669,10 @@ function llenarZonas(id, z){
   $(id + 'Cuenta').textContent = z ? 'El mapa y el buscador muestran solo esta zona.' : '';
   return z;
 }
-// Encuadra el mapa en los semáforos de la zona.
+// Encuadra el mapa en los semáforos de la zona. "Todas las zonas" = vista inicial (San Salvador).
 function encuadrarZona(mapa, z){
-  if (!mapa || !z) return;
+  if (!mapa) return;
+  if (!z){ mapa.setView(MAPA_CENTRO, MAPA_ZOOM, { animate:false }); return; }
   var pts = todos().filter(function(s){ return tieneCoord(s) && enZona(s, z); }).map(function(s){ return [s.la, s.lo]; });
   if (pts.length) mapa.fitBounds(pts, { paddingTopLeft:[30,60], paddingBottomRight:[30,30], maxZoom:16, animate:false });   // arriba más margen: botones del mapa
 }
@@ -1457,7 +1458,7 @@ function eventos(){
   $('btnMapaCopiar').addEventListener('click', copiarMapa);
   $('btnMapaBajar').addEventListener('click', bajarMapa);
   $('buscar').addEventListener('input', renderLista);
-  $('zonaT').addEventListener('change', function(){ ZONA_T = this.value; guardarZona('tiempos', ZONA_T); llenarZonas('zonaT', ZONA_T); renderLista(); renderMapa(false); encuadrarZona(MAPA, ZONA_T); });
+  $('zonaT').addEventListener('change', function(){ ZONA_T = this.value; guardarZona('tiempos', ZONA_T); llenarZonas('zonaT', ZONA_T); renderLista(); renderMapa(false); if (!ZONA_T && S.sel.length) renderMapa(true); else encuadrarZona(MAPA, ZONA_T); });   // Todas: vuelve a lo elegido o a la vista inicial
   $('lista').addEventListener('click', function(e){
     var ed = e.target.closest('[data-edit]'); if (ed){ editarCustom(ed.getAttribute('data-edit')); return; }
     var del = e.target.closest('[data-del]'); if (del){ borrarCustom(del.getAttribute('data-del')); return; }
@@ -2209,7 +2210,7 @@ function eventos(){
     else if ((b = e.target.closest('[data-monit]'))){ S.monit = +b.getAttribute('data-monit'); todo(); }
   });
   $('evBuscar').addEventListener('input', renderLista);
-  $('evZonaMapa').addEventListener('change', function(){ ZONA = this.value; guardarZona('evento', ZONA); llenarZonas('evZonaMapa', ZONA); renderLista(); renderMapa(); encuadrarZona(MAPA, ZONA); });
+  $('evZonaMapa').addEventListener('change', function(){ ZONA = this.value; guardarZona('evento', ZONA); llenarZonas('evZonaMapa', ZONA); renderLista(); renderMapa(); if (!ZONA && S.sel.length) encuadrar(); else encuadrarZona(MAPA, ZONA); });   // Todas: vuelve a lo elegido o a la vista inicial
   $('evBuscar').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ var b = $('evLista').querySelector('.item'); if (b){ e.preventDefault(); toggleSel(b.getAttribute('data-k')); this.value = ''; renderLista(); } } });
   $('evLista').addEventListener('click', function(e){ var b = e.target.closest('.item'); if (b){ toggleSel(b.getAttribute('data-k')); encuadrar(); } });
   $('evBtnQuitarTodos').addEventListener('click', function(){
@@ -2616,7 +2617,7 @@ function eventos(){
   ['faGestores','faCuadrilla'].forEach(function(id){ $(id).addEventListener('change', generar); });
   $('faOtro').addEventListener('change', renderMapa);
   $('faBuscar').addEventListener('input', renderLista);
-  $('faZona').addEventListener('change', function(){ ZONA = this.value; guardarZona('fallas', ZONA); llenarZonas('faZona', ZONA); renderLista(); renderMapa(); if (!sem()) encuadrarZona(MAPA, ZONA); });
+  $('faZona').addEventListener('change', function(){ ZONA = this.value; guardarZona('fallas', ZONA); llenarZonas('faZona', ZONA); renderLista(); renderMapa(); if (!sem()) encuadrarZona(MAPA, ZONA); else if (!ZONA) encuadrar(); });   // Todas: vuelve al semáforo o a la vista inicial
   $('faBuscar').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ var b = $('faLista').querySelector('.item'); if (b){ e.preventDefault(); elegir(b.getAttribute('data-k')); } } });
   $('faLista').addEventListener('click', function(e){ var b = e.target.closest('.item'); if (b) elegir(b.getAttribute('data-k')); });
   $('faChip').addEventListener('click', function(e){ if (e.target.closest('[data-quitar]')){ S.k = null; todo(); } });
