@@ -2272,7 +2272,7 @@ function nuevoEstado(){ return { k:null, falla:-1, aviso:false }; }
 function sem(){ return S.k ? porKey(S.k) : null; }
 function textoFalla(){
   if (S.falla < 0) return '';
-  if (S.falla === OTRO){ var o = limpiarWA($('faOtro').value); return o ? 'Otro: ' + o : 'Otro'; }
+  if (S.falla === OTRO){ var o = limpiarWA($('faOtro').value); return o || 'Otro'; }   // solo lo especificado
   return FALLAS[S.falla].b;
 }
 function colorFalla(){ return S.falla >= 0 ? FALLAS[S.falla].c : COLOR_SIN; }
@@ -2305,25 +2305,29 @@ function renderFallas(){
 }
 
 /* ══ TEXTO ══ */
-function nombre(s){
-  var t = (s.id && s.id !== 'NUEVO' ? s.id + ' - ' : '') + (s.d || '');   // código y enlace siempre (fijos)
-  if (tieneCoord(s)) t += '\n📍 https://maps.google.com/?q=' + s.la + ',' + s.lo;
-  return t;
+// Municipio con mayúscula inicial: "SAN SALVADOR" → "San Salvador" (de, del, la… en minúscula).
+function municipio(c){
+  return String(c || '').toLowerCase().replace(/(^|[\s-])(\S)/g, function(m, sep, l){ return sep + l.toUpperCase(); })
+    .replace(/ (De|Del|La|Las|Los|El|Y) /g, function(m){ return m.toLowerCase(); })
+    .replace(/Ahuachapan/, 'Ahuachapán').replace(/Metapan/, 'Metapán').replace(/Cuscatlan/, 'Cuscatlán');   // tildes que faltan en el listado
 }
+// Formato tipo ficha: un dato por línea; la falla en mayúsculas con su emoji de color.
 function generar(){
-  var s = sem(), f = textoFalla(), notas = limpiarWA($('faNotas').value), lin = [], seg = [];
+  var s = sem(), f = textoFalla(), notas = limpiarWA($('faNotas').value), lin = [];
+  var fecha = fmtFecha($('faFecha').value), hora = fmtHora($('faHora').value);
   lin.push('🚦 *PLANEAMIENTO SEMAFÓRICO* 🚦');
   lin.push('⚠️ *REPORTE DE FALLA*');
-  lin.push('📅 Fecha: ' + fmtFecha($('faFecha').value));
-  lin.push('🕒 Hora de detección: ' + fmtHora($('faHora').value));
-  lin.push('*Intersección:*');
-  if (s) nombre(s).split('\n').forEach(function(x){ lin.push(x); });
-  lin.push('');
-  lin.push((S.falla >= 0 ? FALLAS[S.falla].e + ' ' : '') + '*Falla:* ' + f);
-  if ($('faGestores').checked) seg.push('* Se necesita asistencia de gestores.');
-  if ($('faCuadrilla').checked) seg.push('* Reportado a cuadrilla.');
-  if (seg.length){ lin.push(''); lin.push('*Seguimiento:*'); seg.forEach(function(x){ lin.push(x); }); }
-  if (notas){ lin.push(''); lin.push('Notas: ' + notas); }
+  lin.push('*Fecha:* ' + fecha + (fecha && hora ? ' · ' : '') + hora);
+  lin.push('*Semáforo:* ' + (s && s.id && s.id !== 'NUEVO' ? s.id : (s ? 'sin código' : '')));
+  lin.push('*Ubicación:* ' + (s ? limpiarWA(s.d) + (s.c ? ', ' + municipio(s.c) : '') : ''));
+  if (tieneCoord(s)) lin.push('📍 https://maps.google.com/?q=' + s.la + ',' + s.lo);
+  if (S.falla >= 0) lin.push(FALLAS[S.falla].e + ' *' + f.toUpperCase() + '*');
+  else lin.push('*Falla:* ');
+  var seg = [];
+  if ($('faGestores').checked) seg.push('⚠️ Se necesita asistencia de gestores.');   // advertencia: falta algo
+  if ($('faCuadrilla').checked) seg.push('✅ Reportado a cuadrilla.');                 // check: ya se hizo
+  if (seg.length){ lin.push('*Seguimiento:*'); seg.forEach(function(x){ lin.push(x); }); }
+  if (notas) lin.push('*Notas:* ' + notas);
   $('faOut').value = lin.join('\n');
   pintarBurbuja($('faOut').value, 'faBurbuja');
   $('faDescMapa').textContent = f ? 'Falla: ' + f : '';
