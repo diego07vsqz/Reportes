@@ -513,7 +513,7 @@ body[data-modo="fallas"]{--acc:#ea580c;--on-acc:#ffffff}
         <h2><span class="num">4</span>Seguimiento</h2>
         <label class="op"><input type="checkbox" id="faGestores"> Se necesita asistencia de gestores</label>
         <label class="op"><input type="checkbox" id="faCuadrilla"> Reportado a cuadrilla</label>
-        <label class="f">Notas (opcional)<textarea id="faNotas" rows="2" placeholder="Ej. intermitente desde la lluvia."></textarea></label>
+        <label class="f">Notas (opcional)<textarea id="faNotas" rows="2" placeholder="Ej. Luz roja apagada en el acceso norte. Tránsito lento hacia el centro."></textarea></label>
       </section>
     </div>
 
@@ -521,10 +521,6 @@ body[data-modo="fallas"]{--acc:#ea580c;--on-acc:#ffffff}
       <section class="card">
         <h2><span class="num">5</span>Así se verá en WhatsApp</h2>
         <div class="phone"><div class="bubble" id="faBurbuja"></div></div>
-        <div class="opciones"><span class="f">Opciones del texto</span>
-          <label class="f" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="faConId" style="width:auto" checked> Mostrar código del semáforo (ej. SS1301)</label>
-          <label class="f" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="faConLink" style="width:auto"> Agregar enlace de Google Maps</label>
-        </div>
         <textarea id="faOut" readonly tabindex="-1" aria-hidden="true"></textarea>
         <div class="aviso" id="faFaltan" hidden><strong>Copiado, pero faltan datos</strong><ul id="faFaltanLista"></ul></div>
         <button type="button" class="btn-copy" id="faBtnCopy">Copiar reporte</button>
@@ -2249,13 +2245,13 @@ return {
 var FA = (function(){
 
 /* ══ CONFIG ══ */
-var FALLAS = [                                     // botón → texto · color del ícono en el mapa
-  { b:'Intermitencia',          c:'#facc15' },
-  { b:'Falla de comunicación',  c:'#2563eb' },
-  { b:'Apagado',                c:'#374151' },
-  { b:'Necesita poda',          c:'#16a34a' },
-  { b:'Necesita reorientación', c:'#7c3aed' },
-  { b:'Otro',                   c:'#dc2626' }
+var FALLAS = [                                     // botón → texto · color del aro en el mapa · emoji en el texto (mismo color)
+  { b:'Intermitencia',          c:'#facc15', e:'🟡' },
+  { b:'Falla de comunicación',  c:'#2563eb', e:'🔵' },
+  { b:'Apagado',                c:'#374151', e:'⚫' },
+  { b:'Necesita poda',          c:'#16a34a', e:'🟢' },
+  { b:'Necesita reorientación', c:'#7c3aed', e:'🟣' },
+  { b:'Otro',                   c:'#dc2626', e:'🔴' }
 ];
 var OTRO = FALLAS.length - 1;                      // "Otro": pide especificar
 var INTERMITENTE = 0, APAGADO = 2;                 // íconos: intermitencia = solo luz ámbar · apagado = luces grises
@@ -2310,8 +2306,8 @@ function renderFallas(){
 
 /* ══ TEXTO ══ */
 function nombre(s){
-  var t = ($('faConId').checked && s.id && s.id !== 'NUEVO' ? s.id + ' - ' : '') + (s.d || '');
-  if ($('faConLink').checked && tieneCoord(s)) t += '\n📍 https://maps.google.com/?q=' + s.la + ',' + s.lo;
+  var t = (s.id && s.id !== 'NUEVO' ? s.id + ' - ' : '') + (s.d || '');   // código y enlace siempre (fijos)
+  if (tieneCoord(s)) t += '\n📍 https://maps.google.com/?q=' + s.la + ',' + s.lo;
   return t;
 }
 function generar(){
@@ -2323,7 +2319,7 @@ function generar(){
   lin.push('*Intersección:*');
   if (s) nombre(s).split('\n').forEach(function(x){ lin.push(x); });
   lin.push('');
-  lin.push('*Falla:* ' + f);
+  lin.push((S.falla >= 0 ? FALLAS[S.falla].e + ' ' : '') + '*Falla:* ' + f);
   if ($('faGestores').checked) seg.push('* Se necesita asistencia de gestores.');
   if ($('faCuadrilla').checked) seg.push('* Reportado a cuadrilla.');
   if (seg.length){ lin.push(''); lin.push('*Seguimiento:*'); seg.forEach(function(x){ lin.push(x); }); }
@@ -2471,10 +2467,28 @@ function imagenMapa(){
     g.fillStyle = 'rgba(255,255,255,.8)'; g.fillRect(W - w, H - fa * 1.7, w, fa * 1.7);
     g.fillStyle = '#111827'; g.fillText(at, W - w + fa / 2, H - fa * 0.5);
     etiquetaImg(g, W, H, m, w);
+    var fin = conTitulo(cv, Math.min(m, 1.5));
     return new Promise(function(res, rej){
-      try { cv.toBlob(function(b){ if (b) res(b); else rej(new Error('sin imagen')); }, 'image/png'); } catch(err){ rej(err); }
+      try { fin.toBlob(function(b){ if (b) res(b); else rej(new Error('sin imagen')); }, 'image/png'); } catch(err){ rej(err); }
     });
   });
+}
+// Franja superior con código y nombre del semáforo (la imagen se entiende sola en WhatsApp). Sin semáforo: imagen tal cual.
+function conTitulo(mapa, k){
+  var s = sem(); if (!s) return mapa;
+  var W = mapa.width, t = (s.id && s.id !== 'NUEVO' ? s.id + ' · ' : '') + limpiarWA(s.d), completo = t;
+  var fs = Math.round(22 * k), pd = Math.round(14 * k), barra = Math.max(3, Math.round(fs / 6)), f = '800 ' + fs + 'px sans-serif';
+  var cv = document.createElement('canvas'), g = cv.getContext('2d');
+  g.font = f; while (t.length > 1 && g.measureText(t + '…').width > W - pd * 2) t = t.slice(0, -1);
+  if (t !== completo) t += '…';
+  var alto = Math.round(fs * 1.5 + pd * 2);
+  cv.width = W; cv.height = mapa.height + alto;
+  g.drawImage(mapa, 0, alto);
+  g.fillStyle = '#0b1120'; g.fillRect(0, 0, W, alto);
+  g.fillStyle = '#ea580c'; g.fillRect(0, alto - barra, W, barra);
+  g.font = f; g.fillStyle = '#ffffff'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(t, W / 2, (alto - barra) / 2);
+  return cv;
 }
 function bajarImagen(b){ var u = URL.createObjectURL(b), a = document.createElement('a'); a.href = u; a.download = 'mapa-falla.png'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(u); }, 4000); }
 function copiarMapa(){
@@ -2519,7 +2533,7 @@ function todo(){ if (S.k && !porKey(S.k)) S.k = null; renderChip(); renderLista(
 /* ══ EVENTOS ══ */
 function eventos(){
   ['faFecha','faHora','faOtro','faNotas'].forEach(function(id){ $(id).addEventListener('input', generar); });
-  ['faGestores','faCuadrilla','faConId','faConLink'].forEach(function(id){ $(id).addEventListener('change', generar); });
+  ['faGestores','faCuadrilla'].forEach(function(id){ $(id).addEventListener('change', generar); });
   $('faOtro').addEventListener('change', renderMapa);
   $('faBuscar').addEventListener('input', renderLista);
   $('faBuscar').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ var b = $('faLista').querySelector('.item'); if (b){ e.preventDefault(); elegir(b.getAttribute('data-k')); } } });
