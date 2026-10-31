@@ -2250,7 +2250,7 @@ var FA = (function(){
 
 /* ══ CONFIG ══ */
 var FALLAS = [                                     // botón → texto · color del ícono en el mapa
-  { b:'Intermitencia',          c:'#eab308' },
+  { b:'Intermitencia',          c:'#facc15' },
   { b:'Falla de comunicación',  c:'#2563eb' },
   { b:'Apagado',                c:'#374151' },
   { b:'Necesita poda',          c:'#16a34a' },
@@ -2258,8 +2258,8 @@ var FALLAS = [                                     // botón → texto · color 
   { b:'Otro',                   c:'#dc2626' }
 ];
 var OTRO = FALLAS.length - 1;                      // "Otro": pide especificar
-var APAGADO = 2;                                   // "Apagado": luces grises en el ícono
-var COLOR_SIN = '#c27c0e';                         // ícono sin falla elegida
+var INTERMITENTE = 0, APAGADO = 2;                 // íconos: intermitencia = solo luz ámbar · apagado = luces grises
+var COLOR_SIN = '#c27c0e';                         // círculo ámbar, igual que en los otros reportes
 var MAX_LISTA = 40;
 var BASES = {
   calle: { url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attr:'© OpenStreetMap' },
@@ -2361,10 +2361,17 @@ function iniciarMapa(){
   TILES = reintentarTiles(L.tileLayer(BASES.calle.url, { maxZoom:19, attribution:BASES.calle.attr, crossOrigin:'anonymous' })).addTo(MAPA);
   CAPA = L.layerGroup().addTo(MAPA);
 }
-function svgIcono(col, apagado){   // círculo del color de la falla con semáforo dentro
-  var l = apagado ? ['#6b7280','#6b7280','#6b7280'] : ['#ef4444','#fbbf24','#22c55e'];
-  return '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 30 30"><circle cx="15" cy="15" r="12" fill="' + col + '" stroke="#ffffff" stroke-width="2.5"/>' +
-    '<rect x="11" y="6" width="8" height="18" rx="3" fill="#1f2937"/><circle cx="15" cy="9.6" r="2.1" fill="' + l[0] + '"/><circle cx="15" cy="15" r="2.1" fill="' + l[1] + '"/><circle cx="15" cy="20.4" r="2.1" fill="' + l[2] + '"/></svg>';
+// Luces del semáforo según la falla: apagado = grises · intermitencia = solo ámbar · resto = normales.
+function luces(){
+  if (S.falla === APAGADO) return ['#6b7280','#6b7280','#6b7280'];
+  if (S.falla === INTERMITENTE) return ['#4b5563','#fbbf24','#4b5563'];
+  return ['#ef4444','#fbbf24','#22c55e'];
+}
+// Ícono igual al de los otros reportes (círculo ámbar con semáforo) + aro del color de la falla.
+function svgIcono(){
+  var l = luces(), aro = S.falla >= 0 ? '<circle cx="16" cy="16" r="14.5" fill="none" stroke="' + colorFalla() + '" stroke-width="3"/>' : '';
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">' + aro + '<circle cx="16" cy="16" r="11.5" fill="' + COLOR_SIN + '" stroke="#ffffff" stroke-width="2"/>' +
+    '<rect x="12" y="7" width="8" height="18" rx="3" fill="#1f2937"/><circle cx="16" cy="10.6" r="2.1" fill="' + l[0] + '"/><circle cx="16" cy="16" r="2.1" fill="' + l[1] + '"/><circle cx="16" cy="21.4" r="2.1" fill="' + l[2] + '"/></svg>';
 }
 function renderMapa(){
   if (!MAPA) return;
@@ -2378,7 +2385,7 @@ function renderMapa(){
   });
   var s = sem();
   if (tieneCoord(s)){
-    L.marker([s.la, s.lo], { icon:L.divIcon({ className:'fapin', html:svgIcono(colorFalla(), S.falla === APAGADO), iconSize:[40,40], iconAnchor:[20,20], tooltipAnchor:[18,0] }), zIndexOffset:1000 })
+    L.marker([s.la, s.lo], { icon:L.divIcon({ className:'fapin', html:svgIcono(), iconSize:[32,32], iconAnchor:[16,16], tooltipAnchor:[16,0] }), zIndexOffset:1000 })
       .bindTooltip('<b>' + esc(s.id) + '</b> · ' + esc(s.d) + '<br><small>Clic: quitar</small>')
       .on('click', function(e){ L.DomEvent.stopPropagation(e); S.k = null; todo(); })
       .addTo(CAPA);
@@ -2407,16 +2414,17 @@ function vistaCaptura(){
 }
 
 /* ══ IMAGEN DEL MAPA ══ */
-function dibujarIcono(g, x, y, k, col, apagado){
-  var l = apagado ? ['#6b7280','#6b7280','#6b7280'] : ['#ef4444','#fbbf24','#22c55e'];
+function dibujarIcono(g, x, y, k){   // el mismo ícono de pantalla, en la imagen
+  var l = luces();
   function caja(px, py, w, hh, r){ g.beginPath(); g.moveTo(px + r, py); g.arcTo(px + w, py, px + w, py + hh, r); g.arcTo(px + w, py + hh, px, py + hh, r); g.arcTo(px, py + hh, px, py, r); g.arcTo(px, py, px + w, py, r); g.closePath(); }
-  function luz(cy, c){ g.beginPath(); g.arc(15, cy, 2.1, 0, Math.PI * 2); g.fillStyle = c; g.fill(); }
-  g.save(); g.translate(x - 15 * k, y - 15 * k); g.scale(k, k);
+  function luz(cy, c){ g.beginPath(); g.arc(16, cy, 2.1, 0, Math.PI * 2); g.fillStyle = c; g.fill(); }
+  g.save(); g.translate(x - 16 * k, y - 16 * k); g.scale(k, k);
   g.shadowColor = 'rgba(0,0,0,.4)'; g.shadowBlur = 3 * k; g.shadowOffsetY = 1.5 * k;
-  g.beginPath(); g.arc(15, 15, 12, 0, Math.PI * 2); g.fillStyle = col; g.fill(); g.shadowColor = 'transparent';
-  g.strokeStyle = '#ffffff'; g.lineWidth = 2.5; g.stroke();
-  caja(11, 6, 8, 18, 3); g.fillStyle = '#1f2937'; g.fill();
-  luz(9.6, l[0]); luz(15, l[1]); luz(20.4, l[2]);
+  if (S.falla >= 0){ g.beginPath(); g.arc(16, 16, 14.5, 0, Math.PI * 2); g.strokeStyle = colorFalla(); g.lineWidth = 3; g.stroke(); }
+  g.beginPath(); g.arc(16, 16, 11.5, 0, Math.PI * 2); g.fillStyle = COLOR_SIN; g.fill(); g.shadowColor = 'transparent';
+  g.strokeStyle = '#ffffff'; g.lineWidth = 2; g.stroke();
+  caja(12, 7, 8, 18, 3); g.fillStyle = '#1f2937'; g.fill();
+  luz(10.6, l[0]); luz(16, l[1]); luz(21.4, l[2]);
   g.restore();
 }
 function etiquetaImg(g, W, H, m, anchoCredito){   // "Falla: …" abajo a la izquierda (achica la letra si no cabe)
@@ -2456,7 +2464,7 @@ function imagenMapa(){
   }
   return Promise.all(tareas).then(function(){
     var s = sem();
-    if (tieneCoord(s)){ var p = MAPA.project([s.la, s.lo], zz); dibujarIcono(g, (p.x - ox) * e, (p.y - oy) * e, m * 1.3, colorFalla(), S.falla === APAGADO); }
+    if (tieneCoord(s)){ var p = MAPA.project([s.la, s.lo], zz); dibujarIcono(g, (p.x - ox) * e, (p.y - oy) * e, m * MAPA_IMG_ICONO); }   // mismo tamaño que en Cambio de tiempos
     var fa = Math.round(11 * Math.min(m, 1.5)), at = atribucionImg(BASES[BASE_MAPA].attr);
     g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.font = fa + 'px sans-serif';
     var w = g.measureText(at).width + fa;
