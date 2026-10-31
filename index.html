@@ -313,6 +313,12 @@ body[data-modo="evento"] header.top .l-r{fill:#dc2626}
 body[data-modo="fallas"] header.top .l-a{fill:#f59e0b;animation:parpadeo 1.2s steps(1) infinite}
 @keyframes parpadeo{50%{opacity:.25}}
 @media (prefers-reduced-motion:reduce){ body[data-modo="fallas"] header.top .l-a{animation:none} }
+
+/* ══ FILTRO POR ZONA (mapas) ══ */
+.zona-fila{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap}
+.zona-fila label{font-size:14px;font-weight:700}
+.zona-fila select{width:auto;flex:1 1 200px;max-width:300px;padding:8px 10px;font-size:15px}
+.zona-fila .hint{flex:1 1 auto}
 </style>
 </head>
 <body>
@@ -343,6 +349,7 @@ body[data-modo="fallas"] header.top .l-a{fill:#f59e0b;animation:parpadeo 1.2s st
         <h2><span class="num">2</span>¿Dónde?</h2>
         <p class="hint">Toca los semáforos del reporte. Puedes elegir varios.</p>
         <div class="chips" id="chips"></div>
+        <div class="zona-fila"><label for="zonaT">Zona</label><select id="zonaT"></select><span class="hint" id="zonaTCuenta"></span></div>
         <div id="mapaSlot"><div class="mapwrap" id="mapWrap"><div id="mapa"></div><div class="desc-mapa" id="descMapa" aria-live="polite"></div><div class="guia-fl" id="guiaFl" hidden></div><div class="maptools2"><button type="button" class="btn-flecha" id="btnFlecha" aria-pressed="false" title="Dibujar una flecha de sentido">✏️ Flecha</button><button type="button" id="btnFijar" aria-pressed="false" title="Usar la vista actual para la imagen">📌 Fijar vista</button><button type="button" id="btnBase">Satélite</button></div></div></div>
         <div class="barra-fl" id="barraFl" hidden><label class="op"><input type="checkbox" id="optCurva"> Con curva (varios puntos)</label><button type="button" class="mini" id="btnTerminarFl" hidden>✓ Terminar flecha</button><button type="button" class="mini" id="btnQuitarFl">↶ Quitar la última</button><button type="button" class="mini" id="btnBorrarFl">Borrar flechas</button></div>
         <div class="lista-fl" id="listaFl"></div>
@@ -442,6 +449,7 @@ body[data-modo="fallas"] header.top .l-a{fill:#f59e0b;animation:parpadeo 1.2s st
       <section class="card">
         <h2><span class="num">2</span>Semáforos del evento</h2>
         <details class="ayuda"><summary>ⓘ ¿Cómo elegir?</summary><p class="hint"><b>Selección por área:</b> toca "Seleccionar área" y arrastra un recuadro sobre el mapa (o mantén Shift y arrastra). Clic en un punto lo agrega o lo quita. Clic derecho en un punto elegido lo marca como intervenido.</p></details>
+        <div class="zona-fila"><label for="evZonaMapa">Zona</label><select id="evZonaMapa"></select><span class="hint" id="evZonaMapaCuenta"></span></div>
         <div class="mapwrap">
           <div id="evMapa"></div>
           <div class="maptools">
@@ -514,6 +522,7 @@ body[data-modo="fallas"] header.top .l-a{fill:#f59e0b;animation:parpadeo 1.2s st
         <div class="chips" id="faChip"></div>
         <input type="search" id="faBuscar" placeholder="Buscar semáforo: calle, ciudad o ID…" autocomplete="off">
         <div class="list" id="faLista"></div>
+        <div class="zona-fila"><label for="faZona">Zona</label><select id="faZona"></select><span class="hint" id="faZonaCuenta"></span></div>
         <div class="mapwrap"><div id="faMapa"></div><div class="desc-mapa" id="faDescMapa" aria-live="polite"></div><div class="maptools2"><button type="button" id="faBtnFijar" aria-pressed="false" title="Usar la vista actual para la imagen">📌 Fijar vista</button><button type="button" id="faBtnBase">Satélite</button></div></div>
         <p class="hint">Punto azul = semáforo. Tócalo para elegirlo; toca otro para cambiarlo.</p>
       </section>
@@ -616,6 +625,7 @@ var BASE = [{"k":"AH0001","id":"AH0001","d":"6ª Calle Oriente - Desvió a Sonso
 var S = { sel:[], custom:[], act:[], nue:[], motivo:-1, sentido:-1, duracion:-1, aviso:false, pin:null, base:'calle', editK:null,
           flechas:[] };   // flechas a mano: [{ pts:[[lat,lon],…] }]
 var MAPA = null, CAPA = null, PIN = null, TILES = null, CAPA_FL = null;
+var ZONA_T = leerZona('tiempos');   // zona del mapa ('' = todas)
 
 /* ══ UTILIDADES ══ */
 // Atajo de document.getElementById.
@@ -635,13 +645,47 @@ function fmtFecha(v){ var p = String(v || '').split('-'); return p.length === 3 
 // "09:05" → "9:05".
 function fmtHora(v){ var p = String(v || '').split(':'); return p.length >= 2 ? (parseInt(p[0],10) + ':' + p[1]) : ''; }
 
+/* ══ ZONAS (filtro de los mapas) ══ */
+// Clave de zona: municipio sin tildes ni mayúsculas; sin municipio = 'sin'.
+function claveZona(c){ return norm(c).replace(/\s+/g, ' ').trim() || 'sin'; }
+// Nombre bonito del municipio: "SAN SALVADOR" → "San Salvador" (con tildes que faltan en el listado).
+function nombreZona(c){
+  if (!String(c || '').trim()) return 'Sin municipio';
+  return String(c).toLowerCase().replace(/(^|[\s-])(\S)/g, function(m, sep, l){ return sep + l.toUpperCase(); })
+    .replace(/ (De|Del|La|Las|Los|El|Y) /g, function(m){ return m.toLowerCase(); })
+    .replace(/Ahuachapan/, 'Ahuachapán').replace(/Metapan/, 'Metapán').replace(/Cuscatlan/, 'Cuscatlán');
+}
+// true si el semáforo es de la zona (zona vacía = todas).
+function enZona(s, z){ return !z || claveZona(s.c) === z; }
+// Llena el selector con las zonas del listado (y su cantidad). Devuelve la zona válida (vacía si ya no existe).
+function llenarZonas(id, z){
+  var cuenta = {}, nombre = {}, total = 0;
+  todos().forEach(function(s){ if (!tieneCoord(s)) return; var k = claveZona(s.c); cuenta[k] = (cuenta[k] || 0) + 1; if (!nombre[k]) nombre[k] = nombreZona(s.c); total++; });
+  if (z && !cuenta[z]) z = '';
+  var ks = Object.keys(cuenta).sort(function(a, b){ return a === 'sin' ? 1 : b === 'sin' ? -1 : nombre[a].localeCompare(nombre[b], 'es'); });
+  $(id).innerHTML = '<option value="">Todas las zonas (' + total + ')</option>' +
+    ks.map(function(k){ return '<option value="' + esc(k) + '">' + esc(nombre[k]) + ' (' + cuenta[k] + ')</option>'; }).join('');
+  $(id).value = z;
+  $(id + 'Cuenta').textContent = z ? 'El mapa y el buscador muestran solo esta zona.' : '';
+  return z;
+}
+// Encuadra el mapa en los semáforos de la zona.
+function encuadrarZona(mapa, z){
+  if (!mapa || !z) return;
+  var pts = todos().filter(function(s){ return tieneCoord(s) && enZona(s, z); }).map(function(s){ return [s.la, s.lo]; });
+  if (pts.length) mapa.fitBounds(pts, { paddingTopLeft:[30,60], paddingBottomRight:[30,30], maxZoom:16, animate:false });   // arriba más margen: botones del mapa
+}
+// Zona recordada por pestaña (ups_zona_tiempos / _evento / _fallas). Clave escrita aquí: se lee antes de que corran las variables de arriba.
+function leerZona(t){ try { return localStorage.getItem('ups_zona_' + t) || ''; } catch(e){ return ''; } }
+function guardarZona(t, z){ try { localStorage.setItem('ups_zona_' + t, z); } catch(e){} }
+
 /* ══ CARGA / GUARDADO LOCAL ══ */
 // Lee del navegador los semáforos agregados por el usuario.
 function cargarCustom(){
   try { var raw = localStorage.getItem(LS_KEY); var a = raw ? JSON.parse(raw) : []; if (Array.isArray(a)) S.custom = a.filter(function(x){ return x && x.k && x.d; }); } catch(e){ S.custom = []; }
 }
 // Guarda en el navegador los semáforos agregados por el usuario.
-function guardarCustom(){ try { localStorage.setItem(LS_KEY, JSON.stringify(S.custom)); } catch(e){} }
+function guardarCustom(){ try { localStorage.setItem(LS_KEY, JSON.stringify(S.custom)); } catch(e){} if ($('zonaT')) ZONA_T = llenarZonas('zonaT', ZONA_T); }
 
 /* ══ TEMA CLARO / OSCURO ══ */
 // Tema en uso: el elegido con el botón o, si no hay, el del sistema.
@@ -729,7 +773,7 @@ function renderChips(){
 function renderLista(){
   var q = norm($('buscar').value).split(/\s+/).filter(Boolean);
   var a = q.length
-    ? todos().filter(function(s){ var t = norm(s.id + ' ' + s.d + ' ' + s.c); return q.every(function(w){ return t.indexOf(w) >= 0; }); })
+    ? todos().filter(function(s){ if (!enZona(s, ZONA_T)) return false; var t = norm(s.id + ' ' + s.d + ' ' + s.c); return q.every(function(w){ return t.indexOf(w) >= 0; }); })
     : S.sel.map(porKey).filter(Boolean);              // sin búsqueda: solo los elegidos
   var h = '';
   a.slice(0, MAX_LISTA).forEach(function(s){
@@ -739,7 +783,7 @@ function renderLista(){
          '<small>' + esc(s.id) + (s.c ? ' · ' + esc(s.c) : '') +
          (s.n ? ' · <span class="edit" data-edit="' + esc(s.k) + '">Editar</span> · <span class="del" data-del="' + esc(s.k) + '">Eliminar</span>' : '') + '</small></span></button>';
   });
-  if (!a.length) h = q.length ? '<div class="empty">No aparece. Agrégalo abajo.</div>' : '<div class="empty">Escribe en el buscador: calle, ciudad o código. Escribe "nuevo" para ver los semáforos que agregaste.</div>';
+  if (!a.length) h = q.length ? '<div class="empty">' + (ZONA_T ? 'No aparece en esta zona. Prueba con "Todas las zonas" o agrégalo abajo.' : 'No aparece. Agrégalo abajo.') + '</div>' : '<div class="empty">Escribe en el buscador: calle, ciudad o código. Escribe "nuevo" para ver los semáforos que agregaste.</div>';
   $('lista').innerHTML = h;
   $('cuenta').textContent = S.sel.length + ' seleccionados' + (q.length ? ' · ' + Math.min(a.length, MAX_LISTA) + ' de ' + a.length + ' resultados' : '');
   if (q.length && !a.length && !$('nuevoDir').value) $('nuevoDir').value = $('buscar').value.trim();
@@ -856,6 +900,7 @@ function renderMapa(encuadrar){
   todos().forEach(function(s){
     if (!tieneCoord(s)) return;
     var on = S.sel.indexOf(s.k) >= 0;
+    if (!on && !enZona(s, ZONA_T)) return;   // fuera de la zona: oculto (los elegidos se ven siempre)
     if (on) pts.push([s.la, s.lo]);
     var m = on
       ? L.marker([s.la, s.lo], { icon:L.divIcon({ className:'sempin', html:svgSemaforo(S.sel.indexOf(s.k) + 1), iconSize:[36,32], iconAnchor:[15,17], tooltipAnchor:[14,0] }), zIndexOffset:1000 })
@@ -1374,7 +1419,8 @@ function reset(){
   quitarPin();
   ahora(); renderOpts(); renderChips(); renderLista(); renderTiempos('act'); renderTiempos('nue'); generar();
   FIJA = null; pintarFijar();
-  if (MAPA){ MAPA.setView(MAPA_CENTRO, MAPA_ZOOM, { animate:false }); renderMapa(false); }   // sin animación: Deshacer inmediato no queda desencuadrado
+  ZONA_T = llenarZonas('zonaT', ZONA_T);
+  if (MAPA){ MAPA.setView(MAPA_CENTRO, MAPA_ZOOM, { animate:false }); renderMapa(false); encuadrarZona(MAPA, ZONA_T); }   // sin animación: Deshacer inmediato no queda desencuadrado
 }
 
 // Copia en memoria del reporte, para Deshacer.
@@ -1411,6 +1457,7 @@ function eventos(){
   $('btnMapaCopiar').addEventListener('click', copiarMapa);
   $('btnMapaBajar').addEventListener('click', bajarMapa);
   $('buscar').addEventListener('input', renderLista);
+  $('zonaT').addEventListener('change', function(){ ZONA_T = this.value; guardarZona('tiempos', ZONA_T); llenarZonas('zonaT', ZONA_T); renderLista(); renderMapa(false); encuadrarZona(MAPA, ZONA_T); });
   $('lista').addEventListener('click', function(e){
     var ed = e.target.closest('[data-edit]'); if (ed){ editarCustom(ed.getAttribute('data-edit')); return; }
     var del = e.target.closest('[data-del]'); if (del){ borrarCustom(del.getAttribute('data-del')); return; }
@@ -1501,6 +1548,7 @@ var PALABRAS_VACIAS = ['boulevard','bulevar','blvd','avenida','av','alameda','al
 /* ══ ESTADO ══ */
 var S = nuevoEstado();
 var MAPA = null, CAPA = null, TILES = null, BASE_MAPA = 'calle', AREA = { activo:false, inicio:null, rect:null };
+var ZONA = leerZona('evento');   // zona del mapa ('' = todas)
 // Estado vacío de un evento.
 function nuevoEstado(){
   return { nombre:'', zona:'', tipo:0, enc:0, hora:'', fase:0, monit:0, nota:'',
@@ -1673,12 +1721,12 @@ function renderOpts(){
 function renderLista(){
   var q = norm($('evBuscar').value).split(/\s+/).filter(Boolean), h = '';
   if (q.length){
-    var a = todos().filter(function(s){ var t = norm(s.id + ' ' + s.d + ' ' + s.c); return q.every(function(w){ return t.indexOf(w) >= 0; }); });
+    var a = todos().filter(function(s){ if (!enZona(s, ZONA)) return false; var t = norm(s.id + ' ' + s.d + ' ' + s.c); return q.every(function(w){ return t.indexOf(w) >= 0; }); });
     a.slice(0, MAX_LISTA).forEach(function(s){
       var on = S.sel.indexOf(s.k) >= 0;
       h += '<button type="button" class="item" data-k="' + esc(s.k) + '" aria-pressed="' + on + '"><span class="box">' + (on ? '✓' : '') + '</span><span>' + esc(s.d) + '<small>' + esc(s.id) + (s.c ? ' · ' + esc(s.c) : '') + '</small></span></button>';
     });
-    if (!a.length) h = '<div class="hint" style="padding:10px">Sin resultados.</div>';
+    if (!a.length) h = '<div class="hint" style="padding:10px">' + (ZONA ? 'Sin resultados en esta zona. Prueba con "Todas las zonas".' : 'Sin resultados.') + '</div>';
   }
   $('evLista').innerHTML = h;
   $('evCuentaSel').textContent = S.sel.length ? S.sel.length + ' semáforos en el evento' : 'Ningún semáforo elegido todavía.';
@@ -1834,7 +1882,7 @@ function renderMapa(){
   calcularSeparacion();
   var f = TAM / 30;
   todos().forEach(function(s){   // puntos azules: todos los no elegidos
-    if (!tieneCoord(s) || S.sel.indexOf(s.k) >= 0) return;
+    if (!tieneCoord(s) || S.sel.indexOf(s.k) >= 0 || !enZona(s, ZONA)) return;
     var m = L.circleMarker([s.la, s.lo], { radius:5, color:'#ffffff', weight:1, fillColor:'#3b82f6', fillOpacity:.85 });
     m.bindTooltip('<b>' + esc(s.id === 'NUEVO' ? 'Nuevo' : s.id) + '</b> · ' + esc(s.d) + '<br><small>Clic: agregar al evento</small>');
     m.on('click', function(e){ L.DomEvent.stopPropagation(e); if (!AREA.activo) toggleSel(s.k); });
@@ -1883,7 +1931,7 @@ function areaFin(e){
   if (!AREA.rect) return;
   var b = L.latLngBounds(AREA.inicio, e.latlng);
   MAPA.removeLayer(AREA.rect); AREA.rect = null; AREA.inicio = null; AREA.ultimo = null;
-  var dentro = todos().filter(function(s){ return tieneCoord(s) && b.contains([s.la, s.lo]); }).map(function(s){ return s.k; });
+  var dentro = todos().filter(function(s){ return tieneCoord(s) && enZona(s, ZONA) && b.contains([s.la, s.lo]); }).map(function(s){ return s.k; });   // solo la zona elegida
   var n = agregarSel(dentro);
   modoArea(false);
   todo();
@@ -2161,6 +2209,7 @@ function eventos(){
     else if ((b = e.target.closest('[data-monit]'))){ S.monit = +b.getAttribute('data-monit'); todo(); }
   });
   $('evBuscar').addEventListener('input', renderLista);
+  $('evZonaMapa').addEventListener('change', function(){ ZONA = this.value; guardarZona('evento', ZONA); llenarZonas('evZonaMapa', ZONA); renderLista(); renderMapa(); encuadrarZona(MAPA, ZONA); });
   $('evBuscar').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ var b = $('evLista').querySelector('.item'); if (b){ e.preventDefault(); toggleSel(b.getAttribute('data-k')); this.value = ''; renderLista(); } } });
   $('evLista').addEventListener('click', function(e){ var b = e.target.closest('.item'); if (b){ toggleSel(b.getAttribute('data-k')); encuadrar(); } });
   $('evBtnQuitarTodos').addEventListener('click', function(){
@@ -2235,7 +2284,8 @@ catch(e){ S = nuevoEstado(); S.hora = horaAhora(); campos(); todo(); }   // esta
 var listo = false;
 return {
   mostrar: function(){
-    if (!listo){ iniciarMapa(); listo = true; todo(); encuadrar(); }
+    ZONA = llenarZonas('evZonaMapa', ZONA);   // incluye semáforos nuevos de la otra pestaña
+    if (!listo){ iniciarMapa(); listo = true; todo(); if (S.sel.length) encuadrar(); else encuadrarZona(MAPA, ZONA); }
     else { if (MAPA) MAPA.invalidateSize(); todo(); }   // refleja cambios hechos en la otra pestaña
   },
   importar: function(ks){   // puente desde "Cambio de tiempos"
@@ -2281,6 +2331,7 @@ var MAPA_CENTRO = [13.6989, -89.1914], MAPA_ZOOM = 12, MAPA_IMG_ANCHO = 1200, ZO
 /* ══ ESTADO ══ */
 var S = nuevoEstado();
 var MAPA = null, CAPA = null, TILES = null, BASE_MAPA = 'calle', FIJA = null;
+var ZONA = leerZona('fallas');   // zona del mapa ('' = todas)
 function nuevoEstado(){ return { k:null, falla:-1, aviso:false, horaAuto:true }; }
 
 /* ══ UTILIDADES ══ */
@@ -2314,13 +2365,13 @@ function renderChip(){
 function renderLista(){
   var q = norm($('faBuscar').value).split(/\s+/).filter(Boolean), h = '';
   if (q.length){
-    var a = todos().filter(function(s){ var t = norm(s.id + ' ' + s.d + ' ' + s.c); return q.every(function(w){ return t.indexOf(w) >= 0; }); });
+    var a = todos().filter(function(s){ if (!enZona(s, ZONA)) return false; var t = norm(s.id + ' ' + s.d + ' ' + s.c); return q.every(function(w){ return t.indexOf(w) >= 0; }); });
     a.slice(0, MAX_LISTA).forEach(function(s){
       var on = s.k === S.k;
       h += '<button type="button" class="item" data-k="' + esc(s.k) + '" aria-pressed="' + on + '"><span class="box">' + (on ? '✓' : '') + '</span><span>' + esc(s.d) +
            '<small>' + esc(s.id) + (s.c ? ' · ' + esc(s.c) : '') + '</small></span></button>';
     });
-    if (!a.length) h = '<div class="empty">No aparece. Revisa el nombre o agrégalo en Cambio de tiempos.</div>';
+    if (!a.length) h = '<div class="empty">' + (ZONA ? 'No aparece en esta zona. Prueba con "Todas las zonas".' : 'No aparece. Revisa el nombre o agrégalo en Cambio de tiempos.') + '</div>';
   }
   $('faLista').innerHTML = h;
 }
@@ -2332,12 +2383,6 @@ function renderFallas(){
 }
 
 /* ══ TEXTO ══ */
-// Municipio con mayúscula inicial: "SAN SALVADOR" → "San Salvador" (de, del, la… en minúscula).
-function municipio(c){
-  return String(c || '').toLowerCase().replace(/(^|[\s-])(\S)/g, function(m, sep, l){ return sep + l.toUpperCase(); })
-    .replace(/ (De|Del|La|Las|Los|El|Y) /g, function(m){ return m.toLowerCase(); })
-    .replace(/Ahuachapan/, 'Ahuachapán').replace(/Metapan/, 'Metapán').replace(/Cuscatlan/, 'Cuscatlán');   // tildes que faltan en el listado
-}
 // Formato tipo ficha: un dato por línea; la falla en mayúsculas con su emoji de color.
 function generar(){
   var s = sem(), f = textoFalla(), notas = limpiarWA($('faNotas').value), lin = [];
@@ -2346,7 +2391,7 @@ function generar(){
   lin.push('⚠️ *REPORTE DE FALLA*');
   lin.push('📅 *Fecha:* ' + fecha + (fecha && hora ? ' · ' : '') + hora);
   lin.push('🚥 *Semáforo:* ' + (s && s.id && s.id !== 'NUEVO' ? s.id : (s ? 'sin código' : '')));
-  lin.push('📍 *Ubicación:* ' + (s ? limpiarWA(s.d) + (s.c ? ', ' + municipio(s.c) : '') : ''));
+  lin.push('📍 *Ubicación:* ' + (s ? limpiarWA(s.d) + (s.c ? ', ' + nombreZona(s.c) : '') : ''));
   if (tieneCoord(s)) lin.push('🔗 https://maps.google.com/?q=' + s.la + ',' + s.lo);
   if (S.falla >= 0) lin.push(FALLAS[S.falla].e + ' *' + f.toUpperCase() + '*');
   else lin.push('*Falla:* ');
@@ -2404,7 +2449,7 @@ function renderMapa(){
   if (!MAPA) return;
   CAPA.clearLayers();
   todos().forEach(function(s){
-    if (!tieneCoord(s) || s.k === S.k) return;
+    if (!tieneCoord(s) || s.k === S.k || !enZona(s, ZONA)) return;
     var m = L.circleMarker([s.la, s.lo], { radius:5, color:'#ffffff', weight:1, fillColor:'#3b82f6', fillOpacity:.85 });
     m.bindTooltip('<b>' + esc(s.id && s.id !== 'NUEVO' ? s.id : 'Nuevo') + '</b> · ' + esc(s.d || ''));
     m.on('click', function(e){ L.DomEvent.stopPropagation(e); S.k = s.k; $('faBuscar').value = ''; todo(); });
@@ -2557,7 +2602,7 @@ function reset(){
   S = nuevoEstado(); FIJA = null; pintarFijar();
   ['faOtro','faNotas','faBuscar'].forEach(function(id){ $(id).value = ''; }); MARCAS.forEach(function(id){ $(id).checked = false; });
   ahora(); pintarFaltantes(); todo();
-  if (MAPA) MAPA.setView(MAPA_CENTRO, MAPA_ZOOM, { animate:false });
+  if (MAPA){ MAPA.setView(MAPA_CENTRO, MAPA_ZOOM, { animate:false }); encuadrarZona(MAPA, ZONA); }
 }
 function borrarReporte(){ var f = foto(); reset(); aviso('Reporte borrado.', { txt:'Deshacer', fn:function(){ restaurar(f); } }); }
 function todo(){ if (S.k && !porKey(S.k)) S.k = null; pintarHoraModo(); renderChip(); renderLista(); renderFallas(); renderMapa(); generar(); }
@@ -2571,6 +2616,7 @@ function eventos(){
   ['faGestores','faCuadrilla'].forEach(function(id){ $(id).addEventListener('change', generar); });
   $('faOtro').addEventListener('change', renderMapa);
   $('faBuscar').addEventListener('input', renderLista);
+  $('faZona').addEventListener('change', function(){ ZONA = this.value; guardarZona('fallas', ZONA); llenarZonas('faZona', ZONA); renderLista(); renderMapa(); if (!sem()) encuadrarZona(MAPA, ZONA); });
   $('faBuscar').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ var b = $('faLista').querySelector('.item'); if (b){ e.preventDefault(); elegir(b.getAttribute('data-k')); } } });
   $('faLista').addEventListener('click', function(e){ var b = e.target.closest('.item'); if (b) elegir(b.getAttribute('data-k')); });
   $('faChip').addEventListener('click', function(e){ if (e.target.closest('[data-quitar]')){ S.k = null; todo(); } });
@@ -2595,7 +2641,8 @@ var listo = false;
 return {
   mostrar: function(){
     tickHora();
-    if (!listo){ iniciarMapa(); listo = true; todo(); encuadrar(); }
+    ZONA = llenarZonas('faZona', ZONA);   // incluye semáforos nuevos de la otra pestaña
+    if (!listo){ iniciarMapa(); listo = true; todo(); if (sem()) encuadrar(); else encuadrarZona(MAPA, ZONA); }
     else { if (MAPA) MAPA.invalidateSize(); todo(); }   // refleja semáforos agregados en otra pestaña
   },
   mapa: function(){ return MAPA; },
