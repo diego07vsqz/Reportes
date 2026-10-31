@@ -58,7 +58,7 @@ input:hover,textarea:hover{border-color:var(--sel-line)}
 input:focus,textarea:focus{outline:none;border-color:var(--sel-line);box-shadow:0 0 0 4px color-mix(in srgb, var(--sel-line) 25%, transparent)}
 ::placeholder{color:var(--muted);opacity:.7;font-style:italic;font-weight:400}
 input[type=checkbox]{accent-color:var(--sel-line);width:18px;height:18px}
-#buscar{font-size:17px;font-weight:500;padding:13px 14px 13px 44px;border-color:var(--sel-line);background-repeat:no-repeat;background-position:14px 50%;background-size:20px;
+#buscar,#faBuscar{font-size:17px;font-weight:500;padding:13px 14px 13px 44px;border-color:var(--sel-line);background-repeat:no-repeat;background-position:14px 50%;background-size:20px;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E")}
 textarea{resize:vertical}
 :focus-visible{outline:3px solid var(--sel-line);outline-offset:1px}
@@ -172,7 +172,7 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
 
 /* ══ PESTAÑAS ══ */
 body[data-modo="evento"]{--acc:#8b5cf6;--on-acc:#ffffff}
-.tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .tab{position:relative;display:grid;gap:4px;align-content:start;text-align:left;padding:14px 16px;border:2px solid var(--line);border-radius:14px;background:var(--card)}
 .tab:hover{border-color:var(--acc)}
 .tab[aria-selected="true"]::after{content:'En uso';position:absolute;top:10px;right:12px;padding:1px 9px;border-radius:999px;font-size:11px;font-weight:800;background:var(--acc);color:var(--on-acc)}
@@ -183,8 +183,8 @@ body[data-modo="evento"]{--acc:#8b5cf6;--on-acc:#ffffff}
 .tab[aria-selected="true"]{background:color-mix(in srgb, var(--acc) 10%, var(--card));border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb, var(--acc) 30%, transparent)}
 .tab[aria-selected="true"] b{color:var(--fg)}
 #vistaEvento .num{background:var(--acc);color:var(--on-acc)}
-body[data-modo="evento"] .bar{display:none!important}
-@media (max-width:899px){ body[data-modo="evento"]{padding-bottom:40px} }
+body[data-modo="evento"] .bar,body[data-modo="fallas"] .bar{display:none!important}
+@media (max-width:899px){ body[data-modo="evento"],body[data-modo="fallas"]{padding-bottom:40px} }
 .puente{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;border:2px dashed #8b5cf6;border-radius:12px;padding:10px 12px;background:color-mix(in srgb, #8b5cf6 8%, transparent)}
 .puente span{font-size:14px;font-weight:600}
 .puente button{background:#8b5cf6;color:#fff;border-color:#8b5cf6}
@@ -279,11 +279,25 @@ body[data-modo="evento"] .bar{display:none!important}
 #vistaEvento .ayuda[open] summary{margin-bottom:6px}
 #vistaEvento .ayuda .hint{background:var(--sel);border-radius:10px;padding:8px 12px}
 /* lupa del buscador: más contraste en ambos temas */
-#buscar,#evBuscar{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.5' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E")}
-:root[data-theme="dark"] #buscar,:root[data-theme="dark"] #evBuscar{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e2e8f0' stroke-width='2.5' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E")}
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) #buscar,:root:not([data-theme="light"]) #evBuscar{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e2e8f0' stroke-width='2.5' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E")} }
+#buscar,#evBuscar,#faBuscar{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.5' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E")}
+:root[data-theme="dark"] #buscar,:root[data-theme="dark"] #evBuscar,:root[data-theme="dark"] #faBuscar{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e2e8f0' stroke-width='2.5' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E")}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) #buscar,:root:not([data-theme="light"]) #evBuscar,:root:not([data-theme="light"]) #faBuscar{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e2e8f0' stroke-width='2.5' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E")} }
 #evOut{position:absolute;left:-9999px;top:0;width:10px;height:10px;opacity:0}
 select{font:inherit;font-size:16px;color:var(--fg);background:var(--field);border:2px solid var(--field-line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+
+/* ══ REPORTE DE FALLAS ══ */
+body[data-modo="fallas"]{--acc:#ea580c;--on-acc:#ffffff}
+#vistaFallas .num{background:var(--acc);color:var(--on-acc)}
+@media (max-width:640px){ .tab small{display:none} .tab{padding:34px 10px 12px} .tab b{font-size:14px} }   /* teléfono: 3 pestañas, solo título */
+#faMapa{height:300px;border:1px solid var(--line);border-radius:12px;z-index:0;background:var(--bg)}
+#faOut{position:absolute;left:-9999px;top:0;width:10px;height:10px;opacity:0}
+#vistaFallas .side .btn-copy{display:block;width:100%}
+#vistaFallas .opt .pto{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px;background:var(--c);box-shadow:0 0 0 1.5px #fff}
+#vistaFallas .op{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600}
+#vistaFallas .op input{width:20px;height:20px;flex:none}
+#vistaFallas .list:empty{display:none}
+#vistaFallas .fapin{background:none;border:0}
+#vistaFallas .fapin svg{display:block;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}
 </style>
 </head>
 <body>
@@ -293,6 +307,7 @@ select{font:inherit;font-size:16px;color:var(--fg);background:var(--field);borde
   <nav class="tabs" role="tablist" aria-label="Tipo de reporte">
     <button type="button" class="tab" role="tab" id="tabTiempos" aria-selected="true"><b>🚦 Cambio de tiempos</b><small>Para pocos semáforos. Reporta los segundos antes y después del cambio: accidentes, apoyos viales, eventos pequeños.</small></button>
     <button type="button" class="tab" role="tab" id="tabEvento" aria-selected="false"><b>🎪 Evento con corredores<span class="tab-cuenta" id="tabCuenta" hidden></span></b><small>Para eventos grandes. Lleva la cuenta de intersecciones intervenidas por corredor: conciertos, partidos, desfiles, marchas.</small></button>
+    <button type="button" class="tab" role="tab" id="tabFallas" aria-selected="false"><b>🛠️ Reporte de fallas</b><small>Un semáforo con falla: intermitencia, sin comunicación, apagado, poda, reorientación u otra.</small></button>
   </nav>
 
   <div id="vistaTiempos">
@@ -462,6 +477,63 @@ select{font:inherit;font-size:16px;color:var(--fg);background:var(--field);borde
         <p class="hint">La imagen se centra sola en los semáforos del evento, aunque muevas el mapa. Usa 📌 Fijar vista si quieres otro encuadre.</p>
         <p class="hint">El evento se guarda solo en este navegador mientras trabajas.</p>
         <button type="button" class="btn-reset" id="evBtnNuevoEvento">↺ Empezar otro evento <small>(borra todo · se puede deshacer)</small></button>
+      </section>
+    </aside>
+  </div>
+  </div>
+  <div id="vistaFallas" hidden>
+  <div class="cols">
+    <div class="form">
+      <section class="card" id="faCardCuando">
+        <h2><span class="num">1</span>¿Cuándo se detectó?</h2>
+        <p class="hint">Ya vienen con la fecha y hora actual.</p>
+        <div class="row">
+          <label class="f">Fecha<input type="date" id="faFecha"></label>
+          <label class="f">Hora de detección<input type="time" id="faHora"></label>
+        </div>
+      </section>
+
+      <section class="card" id="faCardDonde">
+        <h2><span class="num">2</span>¿Qué semáforo?</h2>
+        <p class="hint">Uno por reporte. Búscalo o tócalo en el mapa.</p>
+        <div class="chips" id="faChip"></div>
+        <input type="search" id="faBuscar" placeholder="Buscar semáforo: calle, ciudad o ID…" autocomplete="off">
+        <div class="list" id="faLista"></div>
+        <div class="mapwrap"><div id="faMapa"></div><div class="desc-mapa" id="faDescMapa" aria-live="polite"></div><div class="maptools2"><button type="button" id="faBtnFijar" aria-pressed="false" title="Usar la vista actual para la imagen">📌 Fijar vista</button><button type="button" id="faBtnBase">Satélite</button></div></div>
+        <p class="hint">Punto azul = semáforo. Tócalo para elegirlo; toca otro para cambiarlo.</p>
+      </section>
+
+      <section class="card" id="faCardFalla">
+        <h2><span class="num">3</span>¿Qué falla?</h2>
+        <div class="opts" id="faFallas"></div>
+        <label class="f" id="faOtroWrap" hidden>Especifique *<input type="text" id="faOtro" placeholder="Ej. poste chocado, cabeza dañada…" autocomplete="off"></label>
+      </section>
+
+      <section class="card">
+        <h2><span class="num">4</span>Seguimiento</h2>
+        <label class="op"><input type="checkbox" id="faGestores"> Se necesita asistencia de gestores</label>
+        <label class="op"><input type="checkbox" id="faCuadrilla"> Reportado a cuadrilla</label>
+        <label class="f">Notas (opcional)<textarea id="faNotas" rows="2" placeholder="Ej. intermitente desde la lluvia."></textarea></label>
+      </section>
+    </div>
+
+    <aside class="side">
+      <section class="card">
+        <h2><span class="num">5</span>Así se verá en WhatsApp</h2>
+        <div class="phone"><div class="bubble" id="faBurbuja"></div></div>
+        <div class="opciones"><span class="f">Opciones del texto</span>
+          <label class="f" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="faConId" style="width:auto" checked> Mostrar código del semáforo (ej. SS1301)</label>
+          <label class="f" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="faConLink" style="width:auto"> Agregar enlace de Google Maps</label>
+        </div>
+        <textarea id="faOut" readonly tabindex="-1" aria-hidden="true"></textarea>
+        <div class="aviso" id="faFaltan" hidden><strong>Copiado, pero faltan datos</strong><ul id="faFaltanLista"></ul></div>
+        <button type="button" class="btn-copy" id="faBtnCopy">Copiar reporte</button>
+        <div class="mapbtns">
+          <button type="button" class="btn-blue" id="faBtnMapaCopiar">Copiar mapa</button>
+          <button type="button" id="faBtnMapaBajar">Descargar mapa</button>
+        </div>
+        <p class="hint">Pega primero el texto y luego la imagen. La imagen se centra sola en el semáforo; usa 📌 Fijar vista para otro encuadre.</p>
+        <button type="button" class="btn-reset" id="faBtnReset">↺ Empezar otro reporte <small>(borra todo · se puede deshacer)</small></button>
       </section>
     </aside>
   </div>
@@ -1218,7 +1290,7 @@ function generar(){
   if (S.aviso) pintarFaltantes();
 }
 // Vista previa estilo WhatsApp (negritas y viñetas).
-function pintarBurbuja(txt){
+function pintarBurbuja(txt, destino){
   var h = '';
   String(txt || '').split('\n').forEach(function(l){
     var li = l.indexOf('* ') === 0;
@@ -1227,7 +1299,7 @@ function pintarBurbuja(txt){
       .replace(/\*([^*]+?)\*/g, '<b>$1</b>');
     h += '<div' + (li ? ' class="li"' : '') + '>' + t + '</div>';
   });
-  $('burbuja').innerHTML = h;
+  $(destino || 'burbuja').innerHTML = h;
 }
 
 /* ══ FALTANTES ══ */
@@ -2166,30 +2238,340 @@ return {
   estado: function(){ return S; }
 };
 })();
+</script>
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════════
+   MÓDULO FALLAS (FA) — pestaña "Reporte de fallas"
+   Un semáforo y una falla por reporte. Aislado (IIFE) como EV; estado solo en memoria.
+   Flujo: fecha/hora → semáforo (buscador o mapa) → falla → seguimiento → copiar texto e imagen.
+   Expone: FA.mostrar() al abrir la pestaña · FA.mapa() y FA.estado() solo lectura (pruebas / consola).
+   ═══════════════════════════════════════════════════════════════════════════════ */
+var FA = (function(){
 
+/* ══ CONFIG ══ */
+var FALLAS = [                                     // botón → texto · color del ícono en el mapa
+  { b:'Intermitencia',          c:'#eab308' },
+  { b:'Falla de comunicación',  c:'#2563eb' },
+  { b:'Apagado',                c:'#374151' },
+  { b:'Necesita poda',          c:'#16a34a' },
+  { b:'Necesita reorientación', c:'#7c3aed' },
+  { b:'Otro',                   c:'#dc2626' }
+];
+var OTRO = FALLAS.length - 1;                      // "Otro": pide especificar
+var APAGADO = 2;                                   // "Apagado": luces grises en el ícono
+var COLOR_SIN = '#c27c0e';                         // ícono sin falla elegida
+var MAX_LISTA = 40;
+var BASES = {
+  calle: { url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attr:'© OpenStreetMap' },
+  sat:   { url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attr:'© Esri' }
+};
+var MAPA_CENTRO = [13.6989, -89.1914], MAPA_ZOOM = 12, MAPA_IMG_ANCHO = 1200, ZOOM_SEM = 17;
+
+/* ══ ESTADO ══ */
+var S = nuevoEstado();
+var MAPA = null, CAPA = null, TILES = null, BASE_MAPA = 'calle', FIJA = null;
+function nuevoEstado(){ return { k:null, falla:-1, aviso:false }; }
+
+/* ══ UTILIDADES ══ */
+function sem(){ return S.k ? porKey(S.k) : null; }
+function textoFalla(){
+  if (S.falla < 0) return '';
+  if (S.falla === OTRO){ var o = limpiarWA($('faOtro').value); return o ? 'Otro: ' + o : 'Otro'; }
+  return FALLAS[S.falla].b;
+}
+function colorFalla(){ return S.falla >= 0 ? FALLAS[S.falla].c : COLOR_SIN; }
+function ahora(){ var d = new Date(); $('faFecha').value = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); $('faHora').value = pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+
+/* ══ SEMÁFORO ══ */
+function elegir(k){ S.k = (S.k === k ? null : k); $('faBuscar').value = ''; todo(); encuadrar(); }
+function renderChip(){
+  var s = sem();
+  $('faChip').innerHTML = s ? '<span class="chip"><span>' + esc((s.id && s.id !== 'NUEVO' ? s.id + ' · ' : '') + s.d) + '</span><button type="button" data-quitar="1" aria-label="Quitar semáforo">×</button></span>' : '';
+}
+function renderLista(){
+  var q = norm($('faBuscar').value).split(/\s+/).filter(Boolean), h = '';
+  if (q.length){
+    var a = todos().filter(function(s){ var t = norm(s.id + ' ' + s.d + ' ' + s.c); return q.every(function(w){ return t.indexOf(w) >= 0; }); });
+    a.slice(0, MAX_LISTA).forEach(function(s){
+      var on = s.k === S.k;
+      h += '<button type="button" class="item" data-k="' + esc(s.k) + '" aria-pressed="' + on + '"><span class="box">' + (on ? '✓' : '') + '</span><span>' + esc(s.d) +
+           '<small>' + esc(s.id) + (s.c ? ' · ' + esc(s.c) : '') + '</small></span></button>';
+    });
+    if (!a.length) h = '<div class="empty">No aparece. Revisa el nombre o agrégalo en Cambio de tiempos.</div>';
+  }
+  $('faLista').innerHTML = h;
+}
+function renderFallas(){
+  $('faFallas').innerHTML = FALLAS.map(function(f, i){
+    return '<button type="button" class="opt" data-i="' + i + '" aria-pressed="' + (S.falla === i) + '" style="--c:' + f.c + '"><span class="pto"></span>' + esc(f.b) + '</button>';
+  }).join('');
+  $('faOtroWrap').hidden = S.falla !== OTRO;
+}
+
+/* ══ TEXTO ══ */
+function nombre(s){
+  var t = ($('faConId').checked && s.id && s.id !== 'NUEVO' ? s.id + ' - ' : '') + (s.d || '');
+  if ($('faConLink').checked && tieneCoord(s)) t += '\n📍 https://maps.google.com/?q=' + s.la + ',' + s.lo;
+  return t;
+}
+function generar(){
+  var s = sem(), f = textoFalla(), notas = limpiarWA($('faNotas').value), lin = [], seg = [];
+  lin.push('🚦 *PLANEAMIENTO SEMAFÓRICO* 🚦');
+  lin.push('⚠️ *REPORTE DE FALLA*');
+  lin.push('📅 Fecha: ' + fmtFecha($('faFecha').value));
+  lin.push('🕒 Hora de detección: ' + fmtHora($('faHora').value));
+  lin.push('*Intersección:*');
+  if (s) nombre(s).split('\n').forEach(function(x){ lin.push(x); });
+  lin.push('');
+  lin.push('*Falla:* ' + f);
+  if ($('faGestores').checked) seg.push('* Se necesita asistencia de gestores.');
+  if ($('faCuadrilla').checked) seg.push('* Reportado a cuadrilla.');
+  if (seg.length){ lin.push(''); lin.push('*Seguimiento:*'); seg.forEach(function(x){ lin.push(x); }); }
+  if (notas){ lin.push(''); lin.push('Notas: ' + notas); }
+  $('faOut').value = lin.join('\n');
+  pintarBurbuja($('faOut').value, 'faBurbuja');
+  $('faDescMapa').textContent = f ? 'Falla: ' + f : '';
+  if (S.aviso) pintarFaltantes();
+}
+
+/* ══ FALTANTES ══ */
+function faltantes(){
+  var f = [];
+  if (!$('faFecha').value) f.push({ c:'faCardCuando', t:'Fecha' });
+  if (!$('faHora').value) f.push({ c:'faCardCuando', t:'Hora de detección' });
+  if (!sem()) f.push({ c:'faCardDonde', t:'Elegir el semáforo' });
+  if (S.falla < 0) f.push({ c:'faCardFalla', t:'Elegir la falla' });
+  else if (S.falla === OTRO && !limpiarWA($('faOtro').value)) f.push({ c:'faCardFalla', t:'Especificar la falla en "Otro"' });
+  return f;
+}
+function pintarFaltantes(){
+  var f = S.aviso ? faltantes() : [];
+  ['faCardCuando','faCardDonde','faCardFalla'].forEach(function(id){ $(id).classList.remove('falta'); });
+  f.forEach(function(x){ $(x.c).classList.add('falta'); });
+  $('faFaltanLista').innerHTML = f.map(function(x){ return '<li>' + esc(x.t) + '</li>'; }).join('');
+  if (!f.length) S.aviso = false;
+  $('faFaltan').hidden = !f.length;
+}
+
+/* ══ MAPA ══ */
+function iniciarMapa(){
+  if (typeof L === 'undefined'){ $('faMapa').innerHTML = '<div class="empty">Mapa no disponible. Revisa conexión a internet.</div>'; return; }
+  MAPA = L.map('faMapa', { preferCanvas:true, zoomSnap:0.25, zoomDelta:0.5, wheelPxPerZoomLevel:100 }).setView(MAPA_CENTRO, MAPA_ZOOM);
+  registrarBases(BASES);
+  TILES = reintentarTiles(L.tileLayer(BASES.calle.url, { maxZoom:19, attribution:BASES.calle.attr, crossOrigin:'anonymous' })).addTo(MAPA);
+  CAPA = L.layerGroup().addTo(MAPA);
+}
+function svgIcono(col, apagado){   // círculo del color de la falla con semáforo dentro
+  var l = apagado ? ['#6b7280','#6b7280','#6b7280'] : ['#ef4444','#fbbf24','#22c55e'];
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 30 30"><circle cx="15" cy="15" r="12" fill="' + col + '" stroke="#ffffff" stroke-width="2.5"/>' +
+    '<rect x="11" y="6" width="8" height="18" rx="3" fill="#1f2937"/><circle cx="15" cy="9.6" r="2.1" fill="' + l[0] + '"/><circle cx="15" cy="15" r="2.1" fill="' + l[1] + '"/><circle cx="15" cy="20.4" r="2.1" fill="' + l[2] + '"/></svg>';
+}
+function renderMapa(){
+  if (!MAPA) return;
+  CAPA.clearLayers();
+  todos().forEach(function(s){
+    if (!tieneCoord(s) || s.k === S.k) return;
+    var m = L.circleMarker([s.la, s.lo], { radius:5, color:'#ffffff', weight:1, fillColor:'#3b82f6', fillOpacity:.85 });
+    m.bindTooltip('<b>' + esc(s.id && s.id !== 'NUEVO' ? s.id : 'Nuevo') + '</b> · ' + esc(s.d || ''));
+    m.on('click', function(e){ L.DomEvent.stopPropagation(e); S.k = s.k; $('faBuscar').value = ''; todo(); });
+    m.addTo(CAPA);
+  });
+  var s = sem();
+  if (tieneCoord(s)){
+    L.marker([s.la, s.lo], { icon:L.divIcon({ className:'fapin', html:svgIcono(colorFalla(), S.falla === APAGADO), iconSize:[40,40], iconAnchor:[20,20], tooltipAnchor:[18,0] }), zIndexOffset:1000 })
+      .bindTooltip('<b>' + esc(s.id) + '</b> · ' + esc(s.d) + '<br><small>Clic: quitar</small>')
+      .on('click', function(e){ L.DomEvent.stopPropagation(e); S.k = null; todo(); })
+      .addTo(CAPA);
+  }
+}
+function encuadrar(){ var s = sem(); if (MAPA && tieneCoord(s) && !FIJA) MAPA.setView([s.la, s.lo], Math.max(MAPA.getZoom(), 16), { animate:false }); }
+function cambiarBase(){
+  if (!TILES) return;
+  var antes = BASES[BASE_MAPA].attr;
+  BASE_MAPA = BASE_MAPA === 'calle' ? 'sat' : 'calle';
+  TILES.setUrl(BASES[BASE_MAPA].url);
+  if (MAPA.attributionControl){ MAPA.attributionControl.removeAttribution(antes); MAPA.attributionControl.addAttribution(BASES[BASE_MAPA].attr); }
+  $('faBtnBase').textContent = BASE_MAPA === 'calle' ? 'Satélite' : 'Calles';
+}
+function fijarVista(){
+  if (!MAPA) return;
+  if (FIJA){ FIJA = null; aviso('Vista liberada. La imagen se centra sola en el semáforo.'); }
+  else { FIJA = { centro:MAPA.getCenter(), z:MAPA.getZoom() }; aviso('📌 Vista fijada. La imagen usará este encuadre aunque muevas el mapa.'); }
+  pintarFijar();
+}
+function pintarFijar(){ $('faBtnFijar').setAttribute('aria-pressed', !!FIJA); $('faBtnFijar').textContent = FIJA ? '📌 Vista fijada · Quitar' : '📌 Fijar vista'; }
+function vistaCaptura(){
+  if (FIJA) return FIJA;
+  var s = sem();
+  return tieneCoord(s) ? { centro:L.latLng(s.la, s.lo), z:ZOOM_SEM } : { centro:MAPA.getCenter(), z:MAPA.getZoom() };
+}
+
+/* ══ IMAGEN DEL MAPA ══ */
+function dibujarIcono(g, x, y, k, col, apagado){
+  var l = apagado ? ['#6b7280','#6b7280','#6b7280'] : ['#ef4444','#fbbf24','#22c55e'];
+  function caja(px, py, w, hh, r){ g.beginPath(); g.moveTo(px + r, py); g.arcTo(px + w, py, px + w, py + hh, r); g.arcTo(px + w, py + hh, px, py + hh, r); g.arcTo(px, py + hh, px, py, r); g.arcTo(px, py, px + w, py, r); g.closePath(); }
+  function luz(cy, c){ g.beginPath(); g.arc(15, cy, 2.1, 0, Math.PI * 2); g.fillStyle = c; g.fill(); }
+  g.save(); g.translate(x - 15 * k, y - 15 * k); g.scale(k, k);
+  g.shadowColor = 'rgba(0,0,0,.4)'; g.shadowBlur = 3 * k; g.shadowOffsetY = 1.5 * k;
+  g.beginPath(); g.arc(15, 15, 12, 0, Math.PI * 2); g.fillStyle = col; g.fill(); g.shadowColor = 'transparent';
+  g.strokeStyle = '#ffffff'; g.lineWidth = 2.5; g.stroke();
+  caja(11, 6, 8, 18, 3); g.fillStyle = '#1f2937'; g.fill();
+  luz(9.6, l[0]); luz(15, l[1]); luz(20.4, l[2]);
+  g.restore();
+}
+function etiquetaImg(g, W, H, m, anchoCredito){   // "Falla: …" abajo a la izquierda (achica la letra si no cabe)
+  var t = textoFalla(); if (!t) return;
+  t = 'Falla: ' + t;
+  var k = Math.min(m, 1.5), fs = Math.round(16 * k), pd = Math.round(8 * k), libre = W - anchoCredito - pd * 3;
+  g.textAlign = 'left'; g.textBaseline = 'middle';
+  do { g.font = '700 ' + fs + 'px sans-serif'; } while (g.measureText(t).width + pd * 2 + fs > libre && --fs > 9);
+  var w = Math.min(g.measureText(t).width + pd * 2 + fs, libre), hh = fs + pd * 2, x = pd, y = H - hh - pd;
+  g.fillStyle = 'rgba(255,255,255,.94)'; g.fillRect(x, y, w, hh);
+  g.beginPath(); g.arc(x + pd + fs * 0.35, y + hh / 2, fs * 0.35, 0, Math.PI * 2); g.fillStyle = colorFalla(); g.fill();
+  g.fillStyle = '#111827'; g.fillText(t, x + pd + fs, y + hh / 2, w - pd * 2 - fs);
+}
+function imagenMapa(){
+  if (!MAPA) return Promise.reject(new Error('sin mapa'));
+  var tam = MAPA.getSize(); if (!tam.x || !tam.y) tam = L.point(800, 600);
+  var v = vistaCaptura(), z = v.z;
+  var W = MAPA_IMG_ANCHO, H = Math.round(tam.y * W / tam.x), m = W / tam.x;
+  var zMax = (BASE_MAPA === 'sat' ? 18 : 19);
+  var zz = Math.max(Math.ceil(z), Math.min(zMax, Math.floor(z) + 2, Math.round(z + Math.log(m) / Math.LN2)));
+  var e = W / (tam.x * Math.pow(2, zz - z));
+  var c = MAPA.project(v.centro, zz), ox = c.x - (W / e) / 2, oy = c.y - (H / e) / 2, n = Math.pow(2, zz);
+  var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  var g = cv.getContext('2d'); g.fillStyle = '#e5e7eb'; g.fillRect(0, 0, W, H);
+  g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+  var tareas = [];
+  for (var tx = Math.floor(ox / 256); tx <= Math.floor((ox + W / e) / 256); tx++){
+    for (var ty = Math.floor(oy / 256); ty <= Math.floor((oy + H / e) / 256); ty++){
+      if (ty < 0 || ty >= n) continue;
+      (function(tx, ty){
+        var url = BASES[BASE_MAPA].url.replace('{z}', zz).replace('{x}', ((tx % n) + n) % n).replace('{y}', ty);
+        tareas.push(cargarTile(url).then(function(im){
+          if (im) g.drawImage(im, Math.floor((tx * 256 - ox) * e), Math.floor((ty * 256 - oy) * e), Math.ceil(256 * e) + 1, Math.ceil(256 * e) + 1);
+        }));
+      })(tx, ty);
+    }
+  }
+  return Promise.all(tareas).then(function(){
+    var s = sem();
+    if (tieneCoord(s)){ var p = MAPA.project([s.la, s.lo], zz); dibujarIcono(g, (p.x - ox) * e, (p.y - oy) * e, m * 1.3, colorFalla(), S.falla === APAGADO); }
+    var fa = Math.round(11 * Math.min(m, 1.5)), at = atribucionImg(BASES[BASE_MAPA].attr);
+    g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.font = fa + 'px sans-serif';
+    var w = g.measureText(at).width + fa;
+    g.fillStyle = 'rgba(255,255,255,.8)'; g.fillRect(W - w, H - fa * 1.7, w, fa * 1.7);
+    g.fillStyle = '#111827'; g.fillText(at, W - w + fa / 2, H - fa * 0.5);
+    etiquetaImg(g, W, H, m, w);
+    return new Promise(function(res, rej){
+      try { cv.toBlob(function(b){ if (b) res(b); else rej(new Error('sin imagen')); }, 'image/png'); } catch(err){ rej(err); }
+    });
+  });
+}
+function bajarImagen(b){ var u = URL.createObjectURL(b), a = document.createElement('a'); a.href = u; a.download = 'mapa-falla.png'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(u); }, 4000); }
+function copiarMapa(){
+  var p = imagenMapa();
+  if (navigator.clipboard && navigator.clipboard.write && typeof ClipboardItem !== 'undefined'){
+    var item; try { item = new ClipboardItem({ 'image/png': p }); } catch(e){ item = null; }
+    if (item){
+      navigator.clipboard.write([item]).then(function(){ aviso('✓ Mapa copiado. Pégalo en WhatsApp.'); })
+        .catch(function(){ p.then(function(b){ bajarImagen(b); aviso('No se pudo copiar. Mapa descargado.'); }).catch(function(){ aviso('No se pudo crear el mapa.'); }); });
+      return;
+    }
+  }
+  p.then(function(b){ bajarImagen(b); aviso('Mapa descargado. Adjúntalo en WhatsApp.'); }).catch(function(){ aviso('No se pudo crear el mapa.'); });
+}
+
+/* ══ ACCIONES ══ */
+function copiar(){
+  var falta = faltantes().length > 0;
+  S.aviso = falta; pintarFaltantes();
+  var ok = falta ? '⚠️ Copiado, pero faltan datos. Revisa lo marcado en rojo.' : '✓ Copiado. Ahora pégalo en WhatsApp.', ta = $('faOut');
+  function plan(){ ta.focus(); ta.select(); var r = false; try { r = document.execCommand('copy'); } catch(e){} aviso(r ? ok : 'No se pudo copiar. Intenta de nuevo.'); }
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(function(){ aviso(ok); }).catch(plan);
+  else plan();
+}
+var CAMPOS = ['faFecha','faHora','faOtro','faNotas'], MARCAS = ['faGestores','faCuadrilla'];
+function foto(){ return { S:JSON.parse(JSON.stringify(S)), FIJA:FIJA, v:CAMPOS.map(function(id){ return $(id).value; }), m:MARCAS.map(function(id){ return $(id).checked; }) }; }
+function restaurar(f){
+  S = f.S; S.aviso = false; FIJA = f.FIJA; pintarFijar();
+  CAMPOS.forEach(function(id, i){ $(id).value = f.v[i]; }); MARCAS.forEach(function(id, i){ $(id).checked = f.m[i]; });
+  todo(); if (FIJA && MAPA) MAPA.setView(FIJA.centro, FIJA.z, { animate:false }); else encuadrar();
+  aviso('✓ Reporte recuperado.');
+}
+function reset(){
+  S = nuevoEstado(); FIJA = null; pintarFijar();
+  ['faOtro','faNotas','faBuscar'].forEach(function(id){ $(id).value = ''; }); MARCAS.forEach(function(id){ $(id).checked = false; });
+  ahora(); pintarFaltantes(); todo();
+  if (MAPA) MAPA.setView(MAPA_CENTRO, MAPA_ZOOM, { animate:false });
+}
+function borrarReporte(){ var f = foto(); reset(); aviso('Reporte borrado.', { txt:'Deshacer', fn:function(){ restaurar(f); } }); }
+function todo(){ if (S.k && !porKey(S.k)) S.k = null; renderChip(); renderLista(); renderFallas(); renderMapa(); generar(); }
+
+/* ══ EVENTOS ══ */
+function eventos(){
+  ['faFecha','faHora','faOtro','faNotas'].forEach(function(id){ $(id).addEventListener('input', generar); });
+  ['faGestores','faCuadrilla','faConId','faConLink'].forEach(function(id){ $(id).addEventListener('change', generar); });
+  $('faOtro').addEventListener('change', renderMapa);
+  $('faBuscar').addEventListener('input', renderLista);
+  $('faBuscar').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ var b = $('faLista').querySelector('.item'); if (b){ e.preventDefault(); elegir(b.getAttribute('data-k')); } } });
+  $('faLista').addEventListener('click', function(e){ var b = e.target.closest('.item'); if (b) elegir(b.getAttribute('data-k')); });
+  $('faChip').addEventListener('click', function(e){ if (e.target.closest('[data-quitar]')){ S.k = null; todo(); } });
+  $('faFallas').addEventListener('click', function(e){
+    var b = e.target.closest('.opt'); if (!b) return;
+    var i = parseInt(b.getAttribute('data-i'), 10);
+    S.falla = (S.falla === i ? -1 : i); todo();
+    if (S.falla === OTRO) $('faOtro').focus();
+  });
+  $('faBtnBase').addEventListener('click', cambiarBase);
+  $('faBtnFijar').addEventListener('click', fijarVista);
+  $('faBtnCopy').addEventListener('click', copiar);
+  $('faBtnMapaCopiar').addEventListener('click', copiarMapa);
+  $('faBtnMapaBajar').addEventListener('click', function(){ imagenMapa().then(function(b){ bajarImagen(b); aviso('✓ Mapa descargado.'); }).catch(function(){ aviso('No se pudo crear el mapa.'); }); });
+  $('faBtnReset').addEventListener('click', borrarReporte);
+}
+
+/* ══ INIT ══ */
+eventos();
+reset();
+var listo = false;
+return {
+  mostrar: function(){
+    if (!listo){ iniciarMapa(); listo = true; todo(); encuadrar(); }
+    else { if (MAPA) MAPA.invalidateSize(); todo(); }   // refleja semáforos agregados en otra pestaña
+  },
+  mapa: function(){ return MAPA; },
+  estado: function(){ return S; }
+};
+})();
+</script>
+<script>
 /* ══ PESTAÑAS ══ */
 var LS_VISTA = 'ups_vista';
 var PUENTE_MIN = 6;                                  // con motivo Evento y esta cantidad de semáforos, sugiere el modo Evento
-var SUBTITULOS = { tiempos:'Llena los pasos. Copia el reporte. Pégalo en WhatsApp.', evento:'Elige semáforos, revisa corredores, marca intervenidos y copia.' };
+var SUBTITULOS = { tiempos:'Llena los pasos. Copia el reporte. Pégalo en WhatsApp.', evento:'Elige semáforos, revisa corredores, marca intervenidos y copia.', fallas:'Elige el semáforo y la falla. Copia el reporte y el mapa.' };
+var VISTAS = ['tiempos', 'evento', 'fallas'];
 // Muestra una pestaña, la recuerda y actualiza el enlace (#tiempos / #evento).
 function cambiarVista(v, sinHash){
-  if (v !== 'evento') v = 'tiempos';
+  if (VISTAS.indexOf(v) < 0) v = 'tiempos';
   document.body.setAttribute('data-modo', v);
   $('vistaTiempos').hidden = v !== 'tiempos';
   $('vistaEvento').hidden = v !== 'evento';
+  $('vistaFallas').hidden = v !== 'fallas';
   $('tabTiempos').setAttribute('aria-selected', v === 'tiempos');
   $('tabEvento').setAttribute('aria-selected', v === 'evento');
+  $('tabFallas').setAttribute('aria-selected', v === 'fallas');
   $('subtitulo').textContent = SUBTITULOS[v];
   try { localStorage.setItem(LS_VISTA, v); } catch(e){}
   if (!sinHash && history.replaceState) history.replaceState(null, '', '#' + v);
-  if (v === 'evento') EV.mostrar(); else if (MAPA) MAPA.invalidateSize();
+  if (v === 'evento') EV.mostrar(); else if (v === 'fallas') FA.mostrar(); else if (MAPA) MAPA.invalidateSize();
 }
 // Pestaña al abrir: la del enlace, si no la última usada, si no Cambio de tiempos.
 function vistaInicial(){
   var h = (location.hash || '').replace('#', '');
-  if (h === 'evento' || h === 'tiempos') return h;
+  if (VISTAS.indexOf(h) >= 0) return h;
   var v = null; try { v = localStorage.getItem(LS_VISTA); } catch(e){}
-  return v === 'evento' ? 'evento' : 'tiempos';
+  return VISTAS.indexOf(v) >= 0 ? v : 'tiempos';
 }
 
 /* ══ PUENTE: Cambio de tiempos → Evento ══ */
@@ -2211,8 +2593,9 @@ function pasarAEvento(){
 }
 $('tabTiempos').addEventListener('click', function(){ cambiarVista('tiempos'); });
 $('tabEvento').addEventListener('click', function(){ cambiarVista('evento'); });
+$('tabFallas').addEventListener('click', function(){ cambiarVista('fallas'); });
 $('btnPuente').addEventListener('click', pasarAEvento);
-window.addEventListener('hashchange', function(){ var h = location.hash.replace('#', ''); if (h === 'evento' || h === 'tiempos') cambiarVista(h, true); });
+window.addEventListener('hashchange', function(){ var h = location.hash.replace('#', ''); if (VISTAS.indexOf(h) >= 0) cambiarVista(h, true); });
 cambiarVista(vistaInicial(), !location.hash);
 pintarPuente();
 </script>
