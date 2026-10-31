@@ -321,7 +321,9 @@ body[data-modo="fallas"] header.top .l-a{fill:#f59e0b;animation:parpadeo 1.2s st
 
 /* ══ MENÚ DE PESTAÑAS (un botón que despliega las 3) ══ */
 .vistas{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
-.vistas-dd{position:relative;flex:0 1 560px;min-width:0}
+.vistas-dd{position:relative;flex:1 1 100%;min-width:0}   /* a todo lo ancho, hasta el borde del cuadro de WhatsApp */
+.vistas-pista{flex-basis:100%}
+@media (min-width:900px){ #vistasMenu{grid-template-columns:repeat(3,minmax(0,1fr))} .vistas #vistasMenu .tab{padding-top:30px;align-items:start} .vistas #vistasMenu .tab b{padding-right:0} }   /* el aviso En uso va arriba: el nombre no se parte */   /* PC: las 3 opciones lado a lado */
 .vistas-btn{width:100%;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;text-align:left;padding:10px 12px 10px 16px;
   border:2px solid var(--acc);border-radius:16px;background:color-mix(in srgb, var(--acc) 10%, var(--card));box-shadow:0 0 0 3px color-mix(in srgb, var(--acc) 25%, transparent);transition:box-shadow .2s}
 .vistas-btn:hover,.vistas-btn[aria-expanded="true"]{box-shadow:0 0 0 5px color-mix(in srgb, var(--acc) 35%, transparent)}
