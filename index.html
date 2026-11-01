@@ -294,6 +294,10 @@ body[data-modo="fallas"]{--acc:#ea580c;--on-acc:#ffffff}
 #vistaFallas .opt .pto{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px;background:var(--c);box-shadow:0 0 0 1.5px #fff}
 #vistaFallas .op{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600}
 #vistaFallas .op input{width:20px;height:20px;flex:none}
+#vistaFallas .op.waze{justify-self:start;flex-wrap:wrap;gap:8px;padding:8px 14px;border:2px dashed #0ea5e9;border-radius:999px;background:color-mix(in srgb, #0ea5e9 10%, transparent)}
+#vistaFallas .op.waze:has(input:checked){border-style:solid;background:color-mix(in srgb, #0ea5e9 22%, transparent)}
+#vistaFallas .op.waze small{font-weight:500;color:var(--muted)}
+#vistaFallas .waze-ico{font-size:18px}
 #vistaFallas .list:empty{display:none}
 #vistaFallas .fapin{background:none;border:0}
 #vistaFallas .fapin svg{display:block;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}
@@ -382,6 +386,26 @@ body[data-encendido="v"] header.top .sema .l-v{fill:#16a34a;filter:drop-shadow(0
 @keyframes copiaLate{40%{transform:scale(1.04)}100%{transform:none}}
 @keyframes copiaPulso{from{opacity:.9;transform:scale(1)}to{opacity:0;transform:scale(1.15,1.6)}}
 @media (prefers-reduced-motion:reduce){ .st-senal .senal.gira,.bubble div.cambio,.btn-copy.copiado,.btn-copy.copiado::after{animation:none} .btn-copy .chk path{animation:none;stroke-dashoffset:0} }
+
+/* ══ ENCABEZADO EN PANTALLAS MEDIANAS: el botón Claro/Oscuro va arriba (no tapa el semáforo del título) ══ */
+@media (min-width:641px) and (max-width:1000px){ header.top{padding-top:48px} }
+
+/* ══ BARRA COMPACTA AL BAJAR ══ */
+.mini-barra{position:fixed;z-index:1100;top:0;left:0;right:0;padding:6px 16px;background:var(--hdr-bg);color:var(--hdr-fg);
+  border-bottom:3px solid var(--acc);box-shadow:0 6px 18px rgba(0,0,0,.2);animation:miniBaja .22s ease}
+@keyframes miniBaja{from{transform:translateY(-100%)}to{transform:none}}
+.mini-barra .in{max-width:1120px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.mini-ir{display:flex;align-items:center;gap:12px;flex:1 1 auto;min-width:0;border:0;background:transparent;color:inherit;text-align:left;padding:2px 0}
+.mini-ir .logo-ccm{height:34px;width:auto;flex:none}
+.mini-tit{font-family:var(--f-display);font-weight:800;font-size:15px;letter-spacing:.03em;text-transform:uppercase;line-height:1.15;min-width:0;
+  padding-left:12px;border-left:2px solid color-mix(in srgb, var(--hdr-fg) 25%, transparent)}
+.mini-ir .sema{height:34px;width:auto;flex:none}
+.mini-barra .sema .luz{fill:color-mix(in srgb, currentColor 18%, transparent)}
+body[data-modo="tiempos"] .mini-barra .l-v{fill:#16a34a}
+body[data-modo="evento"] .mini-barra .l-r{fill:#dc2626}
+body[data-modo="fallas"] .mini-barra .l-a{fill:#f59e0b;animation:parpadeo 1.2s steps(1) infinite}
+@media (max-width:640px){ .mini-ir .logo-ccm{height:28px} .mini-tit{font-size:11px;padding-left:8px} .mini-ir{gap:8px} .mini-ir .sema{height:28px} }
+@media (prefers-reduced-motion:reduce){ .mini-barra{animation:none} }
 </style>
 </head>
 <body>
@@ -599,6 +623,8 @@ body[data-encendido="v"] header.top .sema .l-v{fill:#16a34a;filter:drop-shadow(0
       <section class="card" id="faCardFalla">
         <h2><span class="num">3</span>¿Qué falla?</h2>
         <p class="hint">Puedes marcar varias. Ej.: Falla de comunicación + Apagado.</p>
+        <label class="op waze"><input type="checkbox" id="faWaze"><span class="waze-ico" aria-hidden="true">🚗</span>Reporte de Waze <small>(la falla se vio en Waze)</small></label>
+        <p class="hint" id="faWazeHint" hidden>Si no se puede confirmar la falla, marca <b>Posible apagado o intermitencia</b>.</p>
         <div class="opts" id="faFallas"></div>
         <label class="f" id="faOtroWrap" hidden>Especifique *<input type="text" id="faOtro" placeholder="Ej. poste chocado, cabeza dañada…" autocomplete="off"></label>
       </section>
@@ -629,6 +655,7 @@ body[data-encendido="v"] header.top .sema .l-v{fill:#16a34a;filter:drop-shadow(0
   </div>
   </div>
 </div>
+<div class="mini-barra" id="miniBarra" hidden><div class="in"><button type="button" class="mini-ir" id="miniIr" title="Volver arriba"><span class="mini-tit">Unidad de Planeamiento Semafórico</span></button></div></div>
 <div class="bar"><button type="button" class="btn-copy" id="btnCopy2">Copiar reporte</button></div>
 <div id="toast" role="status" hidden></div>
 
@@ -2410,6 +2437,7 @@ var FALLAS = [                                     // botón → texto · color 
   { b:'Apagado',                c:'#374151', e:'⚫' },
   { b:'Necesita poda',          c:'#16a34a', e:'🟢' },
   { b:'Necesita reorientación', c:'#7c3aed', e:'🟣' },
+  { b:'Posible apagado o intermitencia', t:'Posible semáforo apagado o en intermitencia', c:'#f97316', e:'🟠' },   // sin confirmar (ej. solo se vio en Waze)
   { b:'Otro',                   c:'#dc2626', e:'🔴' }
 ];
 var OTRO = FALLAS.length - 1;                      // "Otro": pide especificar
@@ -2432,7 +2460,7 @@ function nuevoEstado(){ return { k:null, fallas:[], aviso:false, horaAuto:true }
 function sem(){ return S.k ? porKey(S.k) : null; }
 function hay(i){ return S.fallas.indexOf(i) >= 0; }
 // Nombre de una falla; en "Otro", solo lo especificado.
-function nombreFalla(i){ return i === OTRO ? (limpiarWA($('faOtro').value) || 'Otro') : FALLAS[i].b; }
+function nombreFalla(i){ return i === OTRO ? (limpiarWA($('faOtro').value) || 'Otro') : (FALLAS[i].t || FALLAS[i].b); }   // t: texto largo del reporte
 // Todas las fallas elegidas: "Falla de comunicación + Apagado" ('' si ninguna).
 function textoFalla(){ return S.fallas.map(nombreFalla).join(' + '); }
 // Etiqueta del mapa: "Falla: …" o "Fallas: …".
@@ -2490,9 +2518,11 @@ function generar(){
   lin.push('🚥 *Semáforo:* ' + (s && s.id && s.id !== 'NUEVO' ? s.id : (s ? 'sin código' : '')));
   lin.push('📍 *Ubicación:* ' + (s ? limpiarWA(s.d) + (s.c ? ', ' + nombreZona(s.c) : '') : ''));
   if (tieneCoord(s)) lin.push('🔗 https://maps.google.com/?q=' + s.la + ',' + s.lo);
+  if ($('faWaze').checked) lin.push('🚗 *Fuente:* Reporte de Waze');   // sin enlace: la falla solo se vio en Waze
   if (S.fallas.length) S.fallas.forEach(function(i){ lin.push(FALLAS[i].e + ' *' + nombreFalla(i).toUpperCase() + '*'); });   // una línea por falla
   else lin.push('*Falla:* ');
   var seg = [];
+  $('faWazeHint').hidden = !$('faWaze').checked;
   if ($('faGestores').checked) seg.push('⚠️ Se necesita asistencia de gestores.');   // advertencia: falta algo
   if ($('faCuadrilla').checked) seg.push('✅ Reportado a cuadrilla.');                 // check: ya se hizo
   if (seg.length){ lin.push('*Seguimiento:*'); seg.forEach(function(x){ lin.push(x); }); }
@@ -2695,7 +2725,7 @@ function copiar(){
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(function(){ aviso(ok); confirmarCopia(['faBtnCopy']); }).catch(plan);
   else plan();
 }
-var CAMPOS = ['faFecha','faHora','faOtro','faNotas'], MARCAS = ['faGestores','faCuadrilla'];
+var CAMPOS = ['faFecha','faHora','faOtro','faNotas'], MARCAS = ['faWaze','faGestores','faCuadrilla'];
 function foto(){ return { S:JSON.parse(JSON.stringify(S)), FIJA:FIJA, v:CAMPOS.map(function(id){ return $(id).value; }), m:MARCAS.map(function(id){ return $(id).checked; }) }; }
 function restaurar(f){
   S = f.S; S.aviso = false; FIJA = f.FIJA; pintarFijar();
@@ -2718,7 +2748,7 @@ function eventos(){
   ['faFecha','faHora'].forEach(function(id){ $(id).addEventListener('input', function(){ S.horaAuto = false; pintarHoraModo(); generar(); }); });   // escribir = hora fija
   $('faHoraModo').addEventListener('click', function(e){ e.preventDefault(); S.horaAuto = !S.horaAuto; pintarHoraModo(); tickHora(); if (S.horaAuto) aviso('⏱ La fecha y hora siguen al reloj.'); });
   setInterval(tickHora, 30000);
-  ['faGestores','faCuadrilla'].forEach(function(id){ $(id).addEventListener('change', generar); });
+  MARCAS.forEach(function(id){ $(id).addEventListener('change', generar); });
   $('faOtro').addEventListener('change', renderMapa);
   $('faBuscar').addEventListener('input', renderLista);
   $('faZona').addEventListener('change', function(){ ZONA = this.value; guardarZona('fallas', ZONA); llenarZonas('faZona', ZONA); renderLista(); renderMapa(); if (!sem()) encuadrarZona(MAPA, ZONA); else if (!ZONA) encuadrar(); });   // Todas: vuelve al semáforo o a la vista inicial
@@ -2795,7 +2825,7 @@ function cambiarVista(v, sinHash){
   $('tabFallas').setAttribute('aria-selected', v === 'fallas');
   $('subtitulo').textContent = SUBTITULOS[v];
   try { localStorage.setItem(LS_VISTA, v); } catch(e){}
-  if (!sinHash && history.replaceState) history.replaceState(null, '', '#' + v);
+  if (!sinHash && history.replaceState){ try { history.replaceState(null, '', '#' + v); } catch(e){} }   // en vistas previas aisladas puede fallar: no debe cortar el cambio de pestaña
   if (v === 'evento') EV.mostrar(); else if (v === 'fallas') FA.mostrar(); else if (MAPA) MAPA.invalidateSize();
 }
 // Pestaña al abrir: la del enlace, si no la última usada, si no Cambio de tiempos.
@@ -2833,7 +2863,16 @@ try { $('vistasPista').hidden = !!localStorage.getItem('ups_menu_visto'); } catc
 $('btnPuente').addEventListener('click', pasarAEvento);
 window.addEventListener('hashchange', function(){ var h = location.hash.replace('#', ''); if (VISTAS.indexOf(h) >= 0) cambiarVista(h, true); });
 cambiarVista(vistaInicial(), !location.hash);
-pintarMenuVistas.listo = true;   // desde aquí, cambiar de pestaña anima la señal (al abrir no)
+pintarMenuVistas.listo = true;
+// Barra compacta: logo + título + semáforo (copias del encabezado); aparece cuando el botón de pestañas sale de la pantalla.
+(function(){
+  var ir = $('miniIr'), logo = document.querySelector('header.top .logo-ccm'), sema = document.querySelector('header.top .sema');
+  if (logo) ir.insertBefore(logo.cloneNode(true), ir.firstChild);
+  if (sema) ir.appendChild(sema.cloneNode(true));
+  function ver(){ $('miniBarra').hidden = document.querySelector('.vistas-dd').getBoundingClientRect().bottom > 0; }
+  window.addEventListener('scroll', ver, { passive:true }); window.addEventListener('resize', ver); ver();
+  ir.addEventListener('click', function(){ window.scrollTo(0, 0); });
+})();   // desde aquí, cambiar de pestaña anima la señal (al abrir no)
 // 1 · Al abrir: el semáforo del encabezado hace rojo → ámbar → verde y queda en la luz de la pestaña.
 (function(){
   var pasos = ['r', 'a', 'v'], i = 0;
