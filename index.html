@@ -298,6 +298,7 @@ body[data-modo="fallas"]{--acc:#ea580c;--on-acc:#ffffff}
 #vistaFallas .op.waze:has(input:checked){border-style:solid;background:color-mix(in srgb, #0ea5e9 22%, transparent)}
 #vistaFallas .op.waze small{font-weight:500;color:var(--muted)}
 #vistaFallas .waze-ico{font-size:18px}
+#vistaFallas .waze-hint{margin-top:-4px}
 #vistaFallas .list:empty{display:none}
 #vistaFallas .fapin{background:none;border:0}
 #vistaFallas .fapin svg{display:block;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}
@@ -623,8 +624,8 @@ body[data-modo="fallas"] .mini-barra .l-a{fill:#f59e0b;animation:parpadeo 1.2s s
       <section class="card" id="faCardFalla">
         <h2><span class="num">3</span>¿Qué falla?</h2>
         <p class="hint">Puedes marcar varias. Ej.: Falla de comunicación + Apagado.</p>
-        <label class="op waze"><input type="checkbox" id="faWaze"><span class="waze-ico" aria-hidden="true">🚗</span>Reporte de Waze <small>(la falla se vio en Waze)</small></label>
-        <p class="hint" id="faWazeHint" hidden>Si no se puede confirmar la falla, marca <b>Posible apagado o intermitencia</b>.</p>
+        <label class="op waze"><input type="checkbox" id="faWaze"><span class="waze-ico" aria-hidden="true">🚗</span>Reporte de Waze <small>(falla no confirmada)</small></label>
+        <p class="hint waze-hint" id="faWazeHint"></p>
         <div class="opts" id="faFallas"></div>
         <label class="f" id="faOtroWrap" hidden>Especifique *<input type="text" id="faOtro" placeholder="Ej. poste chocado, cabeza dañada…" autocomplete="off"></label>
       </section>
@@ -2432,13 +2433,12 @@ var FA = (function(){
 
 /* ══ CONFIG ══ */
 var FALLAS = [                                     // botón → texto · color del aro en el mapa · emoji en el texto (mismo color)
-  { b:'Intermitencia',          c:'#facc15', e:'🟡' },
-  { b:'Falla de comunicación',  c:'#2563eb', e:'🔵' },
-  { b:'Apagado',                c:'#374151', e:'⚫' },
+  { b:'Intermitencia',          c:'#facc15', e:'🟡', p:1 },   // p: con Reporte de Waze sale como POSIBLE
+  { b:'Falla de comunicación',  c:'#2563eb', e:'🔵', p:1 },
+  { b:'Apagado',                c:'#374151', e:'⚫', p:1 },
   { b:'Necesita poda',          c:'#16a34a', e:'🟢' },
   { b:'Necesita reorientación', c:'#7c3aed', e:'🟣' },
-  { b:'Posible apagado o intermitencia', t:'Posible semáforo apagado o en intermitencia', c:'#f97316', e:'🟠' },   // sin confirmar (ej. solo se vio en Waze)
-  { b:'Otro',                   c:'#dc2626', e:'🔴' }
+  { b:'Otro',                   c:'#dc2626', e:'🔴', p:1 }
 ];
 var OTRO = FALLAS.length - 1;                      // "Otro": pide especificar
 var INTERMITENTE = 0, APAGADO = 2;                 // íconos: intermitencia = solo luz ámbar · apagado = luces grises
@@ -2460,9 +2460,12 @@ function nuevoEstado(){ return { k:null, fallas:[], aviso:false, horaAuto:true }
 function sem(){ return S.k ? porKey(S.k) : null; }
 function hay(i){ return S.fallas.indexOf(i) >= 0; }
 // Nombre de una falla; en "Otro", solo lo especificado.
-function nombreFalla(i){ return i === OTRO ? (limpiarWA($('faOtro').value) || 'Otro') : (FALLAS[i].t || FALLAS[i].b); }   // t: texto largo del reporte
-// Todas las fallas elegidas: "Falla de comunicación + Apagado" ('' si ninguna).
-function textoFalla(){ return S.fallas.map(nombreFalla).join(' + '); }
+function nombreFalla(i){ return i === OTRO ? (limpiarWA($('faOtro').value) || 'Otro') : FALLAS[i].b; }
+// Con "Reporte de Waze" la falla no está confirmada: sale como POSIBLE (poda y reorientación no aplican).
+function posible(i){ return $('faWaze').checked && !!FALLAS[i].p; }
+function nombreReporte(i){ var n = nombreFalla(i); return posible(i) ? 'Posible ' + n.charAt(0).toLowerCase() + n.slice(1) : n; }
+// Todas las fallas elegidas: "Falla de comunicación + Apagado" o "Posible intermitencia + Posible apagado" ('' si ninguna).
+function textoFalla(){ return S.fallas.map(nombreReporte).join(' + '); }
 // Etiqueta del mapa: "Falla: …" o "Fallas: …".
 function etiquetaFalla(){ var t = textoFalla(); return t ? (S.fallas.length > 1 ? 'Fallas: ' : 'Falla: ') + t : ''; }
 // Colores de las fallas elegidas (aro del ícono y puntos de la etiqueta).
@@ -2519,10 +2522,12 @@ function generar(){
   lin.push('📍 *Ubicación:* ' + (s ? limpiarWA(s.d) + (s.c ? ', ' + nombreZona(s.c) : '') : ''));
   if (tieneCoord(s)) lin.push('🔗 https://maps.google.com/?q=' + s.la + ',' + s.lo);
   if ($('faWaze').checked) lin.push('🚗 *Fuente:* Reporte de Waze');   // sin enlace: la falla solo se vio en Waze
-  if (S.fallas.length) S.fallas.forEach(function(i){ lin.push(FALLAS[i].e + ' *' + nombreFalla(i).toUpperCase() + '*'); });   // una línea por falla
+  if (S.fallas.length) S.fallas.forEach(function(i){ lin.push(FALLAS[i].e + ' *' + nombreReporte(i).toUpperCase() + '*'); });   // una línea por falla (POSIBLE … con Waze)
   else lin.push('*Falla:* ');
   var seg = [];
-  $('faWazeHint').hidden = !$('faWaze').checked;
+  $('faWazeHint').innerHTML = $('faWaze').checked
+    ? '✓ Las fallas saldrán como <b>POSIBLE</b> (ej. POSIBLE INTERMITENCIA, POSIBLE APAGADO).'
+    : '¿No estás seguro de la falla? Marca <b>Reporte de Waze</b>: el reporte dirá <b>POSIBLE</b>.';
   if ($('faGestores').checked) seg.push('⚠️ Se necesita asistencia de gestores.');   // advertencia: falta algo
   if ($('faCuadrilla').checked) seg.push('✅ Reportado a cuadrilla.');                 // check: ya se hizo
   if (seg.length){ lin.push('*Seguimiento:*'); seg.forEach(function(x){ lin.push(x); }); }
