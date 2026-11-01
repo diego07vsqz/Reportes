@@ -409,6 +409,18 @@ body[data-modo="evento"] .mini-barra .l-r{fill:#dc2626}
 body[data-modo="fallas"] .mini-barra .l-a{fill:#f59e0b;animation:parpadeo 1.2s steps(1) infinite}
 @media (max-width:640px){ .mini-ir .logo-ccm{height:28px} .mini-tit{font-size:11px;padding-left:8px} .mini-ir{gap:8px} .mini-ir .sema{height:28px} }
 @media (prefers-reduced-motion:reduce){ .mini-barra{animation:none} }
+
+/* ══ BOTONES DEL MAPA: confirmación animada ══ */
+.mapbtns button{position:relative}
+.mapbtns button.ocupado{opacity:.65;cursor:progress}
+.mapbtns button .chk,.mapbtns button .baja{width:18px;height:18px;vertical-align:-3px;margin-right:7px}
+.mapbtns button .chk path{stroke-dasharray:1;stroke-dashoffset:1;animation:chkTraza .45s .05s ease-out forwards}
+.mapbtns button.copiado,.mapbtns button.descargado{animation:copiaLate .5s ease-out}
+.mapbtns button.copiado::after,.mapbtns button.descargado::after{content:"";position:absolute;inset:0;border-radius:inherit;border:3px solid var(--ok);animation:copiaPulso .8s ease-out forwards;pointer-events:none}
+.mapbtns button.descargado::after{border-color:var(--sel-line)}
+.baja .flecha-b{animation:bajaFlecha .6s ease-out}
+@keyframes bajaFlecha{0%{transform:translateY(-7px);opacity:0}60%{transform:translateY(1px);opacity:1}100%{transform:none}}
+@media (prefers-reduced-motion:reduce){ .mapbtns button.copiado,.mapbtns button.descargado,.mapbtns button.copiado::after,.mapbtns button.descargado::after,.baja .flecha-b{animation:none} .mapbtns button .chk path{animation:none;stroke-dashoffset:0} }
 </style>
 </head>
 <body>
@@ -1181,21 +1193,21 @@ function bajarBlob(b){
 }
 // Botón "Descargar mapa".
 function bajarMapa(){
-  imagenMapa().then(function(b){ bajarBlob(b); aviso('✓ Mapa descargado.'); })
+  ocupado('btnMapaBajar', imagenMapa()).then(function(b){ bajarBlob(b); aviso('✓ Mapa descargado.'); confirmarBoton(['btnMapaBajar'], 'descargado'); })
               .catch(function(){ aviso('No se pudo crear el mapa.'); });
 }
 // Botón "Copiar mapa". Si el navegador no deja copiar imágenes, la descarga.
 function copiarMapa(){
-  var p = imagenMapa();
+  var p = ocupado('btnMapaCopiar', imagenMapa());
   if (navigator.clipboard && navigator.clipboard.write && typeof ClipboardItem !== 'undefined'){
     var item; try { item = new ClipboardItem({ 'image/png': p }); } catch(e){ item = null; }
     if (item){
-      navigator.clipboard.write([item]).then(function(){ aviso('✓ Mapa copiado. Pégalo en WhatsApp.'); })
-        .catch(function(){ p.then(function(b){ bajarBlob(b); aviso('No se pudo copiar. Mapa descargado.'); }).catch(function(){ aviso('No se pudo crear el mapa.'); }); });
+      navigator.clipboard.write([item]).then(function(){ aviso('✓ Mapa copiado. Pégalo en WhatsApp.'); confirmarBoton(['btnMapaCopiar'], 'copiado'); })
+        .catch(function(){ p.then(function(b){ bajarBlob(b); aviso('No se pudo copiar. Mapa descargado.'); confirmarBoton(['btnMapaCopiar'], 'descargado'); }).catch(function(){ aviso('No se pudo crear el mapa.'); }); });
       return;
     }
   }
-  p.then(function(b){ bajarBlob(b); aviso('Mapa descargado. Adjúntalo en WhatsApp.'); }).catch(function(){ aviso('No se pudo crear el mapa.'); });
+  p.then(function(b){ bajarBlob(b); aviso('Mapa descargado. Adjúntalo en WhatsApp.'); confirmarBoton(['btnMapaCopiar'], 'descargado'); }).catch(function(){ aviso('No se pudo crear el mapa.'); });
 }
 
 /* ══ DESCRIPCIÓN EN EL MAPA ══ */
@@ -1468,16 +1480,30 @@ function resaltarCambios(el, lineas){
 }
 // 4 · Confirma en los botones de copiar: ✓ que se dibuja + "Copiado" por 2 s. Solo se llama si sí se copió.
 var COPIA_T = {};
-function confirmarCopia(ids){
+var ICONO_CONFIRMA = {
+  copiado:'<svg class="chk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path pathLength="1" d="M4 12.5l5 5L20 6.5"/></svg>Copiado',
+  descargado:'<svg class="baja" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/><g class="flecha-b"><path d="M12 3v11"/><path d="M7.5 9.5L12 14l4.5-4.5"/></g></svg>Descargado'
+};
+// Confirma en botones: tipo 'copiado' (✓ que se dibuja) o 'descargado' (flecha que baja). 2.2 s y vuelve al texto original.
+function confirmarBoton(ids, tipo){
   ids.forEach(function(id){
     var b = $(id); if (!b) return;
     if (b._txt === undefined) b._txt = b.innerHTML;
     clearTimeout(COPIA_T[id]);
-    b.classList.remove('copiado'); void b.offsetWidth;   // reinicia la animación si se copia seguido
-    b.innerHTML = '<svg class="chk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path pathLength="1" d="M4 12.5l5 5L20 6.5"/></svg>Copiado';
-    b.classList.add('copiado');
-    COPIA_T[id] = setTimeout(function(){ b.classList.remove('copiado'); b.innerHTML = b._txt; }, 2200);
+    b.classList.remove('copiado', 'descargado'); void b.offsetWidth;   // reinicia la animación si se repite seguido
+    b.innerHTML = ICONO_CONFIRMA[tipo];
+    b.classList.add(tipo);
+    COPIA_T[id] = setTimeout(function(){ b.classList.remove('copiado', 'descargado'); b.innerHTML = b._txt; }, 2200);
   });
+}
+function confirmarCopia(ids){ confirmarBoton(ids, 'copiado'); }
+// Marca un botón como ocupado mientras se arma la imagen (se quita al terminar, salga bien o mal).
+function ocupado(id, promesa){
+  var b = $(id); if (!b) return promesa;
+  b.classList.add('ocupado'); b.setAttribute('aria-busy', 'true');
+  function fin(){ b.classList.remove('ocupado'); b.removeAttribute('aria-busy'); }
+  promesa.then(fin, fin);
+  return promesa;
 }
 
 /* ══ FALTANTES ══ */
@@ -2185,12 +2211,12 @@ function dibujarIcono(g, x, y, s, hecho, aro){   // mismo ícono del mapa, en la
 function bajarBlob(b){ var u = URL.createObjectURL(b), a = document.createElement('a'); a.href = u; a.download = 'mapa-evento.png'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(u); }, 4000); }
 // Botón "Copiar mapa"; si no se puede copiar, descarga.
 function copiarMapa(){
-  var p = imagenMapa();
+  var p = ocupado('evBtnMapaCopiar', imagenMapa());
   if (navigator.clipboard && navigator.clipboard.write && typeof ClipboardItem !== 'undefined'){
     var item; try { item = new ClipboardItem({ 'image/png': p }); } catch(e){ item = null; }
-    if (item){ navigator.clipboard.write([item]).then(function(){ aviso('✓ Mapa copiado. Pégalo en WhatsApp.'); }).catch(function(){ p.then(function(b){ bajarBlob(b); aviso('No se pudo copiar. Mapa descargado.'); }).catch(function(){ aviso('No se pudo crear el mapa.'); }); }); return; }
+    if (item){ navigator.clipboard.write([item]).then(function(){ aviso('✓ Mapa copiado. Pégalo en WhatsApp.'); confirmarBoton(['evBtnMapaCopiar'], 'copiado'); }).catch(function(){ p.then(function(b){ bajarBlob(b); aviso('No se pudo copiar. Mapa descargado.'); confirmarBoton(['evBtnMapaCopiar'], 'descargado'); }).catch(function(){ aviso('No se pudo crear el mapa.'); }); }); return; }
   }
-  p.then(function(b){ bajarBlob(b); aviso('Mapa descargado.'); }).catch(function(){ aviso('No se pudo crear el mapa.'); });
+  p.then(function(b){ bajarBlob(b); aviso('Mapa descargado.'); confirmarBoton(['evBtnMapaCopiar'], 'descargado'); }).catch(function(){ aviso('No se pudo crear el mapa.'); });
 }
 
 /* ══ ACCIONES ══ */
@@ -2393,7 +2419,7 @@ function eventos(){
   });
   $('evBtnCopy').addEventListener('click', copiar);
   $('evBtnMapaCopiar').addEventListener('click', copiarMapa);
-  $('evBtnMapaBajar').addEventListener('click', function(){ imagenMapa().then(function(b){ bajarBlob(b); aviso('✓ Mapa descargado.'); }).catch(function(){ aviso('No se pudo crear el mapa.'); }); });
+  $('evBtnMapaBajar').addEventListener('click', function(){ ocupado('evBtnMapaBajar', imagenMapa()).then(function(b){ bajarBlob(b); aviso('✓ Mapa descargado.'); confirmarBoton(['evBtnMapaBajar'], 'descargado'); }).catch(function(){ aviso('No se pudo crear el mapa.'); }); });
   $('evBtnNuevoEvento').addEventListener('click', nuevoEvento);
   document.addEventListener('mouseup', function(){ if (AREA.rect) areaFin({ latlng:AREA.ultimo || AREA.inicio }); });   // soltó fuera del mapa
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape') menuTipo(false); if (e.key === 'Escape' && AREA.activo){ if (AREA.rect){ MAPA.removeLayer(AREA.rect); AREA.rect = null; } modoArea(false); } });
@@ -2710,16 +2736,16 @@ function conTitulo(mapa, k){
 }
 function bajarImagen(b){ var u = URL.createObjectURL(b), a = document.createElement('a'); a.href = u; a.download = 'mapa-falla.png'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(u); }, 4000); }
 function copiarMapa(){
-  var p = imagenMapa();
+  var p = ocupado('faBtnMapaCopiar', imagenMapa());
   if (navigator.clipboard && navigator.clipboard.write && typeof ClipboardItem !== 'undefined'){
     var item; try { item = new ClipboardItem({ 'image/png': p }); } catch(e){ item = null; }
     if (item){
-      navigator.clipboard.write([item]).then(function(){ aviso('✓ Mapa copiado. Pégalo en WhatsApp.'); })
-        .catch(function(){ p.then(function(b){ bajarImagen(b); aviso('No se pudo copiar. Mapa descargado.'); }).catch(function(){ aviso('No se pudo crear el mapa.'); }); });
+      navigator.clipboard.write([item]).then(function(){ aviso('✓ Mapa copiado. Pégalo en WhatsApp.'); confirmarBoton(['faBtnMapaCopiar'], 'copiado'); })
+        .catch(function(){ p.then(function(b){ bajarImagen(b); aviso('No se pudo copiar. Mapa descargado.'); confirmarBoton(['faBtnMapaCopiar'], 'descargado'); }).catch(function(){ aviso('No se pudo crear el mapa.'); }); });
       return;
     }
   }
-  p.then(function(b){ bajarImagen(b); aviso('Mapa descargado. Adjúntalo en WhatsApp.'); }).catch(function(){ aviso('No se pudo crear el mapa.'); });
+  p.then(function(b){ bajarImagen(b); aviso('Mapa descargado. Adjúntalo en WhatsApp.'); confirmarBoton(['faBtnMapaCopiar'], 'descargado'); }).catch(function(){ aviso('No se pudo crear el mapa.'); });
 }
 
 /* ══ ACCIONES ══ */
@@ -2774,7 +2800,7 @@ function eventos(){
   $('faBtnFijar').addEventListener('click', fijarVista);
   $('faBtnCopy').addEventListener('click', copiar);
   $('faBtnMapaCopiar').addEventListener('click', copiarMapa);
-  $('faBtnMapaBajar').addEventListener('click', function(){ imagenMapa().then(function(b){ bajarImagen(b); aviso('✓ Mapa descargado.'); }).catch(function(){ aviso('No se pudo crear el mapa.'); }); });
+  $('faBtnMapaBajar').addEventListener('click', function(){ ocupado('faBtnMapaBajar', imagenMapa()).then(function(b){ bajarImagen(b); aviso('✓ Mapa descargado.'); confirmarBoton(['faBtnMapaBajar'], 'descargado'); }).catch(function(){ aviso('No se pudo crear el mapa.'); }); });
   $('faBtnReset').addEventListener('click', borrarReporte);
 }
 
