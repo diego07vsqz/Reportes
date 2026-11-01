@@ -395,8 +395,11 @@ body[data-encendido="v"] header.top .sema .l-v{fill:#16a34a;filter:drop-shadow(0
 
 /* ══ BARRA COMPACTA AL BAJAR ══ */
 .mini-barra{position:fixed;z-index:1100;top:0;left:0;right:0;padding:6px 16px;background:var(--hdr-bg);color:var(--hdr-fg);
-  border-bottom:3px solid var(--acc);box-shadow:0 6px 18px rgba(0,0,0,.2);animation:miniBaja .22s ease}
+  border-bottom:3px solid var(--acc);box-shadow:0 6px 18px rgba(0,0,0,.2);transform-origin:50% 0}
+.mini-barra.entra{animation:miniBaja .22s ease}   /* entra deslizando, como antes */
+.mini-barra.sale{animation:burbujaSale .3s cubic-bezier(.5,0,.8,.4) both;pointer-events:none}   /* al volver: se recoge en burbuja y sube */
 @keyframes miniBaja{from{transform:translateY(-100%)}to{transform:none}}
+@keyframes burbujaSale{0%{opacity:1;transform:none;border-radius:0}35%{opacity:1;transform:translateY(4px) scale(.9,.92);border-radius:999px}100%{opacity:0;transform:translateY(-26px) scale(.55);border-radius:999px}}
 .mini-barra .in{max-width:1120px;margin:0 auto;display:flex;align-items:center;gap:12px}
 .mini-ir{display:flex;align-items:center;gap:12px;flex:1 1 auto;min-width:0;border:0;background:transparent;color:inherit;text-align:left;padding:2px 0}
 .mini-ir .logo-ccm{height:34px;width:auto;flex:none}
@@ -408,7 +411,7 @@ body[data-modo="tiempos"] .mini-barra .l-v{fill:#16a34a}
 body[data-modo="evento"] .mini-barra .l-r{fill:#dc2626}
 body[data-modo="fallas"] .mini-barra .l-a{fill:#f59e0b;animation:parpadeo 1.2s steps(1) infinite}
 @media (max-width:640px){ .mini-ir .logo-ccm{height:28px} .mini-tit{font-size:11px;padding-left:8px} .mini-ir{gap:8px} .mini-ir .sema{height:28px} }
-@media (prefers-reduced-motion:reduce){ .mini-barra{animation:none} }
+@media (prefers-reduced-motion:reduce){ .mini-barra.entra,.mini-barra.sale{animation:none} }
 
 /* ══ BOTONES DEL MAPA: confirmación animada ══ */
 .mapbtns button{position:relative}
@@ -2902,10 +2905,15 @@ pintarMenuVistas.listo = true;
   var ir = $('miniIr'), logo = document.querySelector('header.top .logo-ccm'), sema = document.querySelector('header.top .sema');
   if (logo) ir.insertBefore(logo.cloneNode(true), ir.firstChild);
   if (sema) ir.appendChild(sema.cloneNode(true));
-  var oculta = true;
+  var bar = $('miniBarra'), oculta = true, finT = 0, sinMov = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   function ver(){   // solo toca la página cuando la barra cambia (no en cada movimiento): no molesta a los menús del navegador (ej. autocompletar)
-    var o = document.querySelector('.vistas-dd').getBoundingClientRect().bottom > 0;
-    if (o !== oculta){ oculta = o; $('miniBarra').hidden = o; }
+    var b = document.querySelector('.vistas-dd').getBoundingClientRect().bottom;
+    var o = oculta ? b > 0 : b > 24;   // margen para que no parpadee justo en el borde
+    if (o === oculta) return;
+    oculta = o; clearTimeout(finT);
+    if (!o){ bar.hidden = false; bar.classList.remove('sale'); void bar.offsetWidth; bar.classList.add('entra'); }   // entra deslizando
+    else if (sinMov) bar.hidden = true;
+    else { bar.classList.remove('entra'); bar.classList.add('sale'); finT = setTimeout(function(){ if (oculta){ bar.hidden = true; bar.classList.remove('sale'); } }, 320); }   // se encoge y luego se oculta
   }
   window.addEventListener('scroll', ver, { passive:true }); window.addEventListener('resize', ver); ver();
   ir.addEventListener('click', function(){ window.scrollTo(0, 0); });
