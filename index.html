@@ -296,9 +296,11 @@ body[data-modo="fallas"]{--acc:#ea580c;--on-acc:#ffffff}
 #vistaFallas .op input{width:20px;height:20px;flex:none}
 #vistaFallas .op.waze{justify-self:start;flex-wrap:wrap;gap:8px;padding:8px 14px;border:2px dashed #0ea5e9;border-radius:999px;background:color-mix(in srgb, #0ea5e9 10%, transparent)}
 #vistaFallas .op.waze:has(input:checked){border-style:solid;background:color-mix(in srgb, #0ea5e9 22%, transparent)}
-#vistaFallas .op.waze small{font-weight:500;color:var(--muted)}
+#vistaFallas .op.waze small{font-size:13px;font-weight:700;color:#0284c7}
+:root[data-theme="dark"] #vistaFallas .op.waze small{color:#7dd3fc}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) #vistaFallas .op.waze small{color:#7dd3fc} }
 #vistaFallas .waze-ico{font-size:18px}
-#vistaFallas .waze-hint{margin-top:-4px}
+#vistaFallas .waze-hint{margin:0;font-size:14px;font-weight:600;color:var(--fg);background:color-mix(in srgb, #0ea5e9 12%, transparent);border-left:4px solid #0ea5e9;border-radius:8px;padding:8px 12px}   /* guía visible: cuándo marcar Waze */
 #vistaFallas .list:empty{display:none}
 #vistaFallas .fapin{background:none;border:0}
 #vistaFallas .fapin svg{display:block;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}
