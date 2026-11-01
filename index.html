@@ -576,6 +576,7 @@ body[data-modo="fallas"] header.top .l-a{fill:#f59e0b;animation:parpadeo 1.2s st
 
       <section class="card" id="faCardFalla">
         <h2><span class="num">3</span>¿Qué falla?</h2>
+        <p class="hint">Puedes marcar varias. Ej.: Falla de comunicación + Apagado.</p>
         <div class="opts" id="faFallas"></div>
         <label class="f" id="faOtroWrap" hidden>Especifique *<input type="text" id="faOtro" placeholder="Ej. poste chocado, cabeza dañada…" autocomplete="off"></label>
       </section>
@@ -2351,7 +2352,7 @@ return {
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════════
    MÓDULO FALLAS (FA) — pestaña "Reporte de fallas"
-   Un semáforo y una falla por reporte. Aislado (IIFE) como EV; estado solo en memoria.
+   Un semáforo por reporte; una o varias fallas. Aislado (IIFE) como EV; estado solo en memoria.
    Flujo: fecha/hora → semáforo (buscador o mapa) → falla → seguimiento → copiar texto e imagen.
    Expone: FA.mostrar() al abrir la pestaña · FA.mapa() y FA.estado() solo lectura (pruebas / consola).
    ═══════════════════════════════════════════════════════════════════════════════ */
@@ -2380,16 +2381,19 @@ var MAPA_CENTRO = [13.6989, -89.1914], MAPA_ZOOM = 12, MAPA_IMG_ANCHO = 1200, ZO
 var S = nuevoEstado();
 var MAPA = null, CAPA = null, TILES = null, BASE_MAPA = 'calle', FIJA = null;
 var ZONA = leerZona('fallas');   // zona del mapa ('' = todas)
-function nuevoEstado(){ return { k:null, falla:-1, aviso:false, horaAuto:true }; }
+function nuevoEstado(){ return { k:null, fallas:[], aviso:false, horaAuto:true }; }   // fallas: índices de FALLAS (varias a la vez)
 
 /* ══ UTILIDADES ══ */
 function sem(){ return S.k ? porKey(S.k) : null; }
-function textoFalla(){
-  if (S.falla < 0) return '';
-  if (S.falla === OTRO){ var o = limpiarWA($('faOtro').value); return o || 'Otro'; }   // solo lo especificado
-  return FALLAS[S.falla].b;
-}
-function colorFalla(){ return S.falla >= 0 ? FALLAS[S.falla].c : COLOR_SIN; }
+function hay(i){ return S.fallas.indexOf(i) >= 0; }
+// Nombre de una falla; en "Otro", solo lo especificado.
+function nombreFalla(i){ return i === OTRO ? (limpiarWA($('faOtro').value) || 'Otro') : FALLAS[i].b; }
+// Todas las fallas elegidas: "Falla de comunicación + Apagado" ('' si ninguna).
+function textoFalla(){ return S.fallas.map(nombreFalla).join(' + '); }
+// Etiqueta del mapa: "Falla: …" o "Fallas: …".
+function etiquetaFalla(){ var t = textoFalla(); return t ? (S.fallas.length > 1 ? 'Fallas: ' : 'Falla: ') + t : ''; }
+// Colores de las fallas elegidas (aro del ícono y puntos de la etiqueta).
+function coloresFalla(){ return S.fallas.map(function(i){ return FALLAS[i].c; }); }
 function ahora(){ var d = new Date(); $('faFecha').value = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); $('faHora').value = pad(d.getHours()) + ':' + pad(d.getMinutes()); }
 // Botón ⏱ Automática / ✎ Manual (igual que en Evento).
 function pintarHoraModo(){
@@ -2425,23 +2429,23 @@ function renderLista(){
 }
 function renderFallas(){
   $('faFallas').innerHTML = FALLAS.map(function(f, i){
-    return '<button type="button" class="opt" data-i="' + i + '" aria-pressed="' + (S.falla === i) + '" style="--c:' + f.c + '"><span class="pto"></span>' + esc(f.b) + '</button>';
+    return '<button type="button" class="opt" data-i="' + i + '" aria-pressed="' + hay(i) + '" style="--c:' + f.c + '"><span class="pto"></span>' + esc(f.b) + '</button>';
   }).join('');
-  $('faOtroWrap').hidden = S.falla !== OTRO;
+  $('faOtroWrap').hidden = !hay(OTRO);
 }
 
 /* ══ TEXTO ══ */
 // Formato tipo ficha: un dato por línea; la falla en mayúsculas con su emoji de color.
 function generar(){
-  var s = sem(), f = textoFalla(), notas = limpiarWA($('faNotas').value), lin = [];
+  var s = sem(), notas = limpiarWA($('faNotas').value), lin = [];
   var fecha = fmtFecha($('faFecha').value), hora = fmtHora($('faHora').value);
   lin.push('🚦 *PLANEAMIENTO SEMAFÓRICO* 🚦');
-  lin.push('⚠️ *REPORTE DE FALLA*');
+  lin.push(S.fallas.length > 1 ? '⚠️ *REPORTE DE FALLAS*' : '⚠️ *REPORTE DE FALLA*');
   lin.push('📅 *Fecha:* ' + fecha + (fecha && hora ? ' · ' : '') + hora);
   lin.push('🚥 *Semáforo:* ' + (s && s.id && s.id !== 'NUEVO' ? s.id : (s ? 'sin código' : '')));
   lin.push('📍 *Ubicación:* ' + (s ? limpiarWA(s.d) + (s.c ? ', ' + nombreZona(s.c) : '') : ''));
   if (tieneCoord(s)) lin.push('🔗 https://maps.google.com/?q=' + s.la + ',' + s.lo);
-  if (S.falla >= 0) lin.push(FALLAS[S.falla].e + ' *' + f.toUpperCase() + '*');
+  if (S.fallas.length) S.fallas.forEach(function(i){ lin.push(FALLAS[i].e + ' *' + nombreFalla(i).toUpperCase() + '*'); });   // una línea por falla
   else lin.push('*Falla:* ');
   var seg = [];
   if ($('faGestores').checked) seg.push('⚠️ Se necesita asistencia de gestores.');   // advertencia: falta algo
@@ -2450,7 +2454,7 @@ function generar(){
   if (notas) lin.push('*Notas:* ' + notas);
   $('faOut').value = lin.join('\n');
   pintarBurbuja($('faOut').value, 'faBurbuja');
-  $('faDescMapa').textContent = f ? 'Falla: ' + f : '';
+  $('faDescMapa').textContent = etiquetaFalla();
   if (S.aviso) pintarFaltantes();
 }
 
@@ -2460,8 +2464,8 @@ function faltantes(){
   if (!$('faFecha').value) f.push({ c:'faCardCuando', t:'Fecha' });
   if (!$('faHora').value) f.push({ c:'faCardCuando', t:'Hora de detección' });
   if (!sem()) f.push({ c:'faCardDonde', t:'Elegir el semáforo' });
-  if (S.falla < 0) f.push({ c:'faCardFalla', t:'Elegir la falla' });
-  else if (S.falla === OTRO && !limpiarWA($('faOtro').value)) f.push({ c:'faCardFalla', t:'Especificar la falla en "Otro"' });
+  if (!S.fallas.length) f.push({ c:'faCardFalla', t:'Elegir la falla' });
+  else if (hay(OTRO) && !limpiarWA($('faOtro').value)) f.push({ c:'faCardFalla', t:'Especificar la falla en "Otro"' });
   return f;
 }
 function pintarFaltantes(){
@@ -2481,15 +2485,22 @@ function iniciarMapa(){
   TILES = reintentarTiles(L.tileLayer(BASES.calle.url, { maxZoom:19, attribution:BASES.calle.attr, crossOrigin:'anonymous' })).addTo(MAPA);
   CAPA = L.layerGroup().addTo(MAPA);
 }
-// Luces del semáforo según la falla: apagado = grises · intermitencia = solo ámbar · resto = normales.
+// Luces del semáforo según las fallas: apagado = grises (manda) · intermitencia = solo ámbar · resto = normales.
 function luces(){
-  if (S.falla === APAGADO) return ['#6b7280','#6b7280','#6b7280'];
-  if (S.falla === INTERMITENTE) return ['#4b5563','#fbbf24','#4b5563'];
+  if (hay(APAGADO)) return ['#6b7280','#6b7280','#6b7280'];
+  if (hay(INTERMITENTE)) return ['#4b5563','#fbbf24','#4b5563'];
   return ['#ef4444','#fbbf24','#22c55e'];
 }
-// Ícono igual al de los otros reportes (círculo ámbar con semáforo) + aro del color de la falla.
+// Aro del ícono: un tramo por falla, cada uno de su color (una sola falla = aro completo).
+function aroSvg(){
+  var cols = coloresFalla(), n = cols.length, C = 2 * Math.PI * 14.5, t = C / n;
+  return cols.map(function(c, i){
+    return '<circle cx="16" cy="16" r="14.5" fill="none" stroke="' + c + '" stroke-width="3"' + (n > 1 ? ' stroke-dasharray="' + t.toFixed(2) + ' ' + (C - t).toFixed(2) + '" stroke-dashoffset="' + (-i * t).toFixed(2) + '" transform="rotate(-90 16 16)"' : '') + '/>';
+  }).join('');
+}
+// Ícono igual al de los otros reportes (círculo ámbar con semáforo) + aro del color de las fallas.
 function svgIcono(){
-  var l = luces(), aro = S.falla >= 0 ? '<circle cx="16" cy="16" r="14.5" fill="none" stroke="' + colorFalla() + '" stroke-width="3"/>' : '';
+  var l = luces(), aro = aroSvg();
   return '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">' + aro + '<circle cx="16" cy="16" r="11.5" fill="' + COLOR_SIN + '" stroke="#ffffff" stroke-width="2"/>' +
     '<rect x="12" y="7" width="8" height="18" rx="3" fill="#1f2937"/><circle cx="16" cy="10.6" r="2.1" fill="' + l[0] + '"/><circle cx="16" cy="16" r="2.1" fill="' + l[1] + '"/><circle cx="16" cy="21.4" r="2.1" fill="' + l[2] + '"/></svg>';
 }
@@ -2540,23 +2551,24 @@ function dibujarIcono(g, x, y, k){   // el mismo ícono de pantalla, en la image
   function luz(cy, c){ g.beginPath(); g.arc(16, cy, 2.1, 0, Math.PI * 2); g.fillStyle = c; g.fill(); }
   g.save(); g.translate(x - 16 * k, y - 16 * k); g.scale(k, k);
   g.shadowColor = 'rgba(0,0,0,.4)'; g.shadowBlur = 3 * k; g.shadowOffsetY = 1.5 * k;
-  if (S.falla >= 0){ g.beginPath(); g.arc(16, 16, 14.5, 0, Math.PI * 2); g.strokeStyle = colorFalla(); g.lineWidth = 3; g.stroke(); }
+  var cols = coloresFalla(), n = cols.length;
+  cols.forEach(function(c, i){ var a0 = -Math.PI / 2 + i * 2 * Math.PI / n; g.beginPath(); g.arc(16, 16, 14.5, a0, a0 + 2 * Math.PI / n); g.strokeStyle = c; g.lineWidth = 3; g.stroke(); });   // un tramo por falla
   g.beginPath(); g.arc(16, 16, 11.5, 0, Math.PI * 2); g.fillStyle = COLOR_SIN; g.fill(); g.shadowColor = 'transparent';
   g.strokeStyle = '#ffffff'; g.lineWidth = 2; g.stroke();
   caja(12, 7, 8, 18, 3); g.fillStyle = '#1f2937'; g.fill();
   luz(10.6, l[0]); luz(16, l[1]); luz(21.4, l[2]);
   g.restore();
 }
-function etiquetaImg(g, W, H, m, anchoCredito){   // "Falla: …" abajo a la izquierda (achica la letra si no cabe)
-  var t = textoFalla(); if (!t) return;
-  t = 'Falla: ' + t;
-  var k = Math.min(m, 1.5), fs = Math.round(16 * k), pd = Math.round(8 * k), libre = W - anchoCredito - pd * 3;
+function etiquetaImg(g, W, H, m, anchoCredito){   // "Falla(s): …" abajo a la izquierda, con un punto de color por falla (achica la letra si no cabe)
+  var t = etiquetaFalla(); if (!t) return;
+  var cols = coloresFalla(), k = Math.min(m, 1.5), fs = Math.round(16 * k), pd = Math.round(8 * k), libre = W - anchoCredito - pd * 3;
+  function puntos(){ return cols.length * fs * 0.85 + fs * 0.2; }
   g.textAlign = 'left'; g.textBaseline = 'middle';
-  do { g.font = '700 ' + fs + 'px sans-serif'; } while (g.measureText(t).width + pd * 2 + fs > libre && --fs > 9);
-  var w = Math.min(g.measureText(t).width + pd * 2 + fs, libre), hh = fs + pd * 2, x = pd, y = H - hh - pd;
+  do { g.font = '700 ' + fs + 'px sans-serif'; } while (g.measureText(t).width + pd * 2 + puntos() > libre && --fs > 9);
+  var ap = puntos(), w = Math.min(g.measureText(t).width + pd * 2 + ap, libre), hh = fs + pd * 2, x = pd, y = H - hh - pd;
   g.fillStyle = 'rgba(255,255,255,.94)'; g.fillRect(x, y, w, hh);
-  g.beginPath(); g.arc(x + pd + fs * 0.35, y + hh / 2, fs * 0.35, 0, Math.PI * 2); g.fillStyle = colorFalla(); g.fill();
-  g.fillStyle = '#111827'; g.fillText(t, x + pd + fs, y + hh / 2, w - pd * 2 - fs);
+  cols.forEach(function(c, i){ g.beginPath(); g.arc(x + pd + fs * 0.35 + i * fs * 0.85, y + hh / 2, fs * 0.35, 0, Math.PI * 2); g.fillStyle = c; g.fill(); });
+  g.fillStyle = '#111827'; g.fillText(t, x + pd + ap, y + hh / 2, w - pd * 2 - ap);
 }
 function imagenMapa(){
   if (!MAPA) return Promise.reject(new Error('sin mapa'));
@@ -2671,8 +2683,10 @@ function eventos(){
   $('faFallas').addEventListener('click', function(e){
     var b = e.target.closest('.opt'); if (!b) return;
     var i = parseInt(b.getAttribute('data-i'), 10);
-    S.falla = (S.falla === i ? -1 : i); todo();
-    if (S.falla === OTRO) $('faOtro').focus();
+    if (hay(i)) S.fallas = S.fallas.filter(function(x){ return x !== i; });
+    else { S.fallas.push(i); S.fallas.sort(function(a, b){ return a - b; }); }   // mismo orden que los botones
+    todo();
+    if (i === OTRO && hay(OTRO)) $('faOtro').focus();
   });
   $('faBtnBase').addEventListener('click', cambiarBase);
   $('faBtnFijar').addEventListener('click', fijarVista);
