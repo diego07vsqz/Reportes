@@ -2876,7 +2876,11 @@ pintarMenuVistas.listo = true;
   var ir = $('miniIr'), logo = document.querySelector('header.top .logo-ccm'), sema = document.querySelector('header.top .sema');
   if (logo) ir.insertBefore(logo.cloneNode(true), ir.firstChild);
   if (sema) ir.appendChild(sema.cloneNode(true));
-  function ver(){ $('miniBarra').hidden = document.querySelector('.vistas-dd').getBoundingClientRect().bottom > 0; }
+  var oculta = true;
+  function ver(){   // solo toca la página cuando la barra cambia (no en cada movimiento): no molesta a los menús del navegador (ej. autocompletar)
+    var o = document.querySelector('.vistas-dd').getBoundingClientRect().bottom > 0;
+    if (o !== oculta){ oculta = o; $('miniBarra').hidden = o; }
+  }
   window.addEventListener('scroll', ver, { passive:true }); window.addEventListener('resize', ver); ver();
   ir.addEventListener('click', function(){ window.scrollTo(0, 0); });
 })();   // desde aquí, cambiar de pestaña anima la señal (al abrir no)
