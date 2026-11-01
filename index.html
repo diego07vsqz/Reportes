@@ -360,6 +360,30 @@ body[data-modo="fallas"] header.top .l-a{fill:#f59e0b;animation:parpadeo 1.2s st
 @keyframes vistasPista{50%{transform:translateY(-3px)}}
 @media (prefers-reduced-motion:reduce){ .vistas-pista,#vistasMenu{animation:none} }
 @media (max-width:640px){ .vistas-dd{flex-basis:100%} .vistas-txt b{font-size:16px;white-space:normal;line-height:1.2} .vistas-mas{padding:7px 10px} .vistas-pista{flex-basis:100%} #vistasMenu .tab{padding-top:30px} }
+
+/* ══ ANIMACIONES ══ */
+/* 1 · encendido del semáforo del encabezado (data-encendido en el body mientras dura) */
+body[data-encendido] header.top .sema .luz{fill:color-mix(in srgb, currentColor 18%, transparent);animation:none}
+body[data-encendido="r"] header.top .sema .l-r{fill:#dc2626;filter:drop-shadow(0 0 4px #dc2626)}
+body[data-encendido="a"] header.top .sema .l-a{fill:#f59e0b;filter:drop-shadow(0 0 4px #f59e0b)}
+body[data-encendido="v"] header.top .sema .l-v{fill:#16a34a;filter:drop-shadow(0 0 4px #16a34a)}
+/* 2 · la señal del botón se abre girando */
+.st .senal{transform-box:fill-box;transform-origin:center}
+.st-boton .senal.gira{animation:senalGira .45s cubic-bezier(.3,1.4,.5,1)}
+@keyframes senalGira{0%{transform:scaleX(0)}70%{transform:scaleX(1.12)}100%{transform:scaleX(1)}}
+/* 3 · líneas cambiadas en la vista previa */
+.bubble div.cambio{animation:lineaCambio 1.6s ease-out;border-radius:4px}
+@keyframes lineaCambio{0%,25%{background:rgba(250,204,21,.6)}100%{background:transparent}}
+/* 4 · copiar con ✓ */
+.btn-copy{position:relative}
+.btn-copy .chk{width:20px;height:20px;vertical-align:-4px;margin-right:8px}
+.btn-copy .chk path{stroke-dasharray:1;stroke-dashoffset:1;animation:chkTraza .45s .05s ease-out forwards}
+.btn-copy.copiado{animation:copiaLate .5s ease-out}
+.btn-copy.copiado::after{content:"";position:absolute;inset:0;border-radius:inherit;border:3px solid var(--ok);animation:copiaPulso .8s ease-out forwards;pointer-events:none}
+@keyframes chkTraza{to{stroke-dashoffset:0}}
+@keyframes copiaLate{40%{transform:scale(1.04)}100%{transform:none}}
+@keyframes copiaPulso{from{opacity:.9;transform:scale(1)}to{opacity:0;transform:scale(1.15,1.6)}}
+@media (prefers-reduced-motion:reduce){ .st-boton .senal.gira,.bubble div.cambio,.btn-copy.copiado,.btn-copy.copiado::after{animation:none} .btn-copy .chk path{animation:none;stroke-dashoffset:0} }
 </style>
 </head>
 <body>
@@ -1404,7 +1428,28 @@ function pintarBurbuja(txt, destino){
       .replace(/\*([^*]+?)\*/g, '<b>$1</b>');
     h += '<div' + (li ? ' class="li"' : '') + '>' + t + '</div>';
   });
-  $(destino || 'burbuja').innerHTML = h;
+  var el = $(destino || 'burbuja'); el.innerHTML = h;
+  resaltarCambios(el, String(txt || '').split('\n'));
+}
+
+// 3 · Marca las líneas de la vista previa que cambiaron desde la última vez (la primera vez no marca nada).
+function resaltarCambios(el, lineas){
+  var antes = el._lineas; el._lineas = lineas;
+  if (!antes) return;
+  Array.prototype.forEach.call(el.children, function(d, i){ if (antes[i] !== lineas[i]) d.classList.add('cambio'); });
+}
+// 4 · Confirma en los botones de copiar: ✓ que se dibuja + "Copiado" por 2 s. Solo se llama si sí se copió.
+var COPIA_T = {};
+function confirmarCopia(ids){
+  ids.forEach(function(id){
+    var b = $(id); if (!b) return;
+    if (b._txt === undefined) b._txt = b.innerHTML;
+    clearTimeout(COPIA_T[id]);
+    b.classList.remove('copiado'); void b.offsetWidth;   // reinicia la animación si se copia seguido
+    b.innerHTML = '<svg class="chk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path pathLength="1" d="M4 12.5l5 5L20 6.5"/></svg>Copiado';
+    b.classList.add('copiado');
+    COPIA_T[id] = setTimeout(function(){ b.classList.remove('copiado'); b.innerHTML = b._txt; }, 2200);
+  });
 }
 
 /* ══ FALTANTES ══ */
@@ -1452,9 +1497,9 @@ function copiar(){
   S.aviso = falta; pintarFaltantes();
   var MSG_OK = falta ? '⚠️ Copiado, pero faltan datos. Revisa lo marcado en rojo.' : '✓ Copiado. Ahora pégalo en WhatsApp.';
   var ta = $('out');
-  function plan(){ ta.focus(); ta.select(); var ok = false; try { ok = document.execCommand('copy'); } catch(e){} aviso(ok ? MSG_OK : 'No se pudo copiar. Intenta de nuevo.'); }
+  function plan(){ ta.focus(); ta.select(); var ok = false; try { ok = document.execCommand('copy'); } catch(e){} aviso(ok ? MSG_OK : 'No se pudo copiar. Intenta de nuevo.'); if (ok) confirmarCopia(['btnCopy','btnCopy2']); }
   if (navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(ta.value).then(function(){ aviso(MSG_OK); }).catch(plan);
+    navigator.clipboard.writeText(ta.value).then(function(){ aviso(MSG_OK); confirmarCopia(['btnCopy','btnCopy2']); }).catch(plan);
   } else plan();
 }
 // Deja el formulario en blanco (también al abrir la página).
@@ -1838,9 +1883,11 @@ function generar(){
 }
 // Vista previa estilo WhatsApp.
 function pintarBurbuja(txt){
-  $('evBurbuja').innerHTML = String(txt).split('\n').map(function(l){
+  var el = $('evBurbuja');
+  el.innerHTML = String(txt).split('\n').map(function(l){
     return '<div>' + esc(l).replace(/\*_([^*_]+?)_\*/g, '<b><i>$1</i></b>').replace(/\*([^*]+?)\*/g, '<b>$1</b>').replace(/^( +)/, function(m){ return Array(m.length + 1).join('&nbsp;'); }) + '</div>';
   }).join('');
+  resaltarCambios(el, String(txt).split('\n'));
 }
 // Quita del evento semáforos que ya no existen (p. ej. eliminados en la otra pestaña).
 function depurar(){   // quita del evento los semáforos que ya no existen en el listado
@@ -2125,8 +2172,8 @@ function copiar(){
   generar();
   var ta = $('evOut'), falta = !S.sel.length ? 'Aún no hay semáforos en el evento.' : (!S.nombre.trim() ? 'Falta el nombre del evento.' : '');
   var ok = falta ? '⚠️ Copiado, pero ' + falta.charAt(0).toLowerCase() + falta.slice(1) : '✓ Copiado. Pégalo en WhatsApp.';
-  function plan(){ ta.focus(); ta.select(); var r = false; try { r = document.execCommand('copy'); } catch(e){} aviso(r ? ok : 'No se pudo copiar. Intenta de nuevo.'); }
-  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(function(){ aviso(ok); }).catch(plan); else plan();
+  function plan(){ ta.focus(); ta.select(); var r = false; try { r = document.execCommand('copy'); } catch(e){} aviso(r ? ok : 'No se pudo copiar. Intenta de nuevo.'); if (r) confirmarCopia(['evBtnCopy']); }
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(function(){ aviso(ok); confirmarCopia(['evBtnCopy']); }).catch(plan); else plan();
 }
 // Etiqueta "⏱ Automática" / "Manual".
 function pintarHoraModo(){
@@ -2646,8 +2693,8 @@ function copiar(){
   var falta = faltantes().length > 0;
   S.aviso = falta; pintarFaltantes();
   var ok = falta ? '⚠️ Copiado, pero faltan datos. Revisa lo marcado en rojo.' : '✓ Copiado. Ahora pégalo en WhatsApp.', ta = $('faOut');
-  function plan(){ ta.focus(); ta.select(); var r = false; try { r = document.execCommand('copy'); } catch(e){} aviso(r ? ok : 'No se pudo copiar. Intenta de nuevo.'); }
-  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(function(){ aviso(ok); }).catch(plan);
+  function plan(){ ta.focus(); ta.select(); var r = false; try { r = document.execCommand('copy'); } catch(e){} aviso(r ? ok : 'No se pudo copiar. Intenta de nuevo.'); if (r) confirmarCopia(['faBtnCopy']); }
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(function(){ aviso(ok); confirmarCopia(['faBtnCopy']); }).catch(plan);
   else plan();
 }
 var CAMPOS = ['faFecha','faHora','faOtro','faNotas'], MARCAS = ['faGestores','faCuadrilla'];
@@ -2728,7 +2775,9 @@ function menuVistas(abrir){
 // Botón: luz y nombre de la pestaña en uso; puntos de las otras 2 (y contador si hay evento en curso).
 function pintarMenuVistas(v){
   $('vistasNom').textContent = MENU_VISTAS[v].n;
-  document.querySelector('.st-boton').setAttribute('data-v', v);   // semáforo del botón: luz y señal de la pestaña en uso
+  var st = document.querySelector('.st-boton'), antes = st.getAttribute('data-v');
+  st.setAttribute('data-v', v);   // semáforo del botón: luz y señal de la pestaña en uso (cambia en el acto)
+  if (antes !== v && pintarMenuVistas.listo){ var sn = st.querySelector('.senal'); sn.classList.remove('gira'); void sn.getBoundingClientRect(); sn.classList.add('gira'); }
   var tc = $('tabCuenta'), cuenta = v !== 'evento' && tc && !tc.hidden ? tc.textContent : '';
   $('vistasOtras').innerHTML = VISTAS.filter(function(x){ return x !== v; }).map(function(x){
     return x === 'evento' && cuenta ? '<em title="Evento en curso">' + esc(cuenta) + '</em>' : '<i style="--c:' + MENU_VISTAS[x].luz + '"></i>';
@@ -2785,6 +2834,15 @@ try { $('vistasPista').hidden = !!localStorage.getItem('ups_menu_visto'); } catc
 $('btnPuente').addEventListener('click', pasarAEvento);
 window.addEventListener('hashchange', function(){ var h = location.hash.replace('#', ''); if (VISTAS.indexOf(h) >= 0) cambiarVista(h, true); });
 cambiarVista(vistaInicial(), !location.hash);
+pintarMenuVistas.listo = true;   // desde aquí, cambiar de pestaña anima la señal (al abrir no)
+// 1 · Al abrir: el semáforo del encabezado hace rojo → ámbar → verde y queda en la luz de la pestaña.
+(function(){
+  var pasos = ['r', 'a', 'v'], i = 0;
+  (function sig(){
+    if (i < pasos.length){ document.body.setAttribute('data-encendido', pasos[i++]); setTimeout(sig, 380); }
+    else document.body.removeAttribute('data-encendido');
+  })();
+})();
 pintarPuente();
 </script>
 </body>
