@@ -444,6 +444,35 @@ body[data-modo="fallas"] .mini-barra .l-a{fill:#f59e0b;animation:parpadeo 1.2s s
 .baja .flecha-b{animation:bajaFlecha .6s ease-out}
 @keyframes bajaFlecha{0%{transform:translateY(-7px);opacity:0}60%{transform:translateY(1px);opacity:1}100%{transform:none}}
 @media (prefers-reduced-motion:reduce){ .mapbtns button.copiado,.mapbtns button.descargado,.mapbtns button.copiado::after,.mapbtns button.descargado::after,.baja .flecha-b{animation:none} .mapbtns button .chk path{animation:none;stroke-dashoffset:0} }
+
+/* ══ ESTILO MODERNO (solo apariencia) ══ */
+:root{--sombra:0 1px 2px rgba(15,23,42,.05),0 8px 24px -10px rgba(15,23,42,.16);--luz1:rgba(245,158,11,.10);--luz2:rgba(37,99,235,.08)}
+:root[data-theme="dark"]{--sombra:0 1px 0 rgba(255,255,255,.03) inset,0 10px 28px -12px rgba(0,0,0,.65);--luz1:rgba(245,158,11,.07);--luz2:rgba(59,130,246,.09)}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){--sombra:0 1px 0 rgba(255,255,255,.03) inset,0 10px 28px -12px rgba(0,0,0,.65);--luz1:rgba(245,158,11,.07);--luz2:rgba(59,130,246,.09)} }
+body{background-color:var(--bg);background-image:radial-gradient(900px 500px at 0% 0%, var(--luz1), transparent 65%),radial-gradient(800px 600px at 100% 0%, var(--luz2), transparent 65%);background-repeat:no-repeat}
+body[data-modo="evento"]{--luz1:rgba(139,92,246,.10)}
+.card{border-radius:20px;box-shadow:var(--sombra)}
+.card h2{letter-spacing:-.01em}
+.num{border-radius:9px;background-image:linear-gradient(135deg, rgba(255,255,255,.28), rgba(255,255,255,0));box-shadow:0 3px 8px -3px rgba(0,0,0,.35)}
+#vistaEvento .planes-card .num{box-shadow:none}   /* ese número es solo texto, sin fondo */
+input,textarea,select{border-width:1.5px;border-radius:12px}
+.opt{transition:transform .15s ease,border-color .15s,box-shadow .2s}
+.opt:hover{transform:translateY(-1px)}
+.opt:active{transform:scale(.97)}
+.opt[aria-pressed="true"]{box-shadow:0 5px 12px -5px color-mix(in srgb, var(--sel-line) 80%, transparent)}
+.btn-copy{background-image:linear-gradient(135deg, rgba(255,255,255,.22), rgba(255,255,255,0) 60%);box-shadow:0 8px 20px -10px var(--ok);transition:filter .15s,box-shadow .2s}
+.btn-copy:hover{filter:brightness(1.05)}
+.mapbtns button{border-radius:12px;transition:filter .15s}
+.mapbtns button:hover{filter:brightness(1.06)}
+.btn-blue{background-image:linear-gradient(135deg, rgba(255,255,255,.12), rgba(0,0,0,.18));box-shadow:0 6px 16px -10px var(--sel-line)}
+.btn-reset{border-radius:14px}
+#mapa,#evMapa,#faMapa{border-radius:16px}
+.phone{border-radius:18px;background-image:radial-gradient(rgba(0,0,0,.05) 1px, transparent 1.3px);background-size:14px 14px}
+.bubble{border-radius:6px 16px 16px 16px;box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.vistas-btn{border-radius:20px}
+#vistasMenu{border-radius:18px}
+header.top{border-radius:20px;box-shadow:var(--sombra)}
+@media (prefers-reduced-motion:reduce){ .opt,.opt:hover,.opt:active{transition:none;transform:none} }
 </style>
 </head>
 <body>
