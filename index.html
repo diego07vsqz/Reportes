@@ -500,6 +500,11 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
 .cp-qr svg{width:min(260px,100%);height:auto}
 .cp-qr small{color:#334155;font-size:12px;text-align:center}
 .cp-nota{margin:0;font-size:12.5px;color:var(--muted)}
+.cp-viejo{margin:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;font-size:13px;font-weight:700;background:color-mix(in srgb,#f59e0b 16%,transparent);color:#b45309}
+:root[data-theme="dark"] .cp-viejo{color:#fbbf24}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .cp-viejo{color:#fbbf24} }
+.cp-viejo button{border-radius:999px;padding:4px 12px;font-size:12.5px;font-weight:800}
+.comp-panel.viejo #cpLink,.comp-panel.viejo .cp-btns,.comp-panel.viejo .cp-qr{opacity:.45}
 .ev-modal{position:fixed;inset:0;z-index:6000;display:grid;place-items:center;padding:16px;background:rgba(2,6,23,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 .ev-modal .caja{width:min(460px,100%);display:grid;gap:12px;padding:20px;border-radius:20px;background:var(--card);color:var(--fg);border:1px solid var(--line);box-shadow:0 24px 60px -20px rgba(0,0,0,.6);animation:mEntra .3s cubic-bezier(.2,1.3,.4,1)}
 @keyframes mEntra{from{transform:translateY(12px) scale(.97);opacity:0}to{transform:none;opacity:1}}
@@ -698,6 +703,7 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
         <div class="comp-panel" id="evCompPanel" hidden>
           <div class="cp-top"><b>Enlace del evento</b><button type="button" class="cp-x" id="cpCerrar" aria-label="Cerrar">×</button></div>
           <p class="cp-res" id="cpRes"></p>
+          <p class="cp-viejo" id="cpViejo" hidden>⚠️ El evento cambió después de crear este enlace. <button type="button" id="cpActualizar">↻ Actualizar enlace</button></p>
           <input type="text" id="cpLink" readonly aria-label="Enlace del evento">
           <div class="cp-btns"><button type="button" class="btn-blue" id="cpCopiar">📋 Copiar enlace</button><button type="button" id="cpQR">▦ Ver QR</button></div>
           <div class="cp-qr" id="cpQRBox" hidden></div>
@@ -2984,7 +2990,7 @@ function cambiarVista(v, sinHash){
 /* ══ COMPARTIR EVENTO POR ENLACE ══
    El evento viaja comprimido dentro del enlace (#evento?plan=1.xxxx). No hay servidor: solo lo tiene quien recibe el enlace.
    "1." = comprimido (deflate-raw) · "0." = sin comprimir (navegadores viejos). */
-var LINK_EVENTO = '';
+var LINK_EVENTO = '', FOTO_ENLACE = '';   // FOTO_ENLACE: datos del evento cuando se creó el enlace
 function planEnHash(){ var m = (location.hash || '').match(/[?&]plan=([A-Za-z0-9_\-.]+)/); return m ? m[1] : null; }
 function aB64u(bytes){ var s = ''; for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
 function deB64u(t){ t = t.replace(/-/g, '+').replace(/_/g, '/'); while (t.length % 4) t += '='; var s = atob(t), a = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return a; }
@@ -3015,17 +3021,33 @@ function compartirEvento(){
     $('cpLink').value = LINK_EVENTO;
     $('cpRes').innerHTML = '<b>' + esc(ev.nombre || 'Evento sin nombre') + '</b> · ' + plural(ev.sel.length, 'semáforo', 'semáforos') + ' · ' + plural(ev.cor.length, 'corredor', 'corredores') + ' · ' + plural(inter, 'intervenido', 'intervenidos') +
       (nuevos.length ? ' · ' + plural(nuevos.length, 'semáforo nuevo incluido', 'semáforos nuevos incluidos') : '') + '<br><small>Enlace de ' + LINK_EVENTO.length + ' caracteres</small>';
-    $('evCompPanel').hidden = false; $('cpQRBox').hidden = true;
+    FOTO_ENLACE = huellaEvento(ev);
+    $('evCompPanel').hidden = false; $('evCompPanel').classList.remove('viejo'); $('cpViejo').hidden = true; $('cpQRBox').hidden = true;
     copiarEnlace();
   }).catch(function(){ aviso('No se pudo armar el enlace en este navegador.'); });
 }
+// Si el evento cambia después de compartir: el enlace queda marcado como viejo (se ofrece actualizar).
+// Si el evento queda vacío (Empezar otro evento): el panel se cierra.
+function revisarEnlace(){
+  var p = $('evCompPanel'); if (p.hidden || !FOTO_ENLACE) return;
+  var ev = EV.paraCompartir();
+  if (!ev.sel.length){ cerrarEnlace(); return; }
+  var viejo = huellaEvento(ev) !== FOTO_ENLACE;
+  p.classList.toggle('viejo', viejo); $('cpViejo').hidden = !viejo;
+  if (viejo) $('cpQRBox').hidden = true;
+}
+// Huella para comparar: con hora automática, el cambio de minuto no cuenta como cambio del evento.
+function huellaEvento(ev){ var c = JSON.parse(JSON.stringify(ev)); if (c.horaAuto) delete c.hora; return JSON.stringify(c); }
+function cerrarEnlace(){ $('evCompPanel').hidden = true; $('evCompPanel').classList.remove('viejo'); $('cpViejo').hidden = true; $('cpQRBox').hidden = true; $('cpLink').value = ''; LINK_EVENTO = ''; FOTO_ENLACE = ''; }
 function copiarEnlace(){
+  if ($('evCompPanel').classList.contains('viejo')){ aviso('El evento cambió: toca “Actualizar enlace” para compartir lo último.'); return; }
   function plan(){ var i = $('cpLink'); i.focus(); i.select(); var r = false; try { r = document.execCommand('copy'); } catch(e){} aviso(r ? '🔗 Enlace copiado. Pégalo en la otra máquina o en WhatsApp.' : 'Selecciona el enlace y cópialo (Ctrl+C).'); }
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(LINK_EVENTO).then(function(){ aviso('🔗 Enlace copiado. Pégalo en la otra máquina o en WhatsApp.'); }).catch(plan); else plan();
 }
 // QR: la librería se carga solo al pedirlo.
 function verQR(){
   var box = $('cpQRBox');
+  if ($('evCompPanel').classList.contains('viejo')){ aviso('El evento cambió: toca “Actualizar enlace” primero.'); return; }
   function pintar(){ var q = qrcode(0, 'L'); q.addData(LINK_EVENTO); q.make(); box.innerHTML = q.createSvgTag({ cellSize:4, margin:2, scalable:true }) + '<small>Apunta la cámara del teléfono a la pantalla para abrir el evento.</small>'; box.hidden = false; }
   function fallo(){ box.innerHTML = '<small>No se pudo cargar el QR (sin internet). El enlace funciona igual.</small>'; box.hidden = false; }
   if (window.qrcode){ try { pintar(); } catch(e){ fallo(); } return; }
@@ -3062,7 +3084,7 @@ function abrirCompartido(token){
       });
       if (agregados){ guardarCustom(); renderLista(); renderMapa(false); }
       var antes = EV.cargarCompartido(x);
-      cerrar();
+      cerrar(); cerrarEnlace();
       aviso('✓ Evento “' + (x.nombre || 'sin nombre') + '” cargado desde el enlace.', { txt:'Deshacer', fn:function(){ EV.restaurar(antes); aviso('Se recuperó tu evento anterior.'); } });
     });
   }).catch(function(){ limpiarHashPlan(); aviso('El enlace está incompleto o dañado. Pide que lo compartan de nuevo.'); });
@@ -3070,7 +3092,10 @@ function abrirCompartido(token){
 $('evCompartir').addEventListener('click', compartirEvento);
 $('cpCopiar').addEventListener('click', copiarEnlace);
 $('cpQR').addEventListener('click', verQR);
-$('cpCerrar').addEventListener('click', function(){ $('evCompPanel').hidden = true; });
+$('cpCerrar').addEventListener('click', cerrarEnlace);
+$('cpActualizar').addEventListener('click', compartirEvento);
+new MutationObserver(revisarEnlace).observe($('evBurbuja'), { childList:true, subtree:true, characterData:true });   // el texto del evento se rehace en cada cambio
+$('evBtnNuevoEvento').addEventListener('click', function(){ setTimeout(revisarEnlace, 0); });
 $('cpLink').addEventListener('focus', function(){ this.select(); });
 
 // Pestaña al abrir: la del enlace, si no la última usada, si no Cambio de tiempos.
