@@ -483,6 +483,37 @@ input,textarea,select{border-width:1.5px;border-radius:12px}
 #vistasMenu{border-radius:18px}
 header.top{border-radius:20px;box-shadow:var(--sombra)}
 @media (prefers-reduced-motion:reduce){ .opt,.opt:hover,.opt:active{transition:none;transform:none} }
+
+/* ══ COMPARTIR EVENTO POR ENLACE ══ */
+.btn-compartir{display:block;width:100%;border-radius:14px;padding:12px;font-weight:800;border:1.5px solid #7c3aed;color:#6d28d9;background:color-mix(in srgb,#8b5cf6 8%,transparent)}
+.btn-compartir small{font-weight:600;opacity:.75}
+:root[data-theme="dark"] .btn-compartir{color:#c4b5fd;border-color:#8b5cf6}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .btn-compartir{color:#c4b5fd;border-color:#8b5cf6} }
+.comp-panel{display:grid;gap:10px;padding:14px;border-radius:16px;border:1px solid color-mix(in srgb,#8b5cf6 40%,var(--line));background:color-mix(in srgb,#8b5cf6 6%,var(--card))}
+.cp-top{display:flex;align-items:center;gap:8px}.cp-top b{margin-right:auto}
+.cp-x{border:0;background:transparent;font-size:20px;padding:0 6px;color:var(--muted)}
+.cp-res{margin:0;font-size:13.5px}
+.cp-res small{color:var(--muted)}
+#cpLink{font:12px/1.4 ui-monospace,Consolas,monospace;width:100%}
+.cp-btns{display:flex;flex-wrap:wrap;gap:8px}.cp-btns button{flex:1 1 140px}
+.cp-qr{display:grid;justify-items:center;gap:6px;padding:12px;background:#fff;border-radius:12px}
+.cp-qr svg{width:min(260px,100%);height:auto}
+.cp-qr small{color:#334155;font-size:12px;text-align:center}
+.cp-nota{margin:0;font-size:12.5px;color:var(--muted)}
+.ev-modal{position:fixed;inset:0;z-index:6000;display:grid;place-items:center;padding:16px;background:rgba(2,6,23,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.ev-modal .caja{width:min(460px,100%);display:grid;gap:12px;padding:20px;border-radius:20px;background:var(--card);color:var(--fg);border:1px solid var(--line);box-shadow:0 24px 60px -20px rgba(0,0,0,.6);animation:mEntra .3s cubic-bezier(.2,1.3,.4,1)}
+@keyframes mEntra{from{transform:translateY(12px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+.ev-modal h3{margin:0;font-size:18px}
+.ev-modal .ficha{display:grid;gap:6px;padding:12px;border-radius:14px;background:color-mix(in srgb,var(--fg) 4%,transparent);font-size:14px}
+.ev-modal .ficha b{font-size:16px}
+.ev-modal .cors{display:flex;flex-wrap:wrap;gap:6px}
+.ev-modal .cors span{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--card);border:1px solid var(--line)}
+.ev-modal .cors i{width:9px;height:9px;border-radius:50%}
+.ev-modal .ojo{font-size:13px;color:var(--muted);margin:0}
+.ev-modal .warn{font-size:13px;margin:0;color:#b45309}
+.ev-modal .acc{display:flex;gap:8px;flex-wrap:wrap}.ev-modal .acc button{flex:1 1 140px;padding:12px;border-radius:14px;font-weight:800}
+.ev-modal .si{background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;border:0}
+@media (prefers-reduced-motion:reduce){ .ev-modal .caja{animation:none} }
 </style>
 </head>
 <body>
@@ -663,6 +694,15 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
         </div>
         <textarea id="evOut" readonly tabindex="-1" aria-hidden="true"></textarea>
         <button type="button" class="btn-copy" id="evBtnCopy">Copiar reporte</button>
+        <button type="button" class="btn-compartir" id="evCompartir">🔗 Compartir evento <small>(enlace para otra máquina)</small></button>
+        <div class="comp-panel" id="evCompPanel" hidden>
+          <div class="cp-top"><b>Enlace del evento</b><button type="button" class="cp-x" id="cpCerrar" aria-label="Cerrar">×</button></div>
+          <p class="cp-res" id="cpRes"></p>
+          <input type="text" id="cpLink" readonly aria-label="Enlace del evento">
+          <div class="cp-btns"><button type="button" class="btn-blue" id="cpCopiar">📋 Copiar enlace</button><button type="button" id="cpQR">▦ Ver QR</button></div>
+          <div class="cp-qr" id="cpQRBox" hidden></div>
+          <p class="cp-nota">Es una <b>foto de este momento</b>: si cambias algo después, comparte un enlace nuevo. Quien lo abra verá una pregunta antes de reemplazar su evento.</p>
+        </div>
         <div class="mapbtns">
           <button type="button" class="btn-blue" id="evBtnMapaCopiar">Copiar mapa</button>
           <button type="button" id="evBtnMapaBajar">Descargar mapa</button>
@@ -2507,6 +2547,19 @@ return {
     return { nuevos:n, habia:antes };
   },
   encuadrar: function(){ encuadrar(); },
+  paraCompartir: function(){   // copia de los datos del evento (sin preferencias de pantalla)
+    var o = {}; ['nombre','zona','tipo','enc','hora','fase','monit','nota','sel','cor','asig','inter','manual','horaAuto'].forEach(function(k){ o[k] = JSON.parse(JSON.stringify(S[k])); });
+    return o;
+  },
+  cargarCompartido: function(x){   // reemplaza el evento por uno compartido (pasa por la misma limpieza que el guardado); devuelve el anterior
+    var antes = JSON.parse(JSON.stringify(S));
+    S = sanear(x);
+    var huerfanos = S.sel.filter(function(k){ return !corPorId(S.asig[k]); });
+    if (huerfanos.length){ if (S.manual) huerfanos.forEach(function(k){ S.asig[k] = corOtras().id; }); else agruparTodo(); }
+    campos(); todo(); encuadrar();
+    return antes;
+  },
+  restaurar: function(x){ S = sanear(x); campos(); todo(); encuadrar(); },
   mapa: function(){ return MAPA; },        // solo lectura (pruebas / consola)
   estado: function(){ return S; }
 };
@@ -2928,9 +2981,101 @@ function cambiarVista(v, sinHash){
   if (!sinHash && history.replaceState){ try { history.replaceState(null, '', '#' + v); } catch(e){} }   // en vistas previas aisladas puede fallar: no debe cortar el cambio de pestaña
   if (v === 'evento') EV.mostrar(); else if (v === 'fallas') FA.mostrar(); else if (MAPA) MAPA.invalidateSize();
 }
+/* ══ COMPARTIR EVENTO POR ENLACE ══
+   El evento viaja comprimido dentro del enlace (#evento?plan=1.xxxx). No hay servidor: solo lo tiene quien recibe el enlace.
+   "1." = comprimido (deflate-raw) · "0." = sin comprimir (navegadores viejos). */
+var LINK_EVENTO = '';
+function planEnHash(){ var m = (location.hash || '').match(/[?&]plan=([A-Za-z0-9_\-.]+)/); return m ? m[1] : null; }
+function aB64u(bytes){ var s = ''; for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function deB64u(t){ t = t.replace(/-/g, '+').replace(/_/g, '/'); while (t.length % 4) t += '='; var s = atob(t), a = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return a; }
+function flujoZip(bytes, Clase){ return new Response(new Blob([bytes]).stream().pipeThrough(new Clase('deflate-raw'))).arrayBuffer().then(function(b){ return new Uint8Array(b); }); }
+function empacarPlan(obj){
+  var bytes = new TextEncoder().encode(JSON.stringify(obj));
+  if (window.CompressionStream) return flujoZip(bytes, CompressionStream).then(function(z){ return '1.' + aB64u(z); });
+  return Promise.resolve('0.' + aB64u(bytes));
+}
+function desempacarPlan(t){   // cualquier error → promesa rechazada (nunca rompe la página)
+  return Promise.resolve().then(function(){
+    var v = t.slice(0, 2), d = deB64u(t.slice(2));
+    if (v !== '1.' && v !== '0.') throw new Error('versión');
+    return (v === '1.' ? flujoZip(d, DecompressionStream) : d);
+  }).then(function(b){ return JSON.parse(new TextDecoder().decode(b)); });
+}
+function plural(n, uno, varios){ return n + ' ' + (n === 1 ? uno : varios); }
+function baseEnlace(){ return location.href.split('#')[0]; }
+function limpiarHashPlan(){ if (history.replaceState){ try { history.replaceState(null, '', baseEnlace() + '#evento'); } catch(e){} } }
+// Arma el enlace del evento en curso y lo copia.
+function compartirEvento(){
+  var ev = EV.paraCompartir();
+  if (!ev.sel.length){ aviso('Elige semáforos primero: el enlace lleva el evento armado.'); return; }
+  var nuevos = S.custom.filter(function(x){ return ev.sel.indexOf(x.k) >= 0; }).map(function(x){ return { k:x.k, id:x.id, d:x.d, c:x.c, la:x.la, lo:x.lo }; });
+  var inter = ev.sel.filter(function(k){ return ev.inter && ev.inter[k]; }).length;
+  empacarPlan({ v:1, ev:ev, nuevos:nuevos }).then(function(t){
+    LINK_EVENTO = baseEnlace() + '#evento?plan=' + t;
+    $('cpLink').value = LINK_EVENTO;
+    $('cpRes').innerHTML = '<b>' + esc(ev.nombre || 'Evento sin nombre') + '</b> · ' + plural(ev.sel.length, 'semáforo', 'semáforos') + ' · ' + plural(ev.cor.length, 'corredor', 'corredores') + ' · ' + plural(inter, 'intervenido', 'intervenidos') +
+      (nuevos.length ? ' · ' + plural(nuevos.length, 'semáforo nuevo incluido', 'semáforos nuevos incluidos') : '') + '<br><small>Enlace de ' + LINK_EVENTO.length + ' caracteres</small>';
+    $('evCompPanel').hidden = false; $('cpQRBox').hidden = true;
+    copiarEnlace();
+  }).catch(function(){ aviso('No se pudo armar el enlace en este navegador.'); });
+}
+function copiarEnlace(){
+  function plan(){ var i = $('cpLink'); i.focus(); i.select(); var r = false; try { r = document.execCommand('copy'); } catch(e){} aviso(r ? '🔗 Enlace copiado. Pégalo en la otra máquina o en WhatsApp.' : 'Selecciona el enlace y cópialo (Ctrl+C).'); }
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(LINK_EVENTO).then(function(){ aviso('🔗 Enlace copiado. Pégalo en la otra máquina o en WhatsApp.'); }).catch(plan); else plan();
+}
+// QR: la librería se carga solo al pedirlo.
+function verQR(){
+  var box = $('cpQRBox');
+  function pintar(){ var q = qrcode(0, 'L'); q.addData(LINK_EVENTO); q.make(); box.innerHTML = q.createSvgTag({ cellSize:4, margin:2, scalable:true }) + '<small>Apunta la cámara del teléfono a la pantalla para abrir el evento.</small>'; box.hidden = false; }
+  function fallo(){ box.innerHTML = '<small>No se pudo cargar el QR (sin internet). El enlace funciona igual.</small>'; box.hidden = false; }
+  if (window.qrcode){ try { pintar(); } catch(e){ fallo(); } return; }
+  var s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
+  s.onload = function(){ try { pintar(); } catch(e){ fallo(); } }; s.onerror = fallo; document.head.appendChild(s);
+}
+// Abre un enlace compartido: pregunta antes de reemplazar; al cargar ofrece Deshacer.
+function abrirCompartido(token){
+  if (document.querySelector('.ev-modal')) return;
+  cambiarVista('evento', true);
+  desempacarPlan(token).then(function(d){
+    if (!d || d.v !== 1 || !d.ev || !Array.isArray(d.ev.sel)) throw new Error('datos');
+    var x = d.ev, sel = x.sel, cor = Array.isArray(x.cor) ? x.cor : [], nuevos = Array.isArray(d.nuevos) ? d.nuevos : [];
+    var vienen = {}; nuevos.forEach(function(n){ if (n && n.k) vienen[n.k] = 1; });
+    var falta = sel.filter(function(k){ return !porKey(k) && !vienen[k]; });
+    var actual = EV.paraCompartir(), inter = sel.filter(function(k){ return x.inter && x.inter[k]; }).length;
+    var m = document.createElement('div'); m.className = 'ev-modal'; m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true'); m.setAttribute('aria-label', 'Abrir evento compartido');
+    m.innerHTML = '<div class="caja"><h3>🔗 Abrir evento compartido</h3><div class="ficha"><b>' + esc(x.nombre || 'Evento sin nombre') + '</b><span>' +
+      plural(sel.length, 'semáforo', 'semáforos') + ' · ' + plural(cor.length, 'corredor', 'corredores') + ' · ' + plural(inter, 'intervenido', 'intervenidos') + '</span>' +
+      (cor.length ? '<div class="cors">' + cor.map(function(c){ var n = sel.filter(function(k){ return x.asig && x.asig[k] === c.id; }).length; return '<span><i style="background:' + esc(c.color || '#64748b') + '"></i>' + esc(c.nombre || 'Corredor') + ' · ' + n + '</span>'; }).join('') + '</div>' : '') + '</div>' +
+      (falta.length ? '<p class="warn">⚠️ ' + plural(falta.length, 'semáforo no existe', 'semáforos no existen') + ' en esta máquina y se omitirá' + (falta.length === 1 ? '' : 'n') + '.</p>' : '') +
+      (actual.sel.length ? '<p class="ojo">Reemplaza tu evento actual (“' + esc(actual.nombre || 'sin nombre') + '”, ' + plural(actual.sel.length, 'semáforo', 'semáforos') + '). Podrás deshacerlo.</p>' : '<p class="ojo">Se cargará en Evento con corredores, listo para seguir.</p>') +
+      '<div class="acc"><button type="button" class="no">Cancelar</button><button type="button" class="si">Cargar evento</button></div></div>';
+    document.body.appendChild(m); m.querySelector('.si').focus();
+    function cerrar(){ m.remove(); limpiarHashPlan(); }
+    m.querySelector('.no').addEventListener('click', function(){ cerrar(); aviso('No se cargó. Tu evento sigue igual.'); });
+    m.addEventListener('keydown', function(e){ if (e.key === 'Escape'){ cerrar(); aviso('No se cargó. Tu evento sigue igual.'); } });
+    m.querySelector('.si').addEventListener('click', function(){
+      var agregados = 0;   // semáforos nuevos que no existen aquí
+      nuevos.forEach(function(n){
+        if (!n || typeof n.k !== 'string' || typeof n.d !== 'string' || porKey(n.k)) return;
+        var la = +n.la, lo = +n.lo;
+        S.custom.unshift({ k:n.k, id:typeof n.id === 'string' ? n.id : 'NUEVO', d:n.d, c:typeof n.c === 'string' ? n.c : '', n:1, la:isFinite(la) ? la : null, lo:isFinite(lo) ? lo : null }); agregados++;
+      });
+      if (agregados){ guardarCustom(); renderLista(); renderMapa(false); }
+      var antes = EV.cargarCompartido(x);
+      cerrar();
+      aviso('✓ Evento “' + (x.nombre || 'sin nombre') + '” cargado desde el enlace.', { txt:'Deshacer', fn:function(){ EV.restaurar(antes); aviso('Se recuperó tu evento anterior.'); } });
+    });
+  }).catch(function(){ limpiarHashPlan(); aviso('El enlace está incompleto o dañado. Pide que lo compartan de nuevo.'); });
+}
+$('evCompartir').addEventListener('click', compartirEvento);
+$('cpCopiar').addEventListener('click', copiarEnlace);
+$('cpQR').addEventListener('click', verQR);
+$('cpCerrar').addEventListener('click', function(){ $('evCompPanel').hidden = true; });
+$('cpLink').addEventListener('focus', function(){ this.select(); });
+
 // Pestaña al abrir: la del enlace, si no la última usada, si no Cambio de tiempos.
 function vistaInicial(){
-  var h = (location.hash || '').replace('#', '');
+  var h = (location.hash || '').replace('#', '').split('?')[0];   // #evento?plan=… → evento
   if (VISTAS.indexOf(h) >= 0) return h;
   var v = null; try { v = localStorage.getItem(LS_VISTA); } catch(e){}
   return VISTAS.indexOf(v) >= 0 ? v : 'tiempos';
@@ -2961,8 +3106,14 @@ document.addEventListener('click', function(e){ if (!e.target.closest('.vistas-d
 document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !$('vistasMenu').hidden){ menuVistas(false); $('vistasBtn').focus(); } });
 try { $('vistasPista').hidden = !!localStorage.getItem('ups_menu_visto'); } catch(e){ $('vistasPista').hidden = false; }
 $('btnPuente').addEventListener('click', pasarAEvento);
-window.addEventListener('hashchange', function(){ var h = location.hash.replace('#', ''); if (VISTAS.indexOf(h) >= 0) cambiarVista(h, true); });
+window.addEventListener('hashchange', function(){
+  var p = planEnHash();   // enlace compartido pegado en una pestaña ya abierta
+  var h = location.hash.replace('#', '').split('?')[0]; if (VISTAS.indexOf(h) >= 0) cambiarVista(h, true);
+  if (p) abrirCompartido(p);
+});
+var PLAN_INICIAL = planEnHash();   // se lee antes de que cambiarVista limpie el enlace
 cambiarVista(vistaInicial(), !location.hash);
+if (PLAN_INICIAL) abrirCompartido(PLAN_INICIAL);
 pintarMenuVistas.listo = true;
 // Barra compacta: logo + título + semáforo (copias del encabezado); aparece cuando el botón de pestañas sale de la pantalla.
 (function(){
