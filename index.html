@@ -485,26 +485,40 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
 @media (prefers-reduced-motion:reduce){ .opt,.opt:hover,.opt:active{transition:none;transform:none} }
 
 /* ══ COMPARTIR EVENTO POR ENLACE ══ */
-.btn-compartir{display:block;width:100%;border-radius:14px;padding:12px;font-weight:800;border:1.5px solid #7c3aed;color:#6d28d9;background:color-mix(in srgb,#8b5cf6 8%,transparent)}
-.btn-compartir small{font-weight:600;opacity:.75}
+.acc-fila{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.acc-fila .btn-compartir,.acc-fila .btn-reset{margin:0;padding:11px 8px;font-size:14px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:6px;text-align:center}
+.btn-compartir{font-weight:800;border:1.5px solid #7c3aed;color:#6d28d9;background:color-mix(in srgb,#8b5cf6 8%,transparent)}
 :root[data-theme="dark"] .btn-compartir{color:#c4b5fd;border-color:#8b5cf6}
 @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .btn-compartir{color:#c4b5fd;border-color:#8b5cf6} }
-.comp-panel{display:grid;gap:10px;padding:14px;border-radius:16px;border:1px solid color-mix(in srgb,#8b5cf6 40%,var(--line));background:color-mix(in srgb,#8b5cf6 6%,var(--card))}
-.cp-top{display:flex;align-items:center;gap:8px}.cp-top b{margin-right:auto}
-.cp-x{border:0;background:transparent;font-size:20px;padding:0 6px;color:var(--muted)}
-.cp-res{margin:0;font-size:13.5px}
-.cp-res small{color:var(--muted)}
-#cpLink{font:12px/1.4 ui-monospace,Consolas,monospace;width:100%}
-.cp-btns{display:flex;flex-wrap:wrap;gap:8px}.cp-btns button{flex:1 1 140px}
-.cp-qr{display:grid;justify-items:center;gap:6px;padding:12px;background:#fff;border-radius:12px}
-.cp-qr svg{width:min(260px,100%);height:auto}
-.cp-qr small{color:#334155;font-size:12px;text-align:center}
+/* ventana "Compartir evento": al centro en PC, sube desde abajo en teléfono */
+.cp-fondo{position:fixed;inset:0;z-index:6000;display:grid;place-items:center;padding:16px;background:rgba(2,6,23,.5);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);animation:cpF .2s ease}
+@keyframes cpF{from{opacity:0}}
+.cp-caja{width:min(520px,100%);display:grid;gap:14px;padding:22px;border-radius:24px;background:var(--card);color:var(--fg);border:1px solid var(--line);box-shadow:0 30px 70px -24px rgba(0,0,0,.65);animation:cpE .32s cubic-bezier(.2,1.3,.4,1)}
+@keyframes cpE{from{transform:translateY(14px) scale(.97);opacity:0}}
+.cp-tope{display:flex;align-items:center;gap:10px}
+.cp-ico{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;font-size:20px;background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;flex:none}
+.cp-tope h3{margin:0;font-size:18px;flex:1}.cp-tope h3 small{display:block;font-size:12.5px;color:var(--muted);font-weight:600}
+.cp-x{border:0;background:color-mix(in srgb,var(--fg) 7%,transparent);border-radius:50%;width:34px;height:34px;font-size:18px;padding:0;flex:none}
+.cp-nom{font-size:16px;font-weight:800;margin:0}
+.cp-chips{display:flex;flex-wrap:wrap;gap:6px}
+.cp-chips span{font-size:12.5px;font-weight:700;padding:3px 10px;border-radius:999px;background:color-mix(in srgb,var(--fg) 6%,transparent);border:1px solid var(--line)}
+.cp-pill{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 14px;border-radius:999px;border:1.5px solid color-mix(in srgb,#8b5cf6 45%,var(--line));background:var(--field);min-width:0}
+.cp-pill code{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:12.5px ui-monospace,Consolas,monospace;color:var(--fg);user-select:all}
+.cp-pill button{flex:none;border-radius:999px;padding:8px 14px;font-weight:800;border:0;background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;white-space:nowrap}
+.cp-pill button.ok{background:#059669}
+.cp-sh{padding:11px;border-radius:14px;font-weight:800}
+.cp-pie{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.cp-est{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:800;padding:3px 10px;border-radius:999px;background:color-mix(in srgb,#10b981 16%,transparent);color:#047857}
+:root[data-theme="dark"] .cp-est{color:#34d399}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .cp-est{color:#34d399} }
+.cp-lnk{border:0;background:transparent;color:#7c3aed;font-weight:800;padding:0;font-size:13px;text-decoration:underline;text-underline-offset:3px}
+:root[data-theme="dark"] .cp-lnk{color:#c4b5fd}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .cp-lnk{color:#c4b5fd} }
+.cp-qr{display:grid;justify-items:center;gap:6px;padding:10px;background:#fff;border-radius:12px}
+.cp-qr svg{width:180px;height:auto}.cp-qr small{color:#334155;font-size:12px;text-align:center}
 .cp-nota{margin:0;font-size:12.5px;color:var(--muted)}
-.cp-viejo{margin:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;font-size:13px;font-weight:700;background:color-mix(in srgb,#f59e0b 16%,transparent);color:#b45309}
-:root[data-theme="dark"] .cp-viejo{color:#fbbf24}
-@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .cp-viejo{color:#fbbf24} }
-.cp-viejo button{border-radius:999px;padding:4px 12px;font-size:12.5px;font-weight:800}
-.comp-panel.viejo #cpLink,.comp-panel.viejo .cp-btns,.comp-panel.viejo .cp-qr{opacity:.45}
+@media (max-width:640px){ .cp-fondo{place-items:end center;padding:0} .cp-caja{border-radius:24px 24px 0 0;padding-bottom:28px;animation:cpS .35s cubic-bezier(.2,1,.3,1)} @keyframes cpS{from{transform:translateY(100%)}} }
+@media (prefers-reduced-motion:reduce){ .cp-fondo,.cp-caja{animation:none} }
 .ev-modal{position:fixed;inset:0;z-index:6000;display:grid;place-items:center;padding:16px;background:rgba(2,6,23,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 .ev-modal .caja{width:min(460px,100%);display:grid;gap:12px;padding:20px;border-radius:20px;background:var(--card);color:var(--fg);border:1px solid var(--line);box-shadow:0 24px 60px -20px rgba(0,0,0,.6);animation:mEntra .3s cubic-bezier(.2,1.3,.4,1)}
 @keyframes mEntra{from{transform:translateY(12px) scale(.97);opacity:0}to{transform:none;opacity:1}}
@@ -699,23 +713,16 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
         </div>
         <textarea id="evOut" readonly tabindex="-1" aria-hidden="true"></textarea>
         <button type="button" class="btn-copy" id="evBtnCopy">Copiar reporte</button>
-        <button type="button" class="btn-compartir" id="evCompartir">🔗 Compartir evento <small>(enlace para otra máquina)</small></button>
-        <div class="comp-panel" id="evCompPanel" hidden>
-          <div class="cp-top"><b>Enlace del evento</b><button type="button" class="cp-x" id="cpCerrar" aria-label="Cerrar">×</button></div>
-          <p class="cp-res" id="cpRes"></p>
-          <p class="cp-viejo" id="cpViejo" hidden>⚠️ El evento cambió después de crear este enlace. <button type="button" id="cpActualizar">↻ Actualizar enlace</button></p>
-          <input type="text" id="cpLink" readonly aria-label="Enlace del evento">
-          <div class="cp-btns"><button type="button" class="btn-blue" id="cpCopiar">📋 Copiar enlace</button><button type="button" id="cpQR">▦ Ver QR</button></div>
-          <div class="cp-qr" id="cpQRBox" hidden></div>
-          <p class="cp-nota">Es una <b>foto de este momento</b>: si cambias algo después, comparte un enlace nuevo. Quien lo abra verá una pregunta antes de reemplazar su evento.</p>
-        </div>
         <div class="mapbtns">
           <button type="button" class="btn-blue" id="evBtnMapaCopiar">Copiar mapa</button>
           <button type="button" id="evBtnMapaBajar">Descargar mapa</button>
         </div>
         <p class="hint">La imagen se centra sola en los semáforos del evento, aunque muevas el mapa. Usa 📌 Fijar vista si quieres otro encuadre.</p>
+        <div class="acc-fila">
+          <button type="button" class="btn-compartir" id="evCompartir" title="Enlace para abrir este evento en otra máquina">🔗 Compartir</button>
+          <button type="button" class="btn-reset" id="evBtnNuevoEvento" title="Borra todo · se puede deshacer">↺ Empezar otro</button>
+        </div>
         <p class="hint">El evento se guarda solo en este navegador mientras trabajas.</p>
-        <button type="button" class="btn-reset" id="evBtnNuevoEvento">↺ Empezar otro evento <small>(borra todo · se puede deshacer)</small></button>
       </section>
     </aside>
   </div>
@@ -2990,7 +2997,7 @@ function cambiarVista(v, sinHash){
 /* ══ COMPARTIR EVENTO POR ENLACE ══
    El evento viaja comprimido dentro del enlace (#evento?plan=1.xxxx). No hay servidor: solo lo tiene quien recibe el enlace.
    "1." = comprimido (deflate-raw) · "0." = sin comprimir (navegadores viejos). */
-var LINK_EVENTO = '', FOTO_ENLACE = '';   // FOTO_ENLACE: datos del evento cuando se creó el enlace
+var LINK_EVENTO = '';
 function planEnHash(){ var m = (location.hash || '').match(/[?&]plan=([A-Za-z0-9_\-.]+)/); return m ? m[1] : null; }
 function aB64u(bytes){ var s = ''; for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
 function deB64u(t){ t = t.replace(/-/g, '+').replace(/_/g, '/'); while (t.length % 4) t += '='; var s = atob(t), a = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return a; }
@@ -3010,7 +3017,7 @@ function desempacarPlan(t){   // cualquier error → promesa rechazada (nunca ro
 function plural(n, uno, varios){ return n + ' ' + (n === 1 ? uno : varios); }
 function baseEnlace(){ return location.href.split('#')[0]; }
 function limpiarHashPlan(){ if (history.replaceState){ try { history.replaceState(null, '', baseEnlace() + '#evento'); } catch(e){} } }
-// Arma el enlace del evento en curso y lo copia.
+// Arma el enlace del evento en curso, lo copia y abre la ventana "Compartir evento".
 function compartirEvento(){
   var ev = EV.paraCompartir();
   if (!ev.sel.length){ aviso('Elige semáforos primero: el enlace lleva el evento armado.'); return; }
@@ -3018,37 +3025,40 @@ function compartirEvento(){
   var inter = ev.sel.filter(function(k){ return ev.inter && ev.inter[k]; }).length;
   empacarPlan({ v:1, ev:ev, nuevos:nuevos }).then(function(t){
     LINK_EVENTO = baseEnlace() + '#evento?plan=' + t;
-    $('cpLink').value = LINK_EVENTO;
-    $('cpRes').innerHTML = '<b>' + esc(ev.nombre || 'Evento sin nombre') + '</b> · ' + plural(ev.sel.length, 'semáforo', 'semáforos') + ' · ' + plural(ev.cor.length, 'corredor', 'corredores') + ' · ' + plural(inter, 'intervenido', 'intervenidos') +
-      (nuevos.length ? ' · ' + plural(nuevos.length, 'semáforo nuevo incluido', 'semáforos nuevos incluidos') : '') + '<br><small>Enlace de ' + LINK_EVENTO.length + ' caracteres</small>';
-    FOTO_ENLACE = huellaEvento(ev);
-    $('evCompPanel').hidden = false; $('evCompPanel').classList.remove('viejo'); $('cpViejo').hidden = true; $('cpQRBox').hidden = true;
+    cerrarCompartir();
+    var f = document.createElement('div'); f.className = 'cp-fondo'; f.id = 'cpFondo';
+    f.innerHTML = '<div class="cp-caja" role="dialog" aria-modal="true" aria-labelledby="cpTit">' +
+      '<div class="cp-tope"><span class="cp-ico" aria-hidden="true">🔗</span><h3 id="cpTit">Compartir evento<small>Ábrelo en otra máquina o mándalo por WhatsApp</small></h3><button type="button" class="cp-x" id="cpCerrar" aria-label="Cerrar">×</button></div>' +
+      '<p class="cp-nom">' + esc(ev.nombre || 'Evento sin nombre') + '</p>' +
+      '<div class="cp-chips"><span>🚦 ' + plural(ev.sel.length, 'semáforo', 'semáforos') + '</span><span>🛣️ ' + plural(ev.cor.length, 'corredor', 'corredores') + '</span><span>✅ ' + plural(inter, 'intervenido', 'intervenidos') + '</span>' +
+        (nuevos.length ? '<span>➕ ' + plural(nuevos.length, 'semáforo nuevo', 'semáforos nuevos') + '</span>' : '') + '</div>' +
+      '<div class="cp-pill"><code id="cpLink" title="' + esc(LINK_EVENTO) + '">' + esc(LINK_EVENTO.replace(/^https?:\/\//, '')) + '</code><button type="button" id="cpCopiar">Copiar</button></div>' +
+      (navigator.share ? '<button type="button" class="cp-sh" id="cpShare">📤 Compartir…</button>' : '') +
+      '<div class="cp-pie"><span class="cp-est">🟢 Al día · ' + LINK_EVENTO.length + ' caracteres</span><button type="button" class="cp-lnk" id="cpQR">Ver QR</button></div>' +
+      '<div class="cp-qr" id="cpQRBox" hidden></div>' +
+      '<p class="cp-nota">Es una foto de este momento: si cambias algo después, toca Compartir otra vez. Quien lo abra verá una pregunta antes de reemplazar su evento.</p></div>';
+    document.body.appendChild(f);
+    $('cpCopiar').addEventListener('click', copiarEnlace);
+    $('cpCerrar').addEventListener('click', cerrarCompartir);
+    $('cpQR').addEventListener('click', verQR);
+    if ($('cpShare')) $('cpShare').addEventListener('click', function(){ navigator.share({ title:'Evento: ' + (ev.nombre || ''), url:LINK_EVENTO }).catch(function(){}); });
+    f.addEventListener('click', function(e){ if (e.target === f) cerrarCompartir(); });
+    $('cpCopiar').focus();
     copiarEnlace();
   }).catch(function(){ aviso('No se pudo armar el enlace en este navegador.'); });
 }
-// Si el evento cambia después de compartir: el enlace queda marcado como viejo (se ofrece actualizar).
-// Si el evento queda vacío (Empezar otro evento): el panel se cierra.
-function revisarEnlace(){
-  var p = $('evCompPanel'); if (p.hidden || !FOTO_ENLACE) return;
-  var ev = EV.paraCompartir();
-  if (!ev.sel.length){ cerrarEnlace(); return; }
-  var viejo = huellaEvento(ev) !== FOTO_ENLACE;
-  p.classList.toggle('viejo', viejo); $('cpViejo').hidden = !viejo;
-  if (viejo) $('cpQRBox').hidden = true;
-}
-// Huella para comparar: con hora automática, el cambio de minuto no cuenta como cambio del evento.
-function huellaEvento(ev){ var c = JSON.parse(JSON.stringify(ev)); if (c.horaAuto) delete c.hora; return JSON.stringify(c); }
-function cerrarEnlace(){ $('evCompPanel').hidden = true; $('evCompPanel').classList.remove('viejo'); $('cpViejo').hidden = true; $('cpQRBox').hidden = true; $('cpLink').value = ''; LINK_EVENTO = ''; FOTO_ENLACE = ''; }
+function cerrarCompartir(){ var f = $('cpFondo'); if (f) f.remove(); }
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && $('cpFondo')) cerrarCompartir(); });
 function copiarEnlace(){
-  if ($('evCompPanel').classList.contains('viejo')){ aviso('El evento cambió: toca “Actualizar enlace” para compartir lo último.'); return; }
-  function plan(){ var i = $('cpLink'); i.focus(); i.select(); var r = false; try { r = document.execCommand('copy'); } catch(e){} aviso(r ? '🔗 Enlace copiado. Pégalo en la otra máquina o en WhatsApp.' : 'Selecciona el enlace y cópialo (Ctrl+C).'); }
-  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(LINK_EVENTO).then(function(){ aviso('🔗 Enlace copiado. Pégalo en la otra máquina o en WhatsApp.'); }).catch(plan); else plan();
+  function listo(){ var b = $('cpCopiar'); if (b){ b.textContent = '✓ Copiado'; b.classList.add('ok'); clearTimeout(copiarEnlace.t); copiarEnlace.t = setTimeout(function(){ if ($('cpCopiar')){ $('cpCopiar').textContent = 'Copiar'; $('cpCopiar').classList.remove('ok'); } }, 1800); } aviso('🔗 Enlace copiado. Pégalo en la otra máquina o en WhatsApp.'); }
+  function plan(){ var t = document.createElement('textarea'); t.value = LINK_EVENTO; t.setAttribute('readonly', ''); t.style.cssText = 'position:fixed;left:-9999px;top:0'; document.body.appendChild(t); t.select(); var r = false; try { r = document.execCommand('copy'); } catch(e){} t.remove(); if (r) listo(); else aviso('Selecciona el enlace y cópialo (Ctrl+C).'); }
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(LINK_EVENTO).then(listo).catch(plan); else plan();
 }
-// QR: la librería se carga solo al pedirlo.
+// QR discreto: la librería se carga solo al pedirlo.
 function verQR(){
-  var box = $('cpQRBox');
-  if ($('evCompPanel').classList.contains('viejo')){ aviso('El evento cambió: toca “Actualizar enlace” primero.'); return; }
-  function pintar(){ var q = qrcode(0, 'L'); q.addData(LINK_EVENTO); q.make(); box.innerHTML = q.createSvgTag({ cellSize:4, margin:2, scalable:true }) + '<small>Apunta la cámara del teléfono a la pantalla para abrir el evento.</small>'; box.hidden = false; }
+  var box = $('cpQRBox'); if (!box) return;
+  if (!box.hidden){ box.hidden = true; return; }
+  function pintar(){ var q = qrcode(0, 'L'); q.addData(LINK_EVENTO); q.make(); box.innerHTML = q.createSvgTag({ cellSize:4, margin:2, scalable:true }) + '<small>Apunta la cámara del teléfono a la pantalla.</small>'; box.hidden = false; }
   function fallo(){ box.innerHTML = '<small>No se pudo cargar el QR (sin internet). El enlace funciona igual.</small>'; box.hidden = false; }
   if (window.qrcode){ try { pintar(); } catch(e){ fallo(); } return; }
   var s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
@@ -3084,19 +3094,12 @@ function abrirCompartido(token){
       });
       if (agregados){ guardarCustom(); renderLista(); renderMapa(false); }
       var antes = EV.cargarCompartido(x);
-      cerrar(); cerrarEnlace();
+      cerrar(); cerrarCompartir();
       aviso('✓ Evento “' + (x.nombre || 'sin nombre') + '” cargado desde el enlace.', { txt:'Deshacer', fn:function(){ EV.restaurar(antes); aviso('Se recuperó tu evento anterior.'); } });
     });
   }).catch(function(){ limpiarHashPlan(); aviso('El enlace está incompleto o dañado. Pide que lo compartan de nuevo.'); });
 }
 $('evCompartir').addEventListener('click', compartirEvento);
-$('cpCopiar').addEventListener('click', copiarEnlace);
-$('cpQR').addEventListener('click', verQR);
-$('cpCerrar').addEventListener('click', cerrarEnlace);
-$('cpActualizar').addEventListener('click', compartirEvento);
-new MutationObserver(revisarEnlace).observe($('evBurbuja'), { childList:true, subtree:true, characterData:true });   // el texto del evento se rehace en cada cambio
-$('evBtnNuevoEvento').addEventListener('click', function(){ setTimeout(revisarEnlace, 0); });
-$('cpLink').addEventListener('focus', function(){ this.select(); });
 
 // Pestaña al abrir: la del enlace, si no la última usada, si no Cambio de tiempos.
 function vistaInicial(){
