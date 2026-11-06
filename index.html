@@ -533,6 +533,20 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
 .ev-modal .acc{display:flex;gap:8px;flex-wrap:wrap}.ev-modal .acc button{flex:1 1 140px;padding:12px;border-radius:14px;font-weight:800}
 .ev-modal .si{background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;border:0}
 @media (prefers-reduced-motion:reduce){ .ev-modal .caja{animation:none} }
+
+/* ══ EMPEZAR OTRO: flecha que gira + botón "Deshacer · 5" ══ */
+.btn-reset{position:relative;overflow:hidden}
+.btn-reset .ri{display:inline-block;transition:transform .45s cubic-bezier(.3,1.5,.5,1)}
+.btn-reset:hover .ri{transform:rotate(-70deg)}
+.btn-reset.gira .ri{animation:riGira .5s cubic-bezier(.3,1.2,.5,1)}
+@keyframes riGira{from{transform:rotate(0)}to{transform:rotate(-360deg)}}
+.btn-reset.deshacer{border-color:#2563eb;color:#1d4ed8;background:color-mix(in srgb,#3b82f6 10%,transparent);font-weight:800}
+.btn-reset.deshacer small{display:none}
+:root[data-theme="dark"] .btn-reset.deshacer{color:#93c5fd;border-color:#60a5fa}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .btn-reset.deshacer{color:#93c5fd;border-color:#60a5fa} }
+.btn-reset .cuenta{position:absolute;left:0;bottom:0;height:3px;width:100%;background:#2563eb;transform-origin:left;animation:riCuenta 5s linear forwards}
+@keyframes riCuenta{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@media (prefers-reduced-motion:reduce){ .btn-reset .ri,.btn-reset.gira .ri,.btn-reset .cuenta{transition:none;animation:none} }
 </style>
 </head>
 <body>
@@ -634,7 +648,7 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
           <button type="button" id="btnMapaBajar">Descargar mapa</button>
         </div>
         <p class="hint"><b>Copiar:</b> para pegar en WhatsApp Web. <b>Descargar:</b> si copiar no funciona. Pega primero el texto y luego la imagen. La imagen se centra sola en los semáforos elegidos, aunque muevas el mapa; usa 📌 Fijar vista para otro encuadre.</p>
-        <button type="button" class="btn-reset" id="btnReset">↺ Empezar otro reporte <small>(borra todo · se puede deshacer)</small></button>
+        <button type="button" class="btn-reset" id="btnReset"><span class="ri" aria-hidden="true">↺</span> Empezar otro reporte <small>(borra todo · se puede deshacer)</small></button>
       </section>
     </aside>
   </div>
@@ -720,7 +734,7 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
         <p class="hint">La imagen se centra sola en los semáforos del evento, aunque muevas el mapa. Usa 📌 Fijar vista si quieres otro encuadre.</p>
         <div class="acc-fila">
           <button type="button" class="btn-compartir" id="evCompartir" title="Enlace para abrir este evento en otra máquina">🔗 Compartir</button>
-          <button type="button" class="btn-reset" id="evBtnNuevoEvento" title="Borra todo · se puede deshacer">↺ Empezar otro</button>
+          <button type="button" class="btn-reset" id="evBtnNuevoEvento" title="Borra todo · se puede deshacer"><span class="ri" aria-hidden="true">↺</span> Empezar otro</button>
         </div>
         <p class="hint">El evento se guarda solo en este navegador mientras trabajas.</p>
       </section>
@@ -779,7 +793,7 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
           <button type="button" id="faBtnMapaBajar">Descargar mapa</button>
         </div>
         <p class="hint">Pega primero el texto y luego la imagen. La imagen se centra sola en el semáforo; usa 📌 Fijar vista para otro encuadre.</p>
-        <button type="button" class="btn-reset" id="faBtnReset">↺ Empezar otro reporte <small>(borra todo · se puede deshacer)</small></button>
+        <button type="button" class="btn-reset" id="faBtnReset"><span class="ri" aria-hidden="true">↺</span> Empezar otro reporte <small>(borra todo · se puede deshacer)</small></button>
       </section>
     </aside>
   </div>
@@ -1699,11 +1713,36 @@ function restaurar(f){
   if (typeof renderMapa === 'function') renderMapa(true);
   aviso('✓ Reporte recuperado.');
 }
+// "Empezar otro": la flecha gira y el botón pasa a "↶ Deshacer · 5". Devuelve la función de deshacer para el aviso:
+// botón y aviso deshacen una sola vez (el primero que se toque) y los dos vuelven a la normalidad.
+var DESHACER_SEG = 5;
+function deshacerEnBoton(id, fn){
+  var b = $(id), usado = false;
+  if (b._orig === undefined){
+    b._orig = b.innerHTML;
+    b.addEventListener('click', function(e){   // mientras gira o muestra "Deshacer", el clic no vuelve a borrar
+      if (b._girando){ e.stopImmediatePropagation(); return; }
+      if (b.classList.contains('deshacer') && b._fn){ e.stopImmediatePropagation(); b._fn(); }
+    }, true);
+  }
+  function volver(){ clearInterval(b._t); clearTimeout(b._g); b._girando = false; b._fn = null; b.classList.remove('deshacer', 'gira'); b.innerHTML = b._orig; }
+  function deshacer(){ if (usado) return; usado = true; volver(); $('toast').hidden = true; fn(); }
+  volver();
+  b._fn = deshacer; b._girando = true;
+  b.classList.remove('gira'); void b.offsetWidth; b.classList.add('gira');
+  b._g = setTimeout(function(){   // después de la vuelta: modo Deshacer con cuenta regresiva
+    b._girando = false; if (usado) return;
+    var n = DESHACER_SEG; b.classList.remove('gira'); b.classList.add('deshacer');
+    b.innerHTML = '<span aria-hidden="true">↶</span> <span class="txt">Deshacer · ' + n + '</span><span class="cuenta"></span>';
+    b._t = setInterval(function(){ n--; if (n <= 0){ volver(); return; } var t = b.querySelector('.txt'); if (t) t.textContent = 'Deshacer · ' + n; }, 1000);
+  }, 450);
+  return deshacer;
+}
 // Botón "Empezar otro reporte": guarda copia, limpia y ofrece Deshacer.
 function borrarReporte(){
   var f = foto();
   reset();
-  aviso('Reporte borrado.', { txt:'Deshacer', fn:function(){ restaurar(f); } });
+  aviso('Reporte borrado.', { txt:'Deshacer', fn:deshacerEnBoton('btnReset', function(){ restaurar(f); }) });
 }
 
 /* ══ EVENTOS ══ */
@@ -2372,7 +2411,7 @@ function nuevoEvento(){
   S = nuevoEstado(); S.hora = horaAhora(); FIJA = null; pintarFijar(); PLAN_ACTIVO = ''; renderPlanes();
   $('evBuscar').value = '';   // el buscador no guarda texto del evento anterior
   campos(); todo(); if (MAPA) MAPA.setView(MAPA_CENTRO, MAPA_ZOOM, { animate:false });   // sin animación: no pisa una carga inmediata
-  aviso('Evento borrado.', { txt:'Deshacer', fn:function(){ S = JSON.parse(copia); FIJA = fijaAntes; pintarFijar(); campos(); todo(); if (FIJA && MAPA) MAPA.setView(FIJA.centro, FIJA.z, { animate:false }); else encuadrar(); aviso('✓ Evento recuperado.'); } });
+  aviso('Evento borrado.', { txt:'Deshacer', fn:deshacerEnBoton('evBtnNuevoEvento', function(){ S = JSON.parse(copia); FIJA = fijaAntes; pintarFijar(); campos(); todo(); if (FIJA && MAPA) MAPA.setView(FIJA.centro, FIJA.z, { animate:false }); else encuadrar(); aviso('✓ Evento recuperado.'); }) });
 }
 
 /* ══ PLANES GUARDADOS (semáforos + corredores reutilizables) ══ */
@@ -2902,7 +2941,7 @@ function reset(){
   ahora(); pintarFaltantes(); todo();
   if (MAPA){ MAPA.setView(MAPA_CENTRO, MAPA_ZOOM, { animate:false }); encuadrarZona(MAPA, ZONA); }
 }
-function borrarReporte(){ var f = foto(); reset(); aviso('Reporte borrado.', { txt:'Deshacer', fn:function(){ restaurar(f); } }); }
+function borrarReporte(){ var f = foto(); reset(); aviso('Reporte borrado.', { txt:'Deshacer', fn:deshacerEnBoton('faBtnReset', function(){ restaurar(f); }) }); }
 function todo(){ if (S.k && !porKey(S.k)) S.k = null; pintarHoraModo(); renderChip(); renderLista(); renderFallas(); renderMapa(); generar(); }
 
 /* ══ EVENTOS ══ */
