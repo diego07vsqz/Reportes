@@ -579,8 +579,8 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
 :root .maptools2 button[aria-pressed="true"],:root #vistaEvento .maptools button[aria-pressed="true"]{background:var(--acc);color:var(--on-acc);box-shadow:0 0 0 1px rgba(255,255,255,.3),0 4px 12px -4px var(--acc)}
 /* ── D · Fase con indicador que se desliza ── */
 :root #evFases{position:relative;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:0;padding:4px;border-radius:999px;background:color-mix(in srgb,var(--fg) 8%,transparent);border:1px solid var(--line);isolation:isolate}
-:root #evFases .opt{border:0!important;background:transparent!important;box-shadow:none!important;border-radius:999px;position:relative;z-index:1;transition:color .25s;font-weight:700}
-:root #evFases .opt[aria-pressed="true"]{color:var(--on-acc)}
+:root #evFases.con-ind .opt{border:0!important;background:transparent!important;box-shadow:none!important;border-radius:999px;position:relative;z-index:1;transition:color .25s;font-weight:700}
+:root #evFases.con-ind .opt[aria-pressed="true"]{color:var(--on-acc)}
 :root #evFases .ind{position:absolute;z-index:0;top:4px;bottom:4px;border-radius:999px;background:var(--acc);box-shadow:0 6px 14px -6px var(--acc);transition:left .35s cubic-bezier(.3,1.3,.5,1),width .35s}
 /* ── E · fichas con ✓ ── */
 :root #faFallas .opt[aria-pressed="true"]{background:color-mix(in srgb,var(--c,var(--acc)) 22%,var(--card))!important;border-color:color-mix(in srgb,var(--c,var(--acc)) 70%,var(--fg))!important;color:var(--fg)!important}
@@ -602,14 +602,12 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
 /* ══ ANIMACIONES (1 tarjetas · 2 contador · 3 pestaña · 5 chispas · 6 carga del mapa · 10 zonas) ══ */
 .entra{animation:tEntra .38s cubic-bezier(.2,1.2,.4,1) both}
 @keyframes tEntra{from{opacity:0;transform:translateY(-6px) scale(.94)}}
-.fantasma{pointer-events:none!important;overflow:hidden;animation:tSale .32s ease-in forwards}
-@keyframes tSale{to{opacity:0;transform:scale(.85);max-height:0;max-width:0;padding-top:0;padding-bottom:0;margin:0;border-width:0}}
-.chip.fantasma{max-width:300px}.item.fantasma{max-height:80px}
-#cuenta,#evCuentaSel,#evTotalTxt{display:inline-block;transform-origin:left center}
+#cuenta{transform-origin:left center}
+#evCuentaSel,#evTotalTxt{display:inline-block;transform-origin:left center}
 .salta{animation:cSalta .45s cubic-bezier(.3,1.8,.5,1)}
 @keyframes cSalta{35%{transform:scale(1.18);color:var(--acc)}}
 .vista-entra{animation:vEntra .32s ease-out}
-@keyframes vEntra{from{opacity:0;transform:translateY(8px)}}
+@keyframes vEntra{from{opacity:0}}
 .chispa{position:fixed;z-index:4500;width:7px;height:7px;border-radius:50%;pointer-events:none;animation:chV .7s cubic-bezier(.2,.7,.4,1) forwards}
 .chispa.e{border-radius:1px;width:8px;height:8px;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%)}
 @keyframes chV{to{transform:translate(var(--dx),var(--dy)) scale(.3) rotate(160deg);opacity:0}}
@@ -621,7 +619,7 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
 .zc{box-shadow:inset 4px 0 0 var(--zc)}
 .chip.zc{padding-left:14px}
 .zc .zn{display:inline-block;margin-left:6px;padding:0 6px;border-radius:999px;font-size:10.5px;font-weight:800;color:#fff;background:var(--zc);vertical-align:1px}
-@media (prefers-reduced-motion:reduce){ .entra,.fantasma,.salta,.vista-entra,.esq-mapa::before{animation:none!important} .chispa{display:none} }
+@media (prefers-reduced-motion:reduce){ .entra,.salta,.vista-entra,.esq-mapa::before{animation:none!important} .chispa{display:none} }
 </style>
 </head>
 <body>
@@ -2579,7 +2577,7 @@ function eventos(){
   });
   $('evBuscar').addEventListener('input', renderLista);
   $('evZonaMapa').addEventListener('change', function(){ ZONA = this.value; guardarZona('evento', ZONA); llenarZonas('evZonaMapa', ZONA); renderLista(); renderMapa(); if (!ZONA && S.sel.length) encuadrar(); else encuadrarZona(MAPA, ZONA); });   // Todas: vuelve a lo elegido o a la vista inicial
-  $('evBuscar').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ var b = $('evLista').querySelector('.item'); if (b){ e.preventDefault(); toggleSel(b.getAttribute('data-k')); this.value = ''; renderLista(); } } });
+  $('evBuscar').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ var b = $('evLista').querySelector('.item[data-k]'); if (b){ e.preventDefault(); toggleSel(b.getAttribute('data-k')); this.value = ''; renderLista(); } } });
   $('evLista').addEventListener('click', function(e){ var b = e.target.closest('.item'); if (b){ toggleSel(b.getAttribute('data-k')); encuadrar(); } });
   $('evBtnQuitarTodos').addEventListener('click', function(){
     var copia = JSON.stringify(S); S.sel = []; S.asig = {}; S.inter = {}; S.cor = []; S.manual = false; $('evBuscar').value = ''; todo();
@@ -3019,7 +3017,7 @@ function eventos(){
   $('faOtro').addEventListener('change', renderMapa);
   $('faBuscar').addEventListener('input', renderLista);
   $('faZona').addEventListener('change', function(){ ZONA = this.value; guardarZona('fallas', ZONA); llenarZonas('faZona', ZONA); renderLista(); renderMapa(); if (!sem()) encuadrarZona(MAPA, ZONA); else if (!ZONA) encuadrar(); });   // Todas: vuelve al semáforo o a la vista inicial
-  $('faBuscar').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ var b = $('faLista').querySelector('.item'); if (b){ e.preventDefault(); elegir(b.getAttribute('data-k')); } } });
+  $('faBuscar').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ var b = $('faLista').querySelector('.item[data-k]'); if (b){ e.preventDefault(); elegir(b.getAttribute('data-k')); } } });
   $('faLista').addEventListener('click', function(e){ var b = e.target.closest('.item'); if (b) elegir(b.getAttribute('data-k')); });
   $('faChip').addEventListener('click', function(e){ if (e.target.closest('[data-quitar]')){ S.k = null; todo(); } });
   $('faFallas').addEventListener('click', function(e){
@@ -3281,11 +3279,12 @@ pintarPuente();
   // D · indicador de Fase (se vuelve a poner cada vez que la web redibuja las fases)
   var f=$('evFases'), ant=null;
   function ind(){ if(!f) return; var p=f.querySelector('.opt[aria-pressed="true"]'), i=f.querySelector('.ind');
-    if(!p){ if(i) i.remove(); return; }
+    if(!p){ if(i) i.remove(); f.classList.remove('con-ind'); return; }
     if(!i){ i=document.createElement('span'); i.className='ind'; i.setAttribute('aria-hidden','true'); f.insertBefore(i,f.firstChild);
       if(ant){ i.style.transition='none'; i.style.left=ant.l+'px'; i.style.width=ant.w+'px'; void i.offsetWidth; i.style.transition=''; } }
-    var l=p.offsetLeft, w=p.offsetWidth; i.style.left=l+'px'; i.style.width=w+'px'; ant={l:l,w:w}; }
-  if(f){ new MutationObserver(function(){ if(!f.querySelector('.ind')) ind(); }).observe(f,{childList:true}); f.addEventListener('click',function(){ setTimeout(ind,0); }); window.addEventListener('resize',ind); setTimeout(ind,300); }
+    var l=p.offsetLeft, w=p.offsetWidth; if(!w){ f.classList.remove('con-ind'); return; }   // pestaña oculta: se recalcula al verse
+    i.style.left=l+'px'; i.style.width=w+'px'; ant={l:l,w:w}; f.classList.add('con-ind'); }
+  if(f){ new MutationObserver(function(){ if(!f.querySelector('.ind')) ind(); }).observe(f,{childList:true}); f.addEventListener('click',function(){ setTimeout(ind,0); }); window.addEventListener('resize',ind); if(window.ResizeObserver) new ResizeObserver(function(){ ind(); }).observe(f); setTimeout(ind,300); }
   // G · onda al tocar (capa encima, no toca el botón por dentro)
   document.addEventListener('pointerdown',function(e){ var b=e.target.closest('.btn-copy,.mapbtns button,.acc-fila button,.btn-reset,.opt,.maptools2 button,#vistaEvento .maptools button'); if(!b) return;
     var r=b.getBoundingClientRect(), d=Math.max(r.width,r.height)*2.2, c=document.createElement('span'), i=document.createElement('i');
@@ -3301,25 +3300,19 @@ pintarPuente();
   // 10 · color por zona (franja y etiqueta con el municipio)
   var PAL = ['#2563eb','#db2777','#059669','#d97706','#7c3aed','#0891b2','#dc2626','#65a30d','#c026d3','#ea580c','#0d9488','#4f46e5'];
   function colorZona(z){ var n = 0; for (var i = 0; i < z.length; i++) n = (n * 31 + z.charCodeAt(i)) >>> 0; return PAL[n % PAL.length]; }
-  function zonas(c){ c.querySelectorAll('.item[data-k],.chip').forEach(function(el){ if (el.classList.contains('zc') || el.classList.contains('fantasma')) return;
+  function zonas(c){ c.querySelectorAll('.item[data-k],.chip').forEach(function(el){ if (el.classList.contains('zc')) return;
     var k = el.getAttribute('data-k'); if (!k){ var x = el.querySelector('[data-k]'); k = x && x.getAttribute('data-k'); }
     var s = k && porKey(k); if (!s) return;
     el.classList.add('zc'); el.style.setProperty('--zc', colorZona(claveZona(s.c)));
     if (el.classList.contains('item')){ var sm = el.querySelector('small'); if (sm) sm.insertAdjacentHTML('beforeend', '<span class="zn">' + esc(nombreZona(s.c)) + '</span>'); } }); }
-  // 1 · tarjetas: la nueva entra; la quitada deja una copia que se encoge (sin datos ni clics)
+  // 1 · tarjetas: la recién elegida entra suave
   function animar(c, sel, keyOf, elegidos){
-    var nuevos = elegidos(), prev = c._prevSel, viejos = c._prevNodos || {}, nodos = {};
-    c.querySelectorAll(sel).forEach(function(el){ if (el.classList.contains('fantasma')) return; var k = keyOf(el); if (k) nodos[k] = el; });
+    var nuevos = elegidos(), prev = c._prevSel, nodos = {};
+    c.querySelectorAll(sel).forEach(function(el){ var k = keyOf(el); if (k) nodos[k] = el; });
     if (prev){
       Object.keys(nodos).forEach(function(k){ if (prev.indexOf(k) < 0 && nuevos.indexOf(k) >= 0) nodos[k].classList.add('entra'); });
-      prev.forEach(function(k){ if (nuevos.indexOf(k) >= 0 || !viejos[k] || nodos[k]) return;
-        var g = viejos[k].n.cloneNode(true); g.classList.add('fantasma'); g.classList.remove('entra'); g.removeAttribute('data-k'); g.setAttribute('aria-hidden', 'true');
-        g.querySelectorAll('[data-k],[id],input').forEach(function(x){ x.removeAttribute('data-k'); x.removeAttribute('id'); if (x.tagName === 'INPUT') x.disabled = true; });
-        var ref = viejos[k].sig && nodos[viejos[k].sig]; if (ref && ref.parentNode) ref.parentNode.insertBefore(g, ref); else c.appendChild(g);
-        setTimeout(function(){ g.remove(); }, 340); });
     }
-    var info = {}, ks = Object.keys(nodos); ks.forEach(function(k, i){ info[k] = { n:nodos[k], sig:ks[i + 1] }; });
-    c._prevNodos = info; c._prevSel = nuevos.slice();
+    c._prevSel = nuevos.slice();
   }
   function vigilar(id, fn){ var c = $(id); if (!c) return;
     var mo = new MutationObserver(function(){ mo.disconnect(); try { fn(c); } catch(e){} mo.observe(c, { childList:true }); });
