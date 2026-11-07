@@ -534,19 +534,13 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
 .ev-modal .si{background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;border:0}
 @media (prefers-reduced-motion:reduce){ .ev-modal .caja{animation:none} }
 
-/* ══ EMPEZAR OTRO: flecha que gira + botón "Deshacer · 5" ══ */
+/* ══ EMPEZAR OTRO: flecha que gira ══ */
 .btn-reset{position:relative;overflow:hidden}
 .btn-reset .ri{display:inline-block;transition:transform .45s cubic-bezier(.3,1.5,.5,1)}
 .btn-reset:hover .ri{transform:rotate(-70deg)}
 .btn-reset.gira .ri{animation:riGira .5s cubic-bezier(.3,1.2,.5,1)}
 @keyframes riGira{from{transform:rotate(0)}to{transform:rotate(-360deg)}}
-.btn-reset.deshacer{border-color:#2563eb;color:#1d4ed8;background:color-mix(in srgb,#3b82f6 10%,transparent);font-weight:800}
-.btn-reset.deshacer small{display:none}
-:root[data-theme="dark"] .btn-reset.deshacer{color:#93c5fd;border-color:#60a5fa}
-@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .btn-reset.deshacer{color:#93c5fd;border-color:#60a5fa} }
-.btn-reset .cuenta{position:absolute;left:0;bottom:0;height:3px;width:100%;background:#2563eb;transform-origin:left;animation:riCuenta 5s linear forwards}
-@keyframes riCuenta{from{transform:scaleX(1)}to{transform:scaleX(0)}}
-@media (prefers-reduced-motion:reduce){ .btn-reset .ri,.btn-reset.gira .ri,.btn-reset .cuenta{transition:none;animation:none} }
+@media (prefers-reduced-motion:reduce){ .btn-reset .ri,.btn-reset.gira .ri{transition:none;animation:none} }
 </style>
 </head>
 <body>
@@ -1713,36 +1707,24 @@ function restaurar(f){
   if (typeof renderMapa === 'function') renderMapa(true);
   aviso('✓ Reporte recuperado.');
 }
-// "Empezar otro": la flecha gira y el botón pasa a "↶ Deshacer · 5". Devuelve la función de deshacer para el aviso:
-// botón y aviso deshacen una sola vez (el primero que se toque) y los dos vuelven a la normalidad.
-var DESHACER_SEG = 5;
-function deshacerEnBoton(id, fn){
-  var b = $(id), usado = false;
-  if (b._orig === undefined){
-    b._orig = b.innerHTML;
-    b.addEventListener('click', function(e){   // mientras gira o muestra "Deshacer", el clic no vuelve a borrar
-      if (b._girando){ e.stopImmediatePropagation(); return; }
-      if (b.classList.contains('deshacer') && b._fn){ e.stopImmediatePropagation(); b._fn(); }
-    }, true);
+// "Empezar otro": la flecha ↺ da una vuelta al borrar. Mientras gira (0.45 s), un segundo clic no vuelve a borrar
+// (así no se pierde el Deshacer del aviso). Devuelve la misma función de deshacer para el aviso.
+function girarReset(id, fn){
+  var b = $(id);
+  if (!b._listo){
+    b._listo = true;
+    b.addEventListener('click', function(e){ if (b._girando) e.stopImmediatePropagation(); }, true);
   }
-  function volver(){ clearInterval(b._t); clearTimeout(b._g); b._girando = false; b._fn = null; b.classList.remove('deshacer', 'gira'); b.innerHTML = b._orig; }
-  function deshacer(){ if (usado) return; usado = true; volver(); $('toast').hidden = true; fn(); }
-  volver();
-  b._fn = deshacer; b._girando = true;
+  clearTimeout(b._g); b._girando = true;
   b.classList.remove('gira'); void b.offsetWidth; b.classList.add('gira');
-  b._g = setTimeout(function(){   // después de la vuelta: modo Deshacer con cuenta regresiva
-    b._girando = false; if (usado) return;
-    var n = DESHACER_SEG; b.classList.remove('gira'); b.classList.add('deshacer');
-    b.innerHTML = '<span aria-hidden="true">↶</span> <span class="txt">Deshacer · ' + n + '</span><span class="cuenta"></span>';
-    b._t = setInterval(function(){ n--; if (n <= 0){ volver(); return; } var t = b.querySelector('.txt'); if (t) t.textContent = 'Deshacer · ' + n; }, 1000);
-  }, 450);
-  return deshacer;
+  b._g = setTimeout(function(){ b._girando = false; b.classList.remove('gira'); }, 450);
+  return fn;
 }
 // Botón "Empezar otro reporte": guarda copia, limpia y ofrece Deshacer.
 function borrarReporte(){
   var f = foto();
   reset();
-  aviso('Reporte borrado.', { txt:'Deshacer', fn:deshacerEnBoton('btnReset', function(){ restaurar(f); }) });
+  aviso('Reporte borrado.', { txt:'Deshacer', fn:girarReset('btnReset', function(){ restaurar(f); }) });
 }
 
 /* ══ EVENTOS ══ */
@@ -2411,7 +2393,7 @@ function nuevoEvento(){
   S = nuevoEstado(); S.hora = horaAhora(); FIJA = null; pintarFijar(); PLAN_ACTIVO = ''; renderPlanes();
   $('evBuscar').value = '';   // el buscador no guarda texto del evento anterior
   campos(); todo(); if (MAPA) MAPA.setView(MAPA_CENTRO, MAPA_ZOOM, { animate:false });   // sin animación: no pisa una carga inmediata
-  aviso('Evento borrado.', { txt:'Deshacer', fn:deshacerEnBoton('evBtnNuevoEvento', function(){ S = JSON.parse(copia); FIJA = fijaAntes; pintarFijar(); campos(); todo(); if (FIJA && MAPA) MAPA.setView(FIJA.centro, FIJA.z, { animate:false }); else encuadrar(); aviso('✓ Evento recuperado.'); }) });
+  aviso('Evento borrado.', { txt:'Deshacer', fn:girarReset('evBtnNuevoEvento', function(){ S = JSON.parse(copia); FIJA = fijaAntes; pintarFijar(); campos(); todo(); if (FIJA && MAPA) MAPA.setView(FIJA.centro, FIJA.z, { animate:false }); else encuadrar(); aviso('✓ Evento recuperado.'); }) });
 }
 
 /* ══ PLANES GUARDADOS (semáforos + corredores reutilizables) ══ */
@@ -2941,7 +2923,7 @@ function reset(){
   ahora(); pintarFaltantes(); todo();
   if (MAPA){ MAPA.setView(MAPA_CENTRO, MAPA_ZOOM, { animate:false }); encuadrarZona(MAPA, ZONA); }
 }
-function borrarReporte(){ var f = foto(); reset(); aviso('Reporte borrado.', { txt:'Deshacer', fn:deshacerEnBoton('faBtnReset', function(){ restaurar(f); }) }); }
+function borrarReporte(){ var f = foto(); reset(); aviso('Reporte borrado.', { txt:'Deshacer', fn:girarReset('faBtnReset', function(){ restaurar(f); }) }); }
 function todo(){ if (S.k && !porKey(S.k)) S.k = null; pintarHoraModo(); renderChip(); renderLista(); renderFallas(); renderMapa(); generar(); }
 
 /* ══ EVENTOS ══ */
