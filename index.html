@@ -559,6 +559,45 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
 .btn-reset.gira .ri{animation:riGira .5s cubic-bezier(.3,1.2,.5,1)}
 @keyframes riGira{from{transform:rotate(0)}to{transform:rotate(-360deg)}}
 @media (prefers-reduced-motion:reduce){ .btn-reset .ri,.btn-reset.gira .ri{transition:none;animation:none} }
+
+/* ══ BOTONES MODERNOS (B–G) ══ */
+/* ── B · píldoras con ícono y animación propia ── */
+:root .bp{display:inline-flex!important;align-items:center;justify-content:center;gap:8px;border-radius:999px!important}
+:root .bp svg{width:19px;height:19px;flex:none;overflow:visible}
+:root .bp .h1,:root .bp .h2,:root .bp .pin,:root .bp .fl{transition:transform .35s cubic-bezier(.3,1.5,.5,1)}
+:root .bp:hover .h2{transform:translate(-3px,-3px)}
+:root .bp:hover .pin{animation:pinRebota .6s ease-in-out}
+:root .bp:hover .fl{animation:flBaja .7s ease-in-out infinite}
+@keyframes pinRebota{30%{transform:translateY(-4px)}55%{transform:translateY(0)}75%{transform:translateY(-2px)}}
+@keyframes flBaja{50%{transform:translateY(3px)}}
+@media (max-width:480px){ .mapbtns .bp{white-space:nowrap;gap:6px;padding-left:8px!important;padding-right:8px!important} .mapbtns .bp svg{width:17px;height:17px} }
+/* ── C · barra de vidrio en el mapa ── */
+:root .maptools2,:root #vistaEvento .maptools{gap:0;padding:4px;border-radius:999px;background:color-mix(in srgb,#0f172a 55%,transparent);-webkit-backdrop-filter:blur(12px) saturate(160%);backdrop-filter:blur(12px) saturate(160%);border:1px solid rgba(255,255,255,.18);box-shadow:0 8px 20px -8px rgba(0,0,0,.5)}
+:root .maptools2 button,:root #vistaEvento .maptools button{background:transparent;border:0;color:#fff;box-shadow:none;padding:7px 12px;border-radius:999px;font-weight:700;transition:background .2s}
+:root .maptools2 button+button,:root #vistaEvento .maptools button+button{box-shadow:-1px 0 0 rgba(255,255,255,.18)}
+:root .maptools2 button:hover,:root #vistaEvento .maptools button:hover{background:rgba(255,255,255,.14)}
+:root .maptools2 button[aria-pressed="true"],:root #vistaEvento .maptools button[aria-pressed="true"]{background:var(--acc);color:var(--on-acc);box-shadow:0 0 0 1px rgba(255,255,255,.3),0 4px 12px -4px var(--acc)}
+/* ── D · Fase con indicador que se desliza ── */
+:root #evFases{position:relative;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:0;padding:4px;border-radius:999px;background:color-mix(in srgb,var(--fg) 8%,transparent);border:1px solid var(--line);isolation:isolate}
+:root #evFases .opt{border:0!important;background:transparent!important;box-shadow:none!important;border-radius:999px;position:relative;z-index:1;transition:color .25s;font-weight:700}
+:root #evFases .opt[aria-pressed="true"]{color:var(--on-acc)}
+:root #evFases .ind{position:absolute;z-index:0;top:4px;bottom:4px;border-radius:999px;background:var(--acc);box-shadow:0 6px 14px -6px var(--acc);transition:left .35s cubic-bezier(.3,1.3,.5,1),width .35s}
+/* ── E · fichas con ✓ ── */
+:root #faFallas .opt[aria-pressed="true"]{background:color-mix(in srgb,var(--c,var(--acc)) 22%,var(--card))!important;border-color:color-mix(in srgb,var(--c,var(--acc)) 70%,var(--fg))!important;color:var(--fg)!important}
+:root #faFallas .opt[aria-pressed="true"]::after{content:"✓";display:inline-grid;place-items:center;width:18px;height:18px;margin-left:6px;border-radius:50%;background:var(--c,var(--acc));color:#fff;font-size:11px;font-weight:900;animation:okPop .4s cubic-bezier(.3,1.6,.5,1)}
+@keyframes okPop{from{transform:scale(0)}to{transform:none}}
+/* ── F · Automática como interruptor ── */
+:root .hora-modo{position:relative;padding:2px 9px 2px 34px!important;border-style:solid!important}
+:root .hora-modo::before{content:"";position:absolute;left:6px;top:50%;width:24px;height:14px;margin-top:-7px;border-radius:999px;background:#10b981;transition:background .25s}
+:root .hora-modo::after{content:"";position:absolute;left:17px;top:50%;width:10px;height:10px;margin-top:-5px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:left .3s cubic-bezier(.3,1.5,.5,1)}
+:root .hora-modo.manual::before{background:#94a3b8}
+:root .hora-modo.manual::after{left:8px}
+/* ── G · efecto al tocar ── */
+.btn-copy:active,.mapbtns button:active,.acc-fila button:active,.btn-reset:active,.opt:active,.maptools2 button:active,#vistaEvento .maptools button:active{scale:.96}
+.onda-capa{position:fixed;z-index:4000;overflow:hidden;pointer-events:none}
+.onda-capa i{position:absolute;border-radius:50%;background:currentColor;opacity:.3;transform:scale(0);animation:ondaG .55s ease-out forwards}
+@keyframes ondaG{to{transform:scale(1);opacity:0}}
+@media (prefers-reduced-motion:reduce){ .bp *,#evFases .ind,#faFallas .opt::after,.hora-modo::before,.hora-modo::after{animation:none!important;transition:none!important} .onda-capa{display:none} }
 </style>
 </head>
 <body>
@@ -654,13 +693,13 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
         </div>
         <textarea id="out" readonly tabindex="-1" aria-hidden="true"></textarea>
         <div class="aviso" id="faltan" hidden><strong>Copiado, pero faltan datos</strong><ul id="faltanLista"></ul></div>
-        <button type="button" class="btn-copy" id="btnCopy">Copiar reporte</button>
+        <button type="button" class="btn-copy bp" id="btnCopy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g class="h1"><rect x="4" y="7" width="11" height="13" rx="2"/></g><g class="h2"><rect x="9" y="3" width="11" height="13" rx="2" fill="currentColor" fill-opacity=".15"/></g></svg>Copiar reporte</button>
         <div class="mapbtns">
-          <button type="button" class="btn-blue" id="btnMapaCopiar">Copiar mapa</button>
-          <button type="button" id="btnMapaBajar">Descargar mapa</button>
+          <button type="button" class="btn-blue bp" id="btnMapaCopiar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><g class="pin"><path d="M12 15.5s-3.5-3-3.5-5.5a3.5 3.5 0 0 1 7 0c0 2.5-3.5 5.5-3.5 5.5z"/><circle cx="12" cy="10" r="1.2" fill="currentColor"/></g></svg>Copiar mapa</button>
+          <button type="button" class="bp" id="btnMapaBajar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/><g class="fl"><path d="M12 3v11"/><path d="M7.5 9.5L12 14l4.5-4.5"/></g></svg>Descargar mapa</button>
         </div>
         <p class="hint"><b>Copiar:</b> para pegar en WhatsApp Web. <b>Descargar:</b> si copiar no funciona. Pega primero el texto y luego la imagen. La imagen se centra sola en los semáforos elegidos, aunque muevas el mapa; usa 📌 Fijar vista para otro encuadre.</p>
-        <button type="button" class="btn-reset" id="btnReset"><span class="ri" aria-hidden="true">↺</span> Empezar otro reporte <small>(borra todo · se puede deshacer)</small></button>
+        <button type="button" class="btn-reset bp" id="btnReset"><span class="ri" aria-hidden="true">↺</span> Empezar otro reporte <small>(borra todo · se puede deshacer)</small></button>
       </section>
     </aside>
   </div>
@@ -738,15 +777,15 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
           <label><input type="checkbox" id="evOptDetalle"> Detalle de intersecciones intervenidas</label>
         </div>
         <textarea id="evOut" readonly tabindex="-1" aria-hidden="true"></textarea>
-        <button type="button" class="btn-copy" id="evBtnCopy">Copiar reporte</button>
+        <button type="button" class="btn-copy bp" id="evBtnCopy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g class="h1"><rect x="4" y="7" width="11" height="13" rx="2"/></g><g class="h2"><rect x="9" y="3" width="11" height="13" rx="2" fill="currentColor" fill-opacity=".15"/></g></svg>Copiar reporte</button>
         <div class="mapbtns">
-          <button type="button" class="btn-blue" id="evBtnMapaCopiar">Copiar mapa</button>
-          <button type="button" id="evBtnMapaBajar">Descargar mapa</button>
+          <button type="button" class="btn-blue bp" id="evBtnMapaCopiar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><g class="pin"><path d="M12 15.5s-3.5-3-3.5-5.5a3.5 3.5 0 0 1 7 0c0 2.5-3.5 5.5-3.5 5.5z"/><circle cx="12" cy="10" r="1.2" fill="currentColor"/></g></svg>Copiar mapa</button>
+          <button type="button" class="bp" id="evBtnMapaBajar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/><g class="fl"><path d="M12 3v11"/><path d="M7.5 9.5L12 14l4.5-4.5"/></g></svg>Descargar mapa</button>
         </div>
         <p class="hint">La imagen se centra sola en los semáforos del evento, aunque muevas el mapa. Usa 📌 Fijar vista si quieres otro encuadre.</p>
         <div class="acc-fila">
           <button type="button" class="btn-compartir" id="evCompartir" title="Crea un enlace para abrir este evento en otra máquina"><span class="cp-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="14" height="10" rx="1.6"/><path d="M1 18.5h17"/><g class="cp-fl"><path d="M15 3h6v6"/><path d="M21 3l-7.5 7.5"/></g></svg></span><b>Abrir en otra PC</b><small>Enlace con este evento</small></button>
-          <button type="button" class="btn-reset" id="evBtnNuevoEvento" title="Borra todo · se puede deshacer"><span class="ri" aria-hidden="true">↺</span> Empezar otro</button>
+          <button type="button" class="btn-reset bp" id="evBtnNuevoEvento" title="Borra todo · se puede deshacer"><span class="ri" aria-hidden="true">↺</span> Empezar otro</button>
         </div>
         <p class="comp-ayuda"><span aria-hidden="true">💡</span><span>Comparte el evento armado con un compañero o ábrelo en otra máquina.</span></p>
         <p class="hint">El evento se guarda solo en este navegador mientras trabajas.</p>
@@ -800,13 +839,13 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
         <div class="phone"><div class="bubble" id="faBurbuja"></div></div>
         <textarea id="faOut" readonly tabindex="-1" aria-hidden="true"></textarea>
         <div class="aviso" id="faFaltan" hidden><strong>Copiado, pero faltan datos</strong><ul id="faFaltanLista"></ul></div>
-        <button type="button" class="btn-copy" id="faBtnCopy">Copiar reporte</button>
+        <button type="button" class="btn-copy bp" id="faBtnCopy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g class="h1"><rect x="4" y="7" width="11" height="13" rx="2"/></g><g class="h2"><rect x="9" y="3" width="11" height="13" rx="2" fill="currentColor" fill-opacity=".15"/></g></svg>Copiar reporte</button>
         <div class="mapbtns">
-          <button type="button" class="btn-blue" id="faBtnMapaCopiar">Copiar mapa</button>
-          <button type="button" id="faBtnMapaBajar">Descargar mapa</button>
+          <button type="button" class="btn-blue bp" id="faBtnMapaCopiar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><g class="pin"><path d="M12 15.5s-3.5-3-3.5-5.5a3.5 3.5 0 0 1 7 0c0 2.5-3.5 5.5-3.5 5.5z"/><circle cx="12" cy="10" r="1.2" fill="currentColor"/></g></svg>Copiar mapa</button>
+          <button type="button" class="bp" id="faBtnMapaBajar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/><g class="fl"><path d="M12 3v11"/><path d="M7.5 9.5L12 14l4.5-4.5"/></g></svg>Descargar mapa</button>
         </div>
         <p class="hint">Pega primero el texto y luego la imagen. La imagen se centra sola en el semáforo; usa 📌 Fijar vista para otro encuadre.</p>
-        <button type="button" class="btn-reset" id="faBtnReset"><span class="ri" aria-hidden="true">↺</span> Empezar otro reporte <small>(borra todo · se puede deshacer)</small></button>
+        <button type="button" class="btn-reset bp" id="faBtnReset"><span class="ri" aria-hidden="true">↺</span> Empezar otro reporte <small>(borra todo · se puede deshacer)</small></button>
       </section>
     </aside>
   </div>
@@ -3210,6 +3249,24 @@ pintarMenuVistas.listo = true;
   })();
 })();
 pintarPuente();
+</script>
+<script>
+/* ══ BOTONES MODERNOS: indicador de Fase (D) y onda al tocar (G) ══ */
+(function(){
+  // D · indicador de Fase (se vuelve a poner cada vez que la web redibuja las fases)
+  var f=$('evFases'), ant=null;
+  function ind(){ if(!f) return; var p=f.querySelector('.opt[aria-pressed="true"]'), i=f.querySelector('.ind');
+    if(!p){ if(i) i.remove(); return; }
+    if(!i){ i=document.createElement('span'); i.className='ind'; i.setAttribute('aria-hidden','true'); f.insertBefore(i,f.firstChild);
+      if(ant){ i.style.transition='none'; i.style.left=ant.l+'px'; i.style.width=ant.w+'px'; void i.offsetWidth; i.style.transition=''; } }
+    var l=p.offsetLeft, w=p.offsetWidth; i.style.left=l+'px'; i.style.width=w+'px'; ant={l:l,w:w}; }
+  if(f){ new MutationObserver(function(){ if(!f.querySelector('.ind')) ind(); }).observe(f,{childList:true}); f.addEventListener('click',function(){ setTimeout(ind,0); }); window.addEventListener('resize',ind); setTimeout(ind,300); }
+  // G · onda al tocar (capa encima, no toca el botón por dentro)
+  document.addEventListener('pointerdown',function(e){ var b=e.target.closest('.btn-copy,.mapbtns button,.acc-fila button,.btn-reset,.opt,.maptools2 button,#vistaEvento .maptools button'); if(!b) return;
+    var r=b.getBoundingClientRect(), d=Math.max(r.width,r.height)*2.2, c=document.createElement('span'), i=document.createElement('i');
+    c.className='onda-capa'; c.style.cssText='left:'+r.left+'px;top:'+r.top+'px;width:'+r.width+'px;height:'+r.height+'px;border-radius:'+getComputedStyle(b).borderRadius+';color:'+(b.classList.contains('btn-copy')?'#fff':'var(--acc)');
+    i.style.cssText='width:'+d+'px;height:'+d+'px;left:'+(e.clientX-r.left-d/2)+'px;top:'+(e.clientY-r.top-d/2)+'px'; c.appendChild(i); document.body.appendChild(c); setTimeout(function(){ c.remove(); },600); },true);
+})();
 </script>
 </body>
 </html>
