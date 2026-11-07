@@ -598,6 +598,30 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
 .onda-capa i{position:absolute;border-radius:50%;background:currentColor;opacity:.3;transform:scale(0);animation:ondaG .55s ease-out forwards}
 @keyframes ondaG{to{transform:scale(1);opacity:0}}
 @media (prefers-reduced-motion:reduce){ .bp *,#evFases .ind,#faFallas .opt::after,.hora-modo::before,.hora-modo::after{animation:none!important;transition:none!important} .onda-capa{display:none} }
+
+/* ══ ANIMACIONES (1 tarjetas · 2 contador · 3 pestaña · 5 chispas · 6 carga del mapa · 10 zonas) ══ */
+.entra{animation:tEntra .38s cubic-bezier(.2,1.2,.4,1) both}
+@keyframes tEntra{from{opacity:0;transform:translateY(-6px) scale(.94)}}
+.fantasma{pointer-events:none!important;overflow:hidden;animation:tSale .32s ease-in forwards}
+@keyframes tSale{to{opacity:0;transform:scale(.85);max-height:0;max-width:0;padding-top:0;padding-bottom:0;margin:0;border-width:0}}
+.chip.fantasma{max-width:300px}.item.fantasma{max-height:80px}
+#cuenta,#evCuentaSel,#evTotalTxt{display:inline-block;transform-origin:left center}
+.salta{animation:cSalta .45s cubic-bezier(.3,1.8,.5,1)}
+@keyframes cSalta{35%{transform:scale(1.18);color:var(--acc)}}
+.vista-entra{animation:vEntra .32s ease-out}
+@keyframes vEntra{from{opacity:0;transform:translateY(8px)}}
+.chispa{position:fixed;z-index:4500;width:7px;height:7px;border-radius:50%;pointer-events:none;animation:chV .7s cubic-bezier(.2,.7,.4,1) forwards}
+.chispa.e{border-radius:1px;width:8px;height:8px;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%)}
+@keyframes chV{to{transform:translate(var(--dx),var(--dy)) scale(.3) rotate(160deg);opacity:0}}
+.esq-mapa{position:absolute;inset:0;z-index:900;border-radius:inherit;display:grid;place-items:center;background:var(--card);pointer-events:none;transition:opacity .3s}
+.esq-mapa::before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(90deg,color-mix(in srgb,var(--fg) 6%,transparent) 25%,color-mix(in srgb,var(--fg) 13%,transparent) 50%,color-mix(in srgb,var(--fg) 6%,transparent) 75%);background-size:300% 100%;animation:esqB 1.2s linear infinite}
+.esq-mapa span{position:relative;font-size:13px;font-weight:700;color:var(--muted)}
+.esq-mapa.fuera{opacity:0}
+@keyframes esqB{from{background-position:100% 0}to{background-position:-50% 0}}
+.zc{box-shadow:inset 4px 0 0 var(--zc)}
+.chip.zc{padding-left:14px}
+.zc .zn{display:inline-block;margin-left:6px;padding:0 6px;border-radius:999px;font-size:10.5px;font-weight:800;color:#fff;background:var(--zc);vertical-align:1px}
+@media (prefers-reduced-motion:reduce){ .entra,.fantasma,.salta,.vista-entra,.esq-mapa::before{animation:none!important} .chispa{display:none} }
 </style>
 </head>
 <body>
@@ -3266,6 +3290,71 @@ pintarPuente();
     var r=b.getBoundingClientRect(), d=Math.max(r.width,r.height)*2.2, c=document.createElement('span'), i=document.createElement('i');
     c.className='onda-capa'; c.style.cssText='left:'+r.left+'px;top:'+r.top+'px;width:'+r.width+'px;height:'+r.height+'px;border-radius:'+getComputedStyle(b).borderRadius+';color:'+(b.classList.contains('btn-copy')?'#fff':'var(--acc)');
     i.style.cssText='width:'+d+'px;height:'+d+'px;left:'+(e.clientX-r.left-d/2)+'px;top:'+(e.clientY-r.top-d/2)+'px'; c.appendChild(i); document.body.appendChild(c); setTimeout(function(){ c.remove(); },600); },true);
+})();
+</script>
+<script>
+/* ══ ANIMACIONES: solo miran la página (no cambian datos ni reportes) ══ */
+(function(){
+  function evS(){ return (window.EV && EV.estado().sel) || []; }
+  function faK(){ var s = window.FA && FA.estado(); return s && s.k ? [s.k] : []; }
+  // 10 · color por zona (franja y etiqueta con el municipio)
+  var PAL = ['#2563eb','#db2777','#059669','#d97706','#7c3aed','#0891b2','#dc2626','#65a30d','#c026d3','#ea580c','#0d9488','#4f46e5'];
+  function colorZona(z){ var n = 0; for (var i = 0; i < z.length; i++) n = (n * 31 + z.charCodeAt(i)) >>> 0; return PAL[n % PAL.length]; }
+  function zonas(c){ c.querySelectorAll('.item[data-k],.chip').forEach(function(el){ if (el.classList.contains('zc') || el.classList.contains('fantasma')) return;
+    var k = el.getAttribute('data-k'); if (!k){ var x = el.querySelector('[data-k]'); k = x && x.getAttribute('data-k'); }
+    var s = k && porKey(k); if (!s) return;
+    el.classList.add('zc'); el.style.setProperty('--zc', colorZona(claveZona(s.c)));
+    if (el.classList.contains('item')){ var sm = el.querySelector('small'); if (sm) sm.insertAdjacentHTML('beforeend', '<span class="zn">' + esc(nombreZona(s.c)) + '</span>'); } }); }
+  // 1 · tarjetas: la nueva entra; la quitada deja una copia que se encoge (sin datos ni clics)
+  function animar(c, sel, keyOf, elegidos){
+    var nuevos = elegidos(), prev = c._prevSel, viejos = c._prevNodos || {}, nodos = {};
+    c.querySelectorAll(sel).forEach(function(el){ if (el.classList.contains('fantasma')) return; var k = keyOf(el); if (k) nodos[k] = el; });
+    if (prev){
+      Object.keys(nodos).forEach(function(k){ if (prev.indexOf(k) < 0 && nuevos.indexOf(k) >= 0) nodos[k].classList.add('entra'); });
+      prev.forEach(function(k){ if (nuevos.indexOf(k) >= 0 || !viejos[k] || nodos[k]) return;
+        var g = viejos[k].n.cloneNode(true); g.classList.add('fantasma'); g.classList.remove('entra'); g.removeAttribute('data-k'); g.setAttribute('aria-hidden', 'true');
+        g.querySelectorAll('[data-k],[id],input').forEach(function(x){ x.removeAttribute('data-k'); x.removeAttribute('id'); if (x.tagName === 'INPUT') x.disabled = true; });
+        var ref = viejos[k].sig && nodos[viejos[k].sig]; if (ref && ref.parentNode) ref.parentNode.insertBefore(g, ref); else c.appendChild(g);
+        setTimeout(function(){ g.remove(); }, 340); });
+    }
+    var info = {}, ks = Object.keys(nodos); ks.forEach(function(k, i){ info[k] = { n:nodos[k], sig:ks[i + 1] }; });
+    c._prevNodos = info; c._prevSel = nuevos.slice();
+  }
+  function vigilar(id, fn){ var c = $(id); if (!c) return;
+    var mo = new MutationObserver(function(){ mo.disconnect(); try { fn(c); } catch(e){} mo.observe(c, { childList:true }); });
+    try { fn(c); } catch(e){} mo.observe(c, { childList:true }); }
+  function kd(el){ return el.getAttribute('data-k'); }
+  vigilar('chips', function(c){ animar(c, '.chip', function(el){ var b = el.querySelector('[data-k]'); return b && b.getAttribute('data-k'); }, function(){ return S.sel; }); zonas(c); });
+  vigilar('lista', function(c){ animar(c, '.item[data-k]', kd, function(){ return S.sel; }); zonas(c); });
+  vigilar('evLista', function(c){ animar(c, '.item[data-k]', kd, evS); zonas(c); });
+  vigilar('faLista', function(c){ animar(c, '.item[data-k]', kd, faK); zonas(c); });
+  vigilar('evCorredores', function(c){ animar(c, '.sem', function(el){ var i = el.querySelector('[data-inter]'); return i && i.getAttribute('data-inter'); }, evS); });
+  // 2 · contador que salta cuando cambia el número
+  ['cuenta', 'evCuentaSel', 'evTotalTxt'].forEach(function(id){ var el = $(id); if (!el) return; var ant = (el.textContent.match(/\d+/) || [''])[0];
+    new MutationObserver(function(){ var n = (el.textContent.match(/\d+/) || [''])[0]; if (n !== ant){ el.classList.remove('salta'); void el.offsetWidth; el.classList.add('salta'); } ant = n; })
+      .observe(el, { childList:true, characterData:true, subtree:true }); });
+  // 3 · pestaña suave
+  new MutationObserver(function(){ ['vistaTiempos', 'vistaEvento', 'vistaFallas'].forEach(function(id){ var v = $(id); if (v && !v.hidden){
+    v.classList.remove('vista-entra'); void v.offsetWidth; v.classList.add('vista-entra'); clearTimeout(v._ve); v._ve = setTimeout(function(){ v.classList.remove('vista-entra'); }, 400); } }); })
+    .observe(document.body, { attributes:true, attributeFilter:['data-modo'] });
+  // 5 · chispas al copiar el reporte
+  var COL = ['#22c55e', '#facc15', '#38bdf8', '#f472b6', '#a78bfa', '#fb923c'];
+  ['btnCopy', 'evBtnCopy', 'faBtnCopy'].forEach(function(id){ var b = $(id); if (!b) return; var tenia = false;
+    new MutationObserver(function(){ var t = b.classList.contains('copiado');
+      if (t && !tenia && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)){ var r = b.getBoundingClientRect();
+        for (var i = 0; i < 18; i++){ var s = document.createElement('span'), a = Math.random() * Math.PI * 2, d = 40 + Math.random() * 60; s.className = 'chispa' + (i % 3 ? '' : ' e');
+          s.style.cssText = 'left:' + (r.left + r.width / 2 + (Math.random() - .5) * r.width * .6) + 'px;top:' + (r.top + r.height / 2) + 'px;background:' + COL[i % COL.length] + ';--dx:' + Math.cos(a) * d + 'px;--dy:' + (Math.sin(a) * d - 20) + 'px;animation-delay:' + Math.random() * 80 + 'ms';
+          document.body.appendChild(s); (function(s){ setTimeout(function(){ s.remove(); }, 850); })(s); } }
+      tenia = t; }).observe(b, { attributes:true, attributeFilter:['class'] }); });
+  // 6 · esqueleto en cada mapa hasta que cargue el primer cuadro (máx. 8 s; sin Leaflet se quita para ver el aviso)
+  document.querySelectorAll('.mapwrap').forEach(function(m){
+    var e = document.createElement('div'); e.className = 'esq-mapa'; e.setAttribute('aria-hidden', 'true'); e.innerHTML = '<span>Cargando mapa…</span>'; m.appendChild(e);
+    var listo = false, mo;
+    function quitar(){ if (listo) return; listo = true; if (mo) mo.disconnect(); e.classList.add('fuera'); setTimeout(function(){ e.remove(); }, 320); }
+    function revisar(){ if (typeof L === 'undefined' || m.querySelector('.leaflet-tile-loaded, .empty')) quitar(); }
+    mo = new MutationObserver(revisar); mo.observe(m, { subtree:true, childList:true, attributes:true, attributeFilter:['class'] });
+    revisar(); setTimeout(quitar, 8000);
+  });
 })();
 </script>
 </body>
