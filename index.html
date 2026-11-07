@@ -488,6 +488,24 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
 .acc-fila{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .acc-fila .btn-compartir,.acc-fila .btn-reset{margin:0;padding:11px 8px;font-size:14px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:6px;text-align:center}
 .btn-compartir{font-weight:800;border:1.5px solid #7c3aed;color:#6d28d9;background:color-mix(in srgb,#8b5cf6 8%,transparent)}
+/* Compartir: ícono + 2 líneas ("Abrir en otra PC" / "Enlace con este evento") */
+.acc-fila .btn-compartir{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:10px;row-gap:1px;align-items:center;justify-content:stretch;text-align:left;padding:8px 10px;position:relative;overflow:hidden;isolation:isolate}
+.btn-compartir .cp-ic{grid-row:1 / span 2;width:36px;height:36px;border-radius:11px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#a855f7,#6366f1);box-shadow:0 6px 14px -6px #7c3aed;transition:transform .35s cubic-bezier(.3,1.5,.5,1)}
+.btn-compartir .cp-ic svg{width:22px;height:22px;overflow:visible}
+.btn-compartir .cp-fl{transition:transform .35s cubic-bezier(.3,1.5,.5,1)}
+.btn-compartir b{font-size:14px;line-height:1.15;min-width:0}
+.btn-compartir small{font-size:11.5px;font-weight:600;opacity:.8;line-height:1.2;min-width:0}
+/* animación: al pasar el mouse la flecha sale de la pantalla y un brillo recorre el botón; al tocar, el ícono salta */
+.btn-compartir::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(100deg,transparent 30%,color-mix(in srgb,#a855f7 22%,transparent) 50%,transparent 70%);transform:translateX(-110%);transition:transform .7s ease}
+.btn-compartir:hover::after,.btn-compartir:focus-visible::after{transform:translateX(110%)}
+.btn-compartir:hover .cp-fl,.btn-compartir:focus-visible .cp-fl{transform:translate(2px,-2px)}
+.btn-compartir:hover .cp-ic{transform:rotate(-6deg) scale(1.05)}
+.btn-compartir.envia .cp-ic{animation:cpSalta .55s cubic-bezier(.3,1.5,.5,1)}
+.btn-compartir.envia .cp-fl{animation:cpVuela .55s ease-in-out}
+@keyframes cpSalta{0%{transform:scale(1)}35%{transform:scale(.88)}70%{transform:scale(1.12)}100%{transform:none}}
+@keyframes cpVuela{0%{transform:none;opacity:1}45%{transform:translate(9px,-9px);opacity:0}46%{transform:translate(-6px,6px);opacity:0}100%{transform:none;opacity:1}}
+.comp-ayuda{margin:2px 0 0;font-size:12.5px;color:var(--muted);display:flex;gap:6px;align-items:flex-start}
+@media (prefers-reduced-motion:reduce){ .btn-compartir::after,.btn-compartir .cp-ic,.btn-compartir .cp-fl{transition:none;animation:none!important} }
 :root[data-theme="dark"] .btn-compartir{color:#c4b5fd;border-color:#8b5cf6}
 @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .btn-compartir{color:#c4b5fd;border-color:#8b5cf6} }
 /* ventana "Compartir evento": al centro en PC, sube desde abajo en teléfono */
@@ -727,9 +745,10 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
         </div>
         <p class="hint">La imagen se centra sola en los semáforos del evento, aunque muevas el mapa. Usa 📌 Fijar vista si quieres otro encuadre.</p>
         <div class="acc-fila">
-          <button type="button" class="btn-compartir" id="evCompartir" title="Enlace para abrir este evento en otra máquina">🔗 Compartir</button>
+          <button type="button" class="btn-compartir" id="evCompartir" title="Crea un enlace para abrir este evento en otra máquina"><span class="cp-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="14" height="10" rx="1.6"/><path d="M1 18.5h17"/><g class="cp-fl"><path d="M15 3h6v6"/><path d="M21 3l-7.5 7.5"/></g></svg></span><b>Abrir en otra PC</b><small>Enlace con este evento</small></button>
           <button type="button" class="btn-reset" id="evBtnNuevoEvento" title="Borra todo · se puede deshacer"><span class="ri" aria-hidden="true">↺</span> Empezar otro</button>
         </div>
+        <p class="comp-ayuda"><span aria-hidden="true">💡</span><span>Comparte el evento armado con un compañero o ábrelo en otra máquina.</span></p>
         <p class="hint">El evento se guarda solo en este navegador mientras trabajas.</p>
       </section>
     </aside>
@@ -3120,7 +3139,7 @@ function abrirCompartido(token){
     });
   }).catch(function(){ limpiarHashPlan(); aviso('El enlace está incompleto o dañado. Pide que lo compartan de nuevo.'); });
 }
-$('evCompartir').addEventListener('click', compartirEvento);
+$('evCompartir').addEventListener('click', function(){ var b = $('evCompartir'); b.classList.remove('envia'); void b.offsetWidth; b.classList.add('envia'); setTimeout(function(){ b.classList.remove('envia'); }, 600); compartirEvento(); });
 
 // Pestaña al abrir: la del enlace, si no la última usada, si no Cambio de tiempos.
 function vistaInicial(){
