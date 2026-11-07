@@ -599,7 +599,7 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
 @keyframes ondaG{to{transform:scale(1);opacity:0}}
 @media (prefers-reduced-motion:reduce){ .bp *,#evFases .ind,#faFallas .opt::after,.hora-modo::before,.hora-modo::after{animation:none!important;transition:none!important} .onda-capa{display:none} }
 
-/* ══ ANIMACIONES (1 tarjetas · 2 contador · 3 pestaña · 5 chispas · 6 carga del mapa · 10 zonas) ══ */
+/* ══ ANIMACIONES (1 tarjetas · 2 contador · 3 pestaña · 6 carga del mapa · 10 zonas) ══ */
 .entra{animation:tEntra .38s cubic-bezier(.2,1.2,.4,1) both}
 @keyframes tEntra{from{opacity:0;transform:translateY(-6px) scale(.94)}}
 #cuenta{transform-origin:left center}
@@ -608,9 +608,6 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
 @keyframes cSalta{35%{transform:scale(1.18);color:var(--acc)}}
 .vista-entra{animation:vEntra .32s ease-out}
 @keyframes vEntra{from{opacity:0}}
-.chispa{position:fixed;z-index:4500;width:7px;height:7px;border-radius:50%;pointer-events:none;animation:chV .7s cubic-bezier(.2,.7,.4,1) forwards}
-.chispa.e{border-radius:1px;width:8px;height:8px;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%)}
-@keyframes chV{to{transform:translate(var(--dx),var(--dy)) scale(.3) rotate(160deg);opacity:0}}
 .esq-mapa{position:absolute;inset:0;z-index:900;border-radius:inherit;display:grid;place-items:center;background:var(--card);pointer-events:none;transition:opacity .3s}
 .esq-mapa::before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(90deg,color-mix(in srgb,var(--fg) 6%,transparent) 25%,color-mix(in srgb,var(--fg) 13%,transparent) 50%,color-mix(in srgb,var(--fg) 6%,transparent) 75%);background-size:300% 100%;animation:esqB 1.2s linear infinite}
 .esq-mapa span{position:relative;font-size:13px;font-weight:700;color:var(--muted)}
@@ -619,7 +616,7 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
 .zc{box-shadow:inset 4px 0 0 var(--zc)}
 .chip.zc{padding-left:14px}
 .zc .zn{display:inline-block;margin-left:6px;padding:0 6px;border-radius:999px;font-size:10.5px;font-weight:800;color:#fff;background:var(--zc);vertical-align:1px}
-@media (prefers-reduced-motion:reduce){ .entra,.salta,.vista-entra,.esq-mapa::before{animation:none!important} .chispa{display:none} }
+@media (prefers-reduced-motion:reduce){ .entra,.salta,.vista-entra,.esq-mapa::before{animation:none!important} }
 </style>
 </head>
 <body>
@@ -3331,15 +3328,6 @@ pintarPuente();
   new MutationObserver(function(){ ['vistaTiempos', 'vistaEvento', 'vistaFallas'].forEach(function(id){ var v = $(id); if (v && !v.hidden){
     v.classList.remove('vista-entra'); void v.offsetWidth; v.classList.add('vista-entra'); clearTimeout(v._ve); v._ve = setTimeout(function(){ v.classList.remove('vista-entra'); }, 400); } }); })
     .observe(document.body, { attributes:true, attributeFilter:['data-modo'] });
-  // 5 · chispas al copiar el reporte
-  var COL = ['#22c55e', '#facc15', '#38bdf8', '#f472b6', '#a78bfa', '#fb923c'];
-  ['btnCopy', 'evBtnCopy', 'faBtnCopy'].forEach(function(id){ var b = $(id); if (!b) return; var tenia = false;
-    new MutationObserver(function(){ var t = b.classList.contains('copiado');
-      if (t && !tenia && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)){ var r = b.getBoundingClientRect();
-        for (var i = 0; i < 18; i++){ var s = document.createElement('span'), a = Math.random() * Math.PI * 2, d = 40 + Math.random() * 60; s.className = 'chispa' + (i % 3 ? '' : ' e');
-          s.style.cssText = 'left:' + (r.left + r.width / 2 + (Math.random() - .5) * r.width * .6) + 'px;top:' + (r.top + r.height / 2) + 'px;background:' + COL[i % COL.length] + ';--dx:' + Math.cos(a) * d + 'px;--dy:' + (Math.sin(a) * d - 20) + 'px;animation-delay:' + Math.random() * 80 + 'ms';
-          document.body.appendChild(s); (function(s){ setTimeout(function(){ s.remove(); }, 850); })(s); } }
-      tenia = t; }).observe(b, { attributes:true, attributeFilter:['class'] }); });
   // 6 · esqueleto en cada mapa hasta que cargue el primer cuadro (máx. 8 s; sin Leaflet se quita para ver el aviso)
   document.querySelectorAll('.mapwrap').forEach(function(m){
     var e = document.createElement('div'); e.className = 'esq-mapa'; e.setAttribute('aria-hidden', 'true'); e.innerHTML = '<span>Cargando mapa…</span>'; m.appendChild(e);
