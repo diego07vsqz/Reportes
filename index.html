@@ -2360,7 +2360,7 @@ function imagenMapa(){
 }
 /* ══ IMAGEN MEGAEVENTO ══
    Automática con más de MEGA_DESDE semáforos; el botón 🔍 la fuerza (S.mega: '' auto · 'si' · 'no').
-   Círculos de color sin líneas, recuadro con el centro ampliado, leyenda con barras y fondo tenue. */
+   Íconos pequeños fijos (luz verde = intervenido) sin líneas, recuadro con el centro ampliado, leyenda con barras y fondo tenue. */
 var MEGA_DESDE = 15;
 function megaAuto(){ return S.sel.length > MEGA_DESDE; }
 function esMega(){ return S.mega === 'si' || (S.mega !== 'no' && megaAuto()); }
@@ -2381,21 +2381,33 @@ function pintarCuadros(g, cx, cy, zf, W, H, filtro){
   }
   return Promise.all(t).then(function(){ if (filtro){ g.fillStyle = 'rgba(255,255,255,.28)'; g.fillRect(0, 0, W, H); } });
 }
-function puntoChico(g, x, y, r, col, hecho){
-  g.save(); g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = r * .5; g.shadowOffsetY = r * .12;
-  g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fillStyle = col; g.fill(); g.shadowColor = 'transparent';
-  g.lineWidth = Math.max(2, r * .28); g.strokeStyle = '#ffffff'; g.stroke();
-  if (hecho){ g.lineWidth = Math.max(2, r * .3); g.lineCap = 'round'; g.lineJoin = 'round'; g.beginPath(); g.moveTo(x - r * .45, y + r * .02); g.lineTo(x - r * .1, y + r * .38); g.lineTo(x + r * .48, y - r * .36); g.stroke(); }
+// Ícono megaevento (sin ✓): intervenido = fondo oscuro con la luz verde encendida · pendiente = luces apagadas en gris. Aro = color del corredor.
+function iconoMega(g, x, y, s, hecho, aro){
+  var f = s / 30;
+  function caja(px, py, w, hh, r){ g.beginPath(); g.moveTo(px + r, py); g.arcTo(px + w, py, px + w, py + hh, r); g.arcTo(px + w, py + hh, px, py + hh, r); g.arcTo(px, py + hh, px, py, r); g.arcTo(px, py, px + w, py, r); g.closePath(); }
+  function circ(cx, cy, r, fill){ g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fillStyle = fill; g.fill(); }
+  g.save(); g.translate(x - 15 * f, y - 17 * f); g.scale(f, f);
+  g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = 3; g.shadowOffsetY = 1;
+  circ(15, 17, 12, hecho ? '#0f172a' : '#d1d5db'); g.shadowColor = 'transparent';
+  g.lineWidth = 3; g.strokeStyle = aro; g.stroke();
+  caja(11, 8, 8, 18, 3); g.fillStyle = hecho ? '#1f2937' : '#9ca3af'; g.fill();
+  var apagada = '#f3f4f6';
+  circ(15, 11.6, 2.1, hecho ? '#3f1d1d' : apagada); circ(15, 17, 2.1, hecho ? '#3b2f0b' : apagada);
+  if (hecho){ g.shadowColor = '#22c55e'; g.shadowBlur = 6; circ(15, 22.4, 2.6, '#22c55e'); } else circ(15, 22.4, 2.1, apagada);
   g.restore();
 }
 function dibujarPuntos(g, pts, conv, r){
-  pts.forEach(function(p){ var q = conv(p); puntoChico(g, q.x, q.y, r, p.col, p.hecho); });
+  // pendientes primero: los intervenidos quedan encima
+  pts.slice().sort(function(a, b){ return (a.hecho ? 1 : 0) - (b.hecho ? 1 : 0); })
+     .forEach(function(p){ var q = conv(p); iconoMega(g, q.x, q.y, r * 2.9, p.hecho, p.col); });
 }
 function leyendaMega(W, k){
   var cors = S.cor.filter(function(c){ return semsDe(c).length; }); if (!cors.length) return { alto:0 };
   var fs = Math.round(14 * k), pad = Math.round(14 * k), cols = W >= 900 ? 3 : 2, filas = Math.ceil(cors.length / cols);
   var celda = Math.round(fs * 2.7), izq = Math.round(W * .2);
-  return { alto:pad * 2 + celda * filas, cors:cors, fs:fs, pad:pad, cols:cols, celda:celda, izq:izq };
+  var minimo = Math.round(fs * 6.2);   // alto mínimo para que el total (número + texto + barra) quepa sin encimarse
+  var cuerpo = Math.max(celda * filas, minimo);
+  return { alto:pad * 2 + cuerpo, cors:cors, fs:fs, pad:pad, cols:cols, celda:celda, izq:izq, dy:Math.round((cuerpo - celda * filas) / 2) };
 }
 function dibujarLeyendaMega(g, Lg, y0, W){
   if (!Lg.alto) return; var fs = Lg.fs, pad = Lg.pad;
@@ -2404,15 +2416,19 @@ function dibujarLeyendaMega(g, Lg, y0, W){
   var tot = S.sel.length, hechas = intervenidas(S.sel), bx = pad, by = y0 + pad, bw = Lg.izq - pad * 1.5, bh = Lg.alto - pad * 2;
   caja(bx, by, bw, bh, fs * .7); g.fillStyle = '#0b1120'; g.fill();
   g.fillStyle = '#ffffff'; g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.font = '800 ' + Math.round(fs * 2.4) + 'px sans-serif'; g.fillText(hechas + '/' + tot, bx + bw / 2, by + bh * .38);
-  g.font = '600 ' + Math.round(fs * .95) + 'px sans-serif'; g.fillStyle = '#cbd5e1'; g.fillText('intervenidas', bx + bw / 2, by + bh * .62);
-  var pw = bw * .7, px = bx + (bw - pw) / 2, py = by + bh * .78; caja(px, py, pw, fs * .5, fs * .25); g.fillStyle = '#334155'; g.fill();
-  if (hechas){ caja(px, py, Math.max(fs * .5, pw * hechas / tot), fs * .5, fs * .25); g.fillStyle = '#22c55e'; g.fill(); }
+  // bloque centrado: número (se achica si no cabe a lo ancho) · "intervenidas" · barra
+  var txt = hechas + '/' + tot, fn = Math.round(fs * 2.4);
+  g.font = '800 ' + fn + 'px sans-serif'; while (fn > fs && g.measureText(txt).width > bw * .86){ fn--; g.font = '800 ' + fn + 'px sans-serif'; }
+  var fl = Math.round(fs * .95), bar = fs * .5, alto = fn + fs * .35 + fl + fs * .55 + bar, top = by + (bh - alto) / 2;
+  g.fillText(txt, bx + bw / 2, top + fn / 2);
+  g.font = '600 ' + fl + 'px sans-serif'; g.fillStyle = '#cbd5e1'; g.fillText('intervenidas', bx + bw / 2, top + fn + fs * .35 + fl / 2);
+  var pw = bw * .7, px = bx + (bw - pw) / 2, py = top + alto - bar; caja(px, py, pw, bar, bar / 2); g.fillStyle = '#334155'; g.fill();
+  if (hechas){ caja(px, py, Math.max(bar, pw * hechas / tot), bar, bar / 2); g.fillStyle = '#22c55e'; g.fill(); }
   g.textAlign = 'left';
   var x0 = Lg.izq + pad * .5, cw = (W - x0 - pad) / Lg.cols;
   Lg.cors.forEach(function(c, i){
     var ks = semsDe(c), h = intervenidas(ks), col = i % Lg.cols, fila = Math.floor(i / Lg.cols);
-    var x = x0 + col * cw, y = y0 + pad + fila * Lg.celda, yy = y + Lg.celda * .4;
+    var x = x0 + col * cw, y = y0 + pad + Lg.dy + fila * Lg.celda, yy = y + Lg.celda * .4;
     g.fillStyle = c.color; g.beginPath(); g.arc(x + fs * .45, yy, fs * .45, 0, Math.PI * 2); g.fill();
     var cnt = h + '/' + ks.length; g.font = '800 ' + fs + 'px sans-serif'; var wc = g.measureText(cnt).width;
     g.font = '600 ' + fs + 'px sans-serif'; var t = c.nombre || 'Corredor', max = cw - fs * 1.6 - wc - fs;
