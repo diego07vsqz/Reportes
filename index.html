@@ -577,6 +577,7 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
 :root .maptools2 button+button,:root #vistaEvento .maptools button+button{box-shadow:-1px 0 0 rgba(255,255,255,.18)}
 :root .maptools2 button:hover,:root #vistaEvento .maptools button:hover{background:rgba(255,255,255,.14)}
 :root .maptools2 button[aria-pressed="true"],:root #vistaEvento .maptools button[aria-pressed="true"]{background:var(--acc);color:var(--on-acc);box-shadow:0 0 0 1px rgba(255,255,255,.3),0 4px 12px -4px var(--acc)}
+@media (max-width:520px){ :root #vistaEvento .maptools{left:8px;right:8px;top:8px;border-radius:16px} :root #vistaEvento .maptools button{flex:1 1 0;min-width:0;padding:6px 4px;font-size:12px;line-height:1.2;border-radius:12px} }
 /* ── D · Fase con indicador que se desliza ── */
 :root #evFases{position:relative;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:0;padding:4px;border-radius:999px;background:color-mix(in srgb,var(--fg) 8%,transparent);border:1px solid var(--line);isolation:isolate}
 :root #evFases.con-ind .opt{border:0!important;background:transparent!important;box-shadow:none!important;border-radius:999px;position:relative;z-index:1;transition:color .25s;font-weight:700}
@@ -760,6 +761,7 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
             <button type="button" id="evBtnArea" aria-pressed="false">▭ Seleccionar área</button>
             <button type="button" id="evBtnFijar" aria-pressed="false" title="Usar la vista actual para la imagen">📌 Fijar vista</button>
             <button type="button" id="evBtnBase">Satélite</button>
+            <button type="button" id="evBtnMega" aria-pressed="false" title="Imagen en modo megaevento">🔍 Megaevento</button>
           </div>
         </div>
         <input type="search" id="evBuscar" placeholder="Buscar semáforo: calle, ciudad o código…" autocomplete="off">
@@ -1914,7 +1916,7 @@ var ZONA = leerZona('evento');   // zona del mapa ('' = todas)
 // Estado vacío de un evento.
 function nuevoEstado(){
   return { nombre:'', zona:'', tipo:0, enc:0, hora:'', fase:0, monit:0, nota:'',
-           sel:[], cor:[], asig:{}, inter:{}, manual:false, barra:true, detalle:false, horaAuto:true };
+           sel:[], cor:[], asig:{}, inter:{}, manual:false, barra:true, detalle:false, horaAuto:true, mega:'' };
 }
 
 /* ══ UTILIDADES ══ */
@@ -1941,6 +1943,7 @@ function sanear(x){   // estado guardado de otra versión o dañado → solo cam
   n.cor = n.cor.filter(function(c){ return esObjeto(c) && typeof c.id === 'string'; }).map(function(c){
     c.nombre = typeof c.nombre === 'string' ? c.nombre : 'Corredor'; c.color = typeof c.color === 'string' ? c.color : COLOR_OTRAS; return c; });
   Object.keys(n.asig).forEach(function(k){ if (typeof n.asig[k] !== 'string') delete n.asig[k]; });
+  if (['', 'si', 'no'].indexOf(n.mega) < 0) n.mega = '';
   return n;
 }
 // Recupera el evento guardado; descarta semáforos que ya no existen.
@@ -2167,7 +2170,7 @@ function depurar(){   // quita del evento los semáforos que ya no existen en el
   limpiarVacios();
 }
 // Refresca todo el evento y lo guarda. Llamar tras cualquier cambio de estado.
-function todo(){ depurar(); renderOpts(); renderLista(); renderCorredores(); renderMapa(); generar(); guardar(); }
+function todo(){ depurar(); renderOpts(); renderLista(); renderCorredores(); renderMapa(); pintarMega(); generar(); guardar(); }
 
 /* ══ MAPA ══ */
 // Crea el mapa del evento (al abrir la pestaña por primera vez).
@@ -2314,6 +2317,7 @@ function cambiarBase(){
 /* ══ IMAGEN DEL MAPA (leyenda de corredores en franja inferior) ══ */
 // Imagen PNG de 1200 px con íconos, líneas guía y leyenda de corredores.
 function imagenMapa(){
+  if (esMega()) return imagenMega();
   if (!MAPA) return Promise.reject(new Error('sin mapa'));
   var tam = MAPA.getSize(), v = vistaCaptura(), z = v.z, sep = separacion(z);
   var W = MAPA_IMG_ANCHO, H = Math.round(tam.y * W / tam.x), m = W / tam.x;
@@ -2352,6 +2356,131 @@ function imagenMapa(){
     dibujarLeyenda(g, ley, H, W);
     g.setTransform(1, 0, 0, 1, 0, 0); dibujarTitulo(g, tit, W);
     return new Promise(function(res, rej){ try { cv.toBlob(function(b){ if (b) res(b); else rej(new Error('sin imagen')); }, 'image/png'); } catch(err){ rej(err); } });
+  });
+}
+/* ══ IMAGEN MEGAEVENTO ══
+   Automática con más de MEGA_DESDE semáforos; el botón 🔍 la fuerza (S.mega: '' auto · 'si' · 'no').
+   Círculos de color sin líneas, recuadro con el centro ampliado, leyenda con barras y fondo tenue. */
+var MEGA_DESDE = 15;
+function megaAuto(){ return S.sel.length > MEGA_DESDE; }
+function esMega(){ return S.mega === 'si' || (S.mega !== 'no' && megaAuto()); }
+function pintarMega(){ var b = $('evBtnMega'); if (!b) return; var on = esMega();
+  b.setAttribute('aria-pressed', String(on));
+  b.title = (on ? 'Imagen en modo megaevento' : 'Imagen normal') + (S.mega ? ' (elegido a mano · toca para volver a automático)' : ' (automático: más de ' + MEGA_DESDE + ' semáforos)'); }
+function alternarMega(){ var quiere = !esMega(); S.mega = (quiere === megaAuto()) ? '' : (quiere ? 'si' : 'no'); pintarMega(); guardar();
+  aviso(quiere ? '🔍 La imagen del mapa saldrá en modo megaevento.' : 'La imagen del mapa saldrá normal.'); }
+// pinta cuadros del mapa para una vista (centro en px del zoom zf, zoom fraccionario) en un rectángulo
+function pintarCuadros(g, cx, cy, zf, W, H, filtro){
+  var zMax = (BASE_MAPA === 'sat' ? 18 : 19), zz = Math.min(zMax, Math.ceil(zf)), e = Math.pow(2, zf - zz), n = Math.pow(2, zz);
+  var c = L.point(cx, cy).multiplyBy(Math.pow(2, zz - zf)), ox = c.x - (W / e) / 2, oy = c.y - (H / e) / 2, t = [];
+  g.fillStyle = '#e5e7eb'; g.fillRect(0, 0, W, H);
+  for (var tx = Math.floor(ox / 256); tx <= Math.floor((ox + W / e) / 256); tx++) for (var ty = Math.floor(oy / 256); ty <= Math.floor((oy + H / e) / 256); ty++){
+    if (ty < 0 || ty >= n) continue;
+    (function(tx, ty){ var url = BASES[BASE_MAPA].url.replace('{z}', zz).replace('{x}', ((tx % n) + n) % n).replace('{y}', ty);
+      t.push(cargarTile(url).then(function(im){ if (!im) return; g.save(); if (filtro) g.filter = filtro; g.drawImage(im, Math.floor((tx * 256 - ox) * e), Math.floor((ty * 256 - oy) * e), Math.ceil(256 * e) + 1, Math.ceil(256 * e) + 1); g.restore(); })); })(tx, ty);
+  }
+  return Promise.all(t).then(function(){ if (filtro){ g.fillStyle = 'rgba(255,255,255,.28)'; g.fillRect(0, 0, W, H); } });
+}
+function puntoChico(g, x, y, r, col, hecho){
+  g.save(); g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = r * .5; g.shadowOffsetY = r * .12;
+  g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fillStyle = col; g.fill(); g.shadowColor = 'transparent';
+  g.lineWidth = Math.max(2, r * .28); g.strokeStyle = '#ffffff'; g.stroke();
+  if (hecho){ g.lineWidth = Math.max(2, r * .3); g.lineCap = 'round'; g.lineJoin = 'round'; g.beginPath(); g.moveTo(x - r * .45, y + r * .02); g.lineTo(x - r * .1, y + r * .38); g.lineTo(x + r * .48, y - r * .36); g.stroke(); }
+  g.restore();
+}
+function dibujarPuntos(g, pts, conv, r){
+  pts.forEach(function(p){ var q = conv(p); puntoChico(g, q.x, q.y, r, p.col, p.hecho); });
+}
+function leyendaMega(W, k){
+  var cors = S.cor.filter(function(c){ return semsDe(c).length; }); if (!cors.length) return { alto:0 };
+  var fs = Math.round(14 * k), pad = Math.round(14 * k), cols = W >= 900 ? 3 : 2, filas = Math.ceil(cors.length / cols);
+  var celda = Math.round(fs * 2.7), izq = Math.round(W * .2);
+  return { alto:pad * 2 + celda * filas, cors:cors, fs:fs, pad:pad, cols:cols, celda:celda, izq:izq };
+}
+function dibujarLeyendaMega(g, Lg, y0, W){
+  if (!Lg.alto) return; var fs = Lg.fs, pad = Lg.pad;
+  g.fillStyle = '#ffffff'; g.fillRect(0, y0, W, Lg.alto); g.fillStyle = '#e5e7eb'; g.fillRect(0, y0, W, 2);
+  function caja(x, y, w, h, r){ g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+  var tot = S.sel.length, hechas = intervenidas(S.sel), bx = pad, by = y0 + pad, bw = Lg.izq - pad * 1.5, bh = Lg.alto - pad * 2;
+  caja(bx, by, bw, bh, fs * .7); g.fillStyle = '#0b1120'; g.fill();
+  g.fillStyle = '#ffffff'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.font = '800 ' + Math.round(fs * 2.4) + 'px sans-serif'; g.fillText(hechas + '/' + tot, bx + bw / 2, by + bh * .38);
+  g.font = '600 ' + Math.round(fs * .95) + 'px sans-serif'; g.fillStyle = '#cbd5e1'; g.fillText('intervenidas', bx + bw / 2, by + bh * .62);
+  var pw = bw * .7, px = bx + (bw - pw) / 2, py = by + bh * .78; caja(px, py, pw, fs * .5, fs * .25); g.fillStyle = '#334155'; g.fill();
+  if (hechas){ caja(px, py, Math.max(fs * .5, pw * hechas / tot), fs * .5, fs * .25); g.fillStyle = '#22c55e'; g.fill(); }
+  g.textAlign = 'left';
+  var x0 = Lg.izq + pad * .5, cw = (W - x0 - pad) / Lg.cols;
+  Lg.cors.forEach(function(c, i){
+    var ks = semsDe(c), h = intervenidas(ks), col = i % Lg.cols, fila = Math.floor(i / Lg.cols);
+    var x = x0 + col * cw, y = y0 + pad + fila * Lg.celda, yy = y + Lg.celda * .4;
+    g.fillStyle = c.color; g.beginPath(); g.arc(x + fs * .45, yy, fs * .45, 0, Math.PI * 2); g.fill();
+    var cnt = h + '/' + ks.length; g.font = '800 ' + fs + 'px sans-serif'; var wc = g.measureText(cnt).width;
+    g.font = '600 ' + fs + 'px sans-serif'; var t = c.nombre || 'Corredor', max = cw - fs * 1.6 - wc - fs;
+    while (t.length > 1 && g.measureText(t).width > max) t = t.slice(0, -2) + '…';
+    g.fillStyle = '#111827'; g.fillText(t, x + fs * 1.3, yy);
+    g.font = '800 ' + fs + 'px sans-serif'; g.fillStyle = '#334155'; g.fillText(cnt, x + cw - fs - wc, yy);
+    var bw2 = cw - fs * 2.3, bx2 = x + fs * 1.3, by2 = y + Lg.celda * .72; caja(bx2, by2, bw2, fs * .32, fs * .16); g.fillStyle = '#e5e7eb'; g.fill();
+    if (h){ caja(bx2, by2, Math.max(fs * .32, bw2 * h / ks.length), fs * .32, fs * .16); g.fillStyle = c.color; g.fill(); }
+  });
+}
+function imagenMega(){
+  if (!MAPA) return Promise.reject(new Error('sin mapa'));
+  var tam = MAPA.getSize(), v = vistaCaptura(), m = MAPA_IMG_ANCHO / tam.x, W = MAPA_IMG_ANCHO, H = Math.round(tam.y * W / tam.x), k = Math.min(m, 1.6);
+  var zf = v.z + Math.log(m) / Math.LN2, c0 = MAPA.project(v.centro, zf);
+  var pts = S.sel.map(function(key){ var s = porKey(key); if (!tieneCoord(s)) return null; var cor = corPorId(S.asig[key]);
+    return { ll:[s.la, s.lo], col:cor ? cor.color : COLOR_OTRAS, hecho:!!S.inter[key] }; }).filter(Boolean);
+  function conv0(p){ var q = MAPA.project(p.ll, zf); return { x:q.x - c0.x + W / 2, y:q.y - c0.y + H / 2 }; }
+  // zona densa: la ventana (tamaño del recuadro ÷ AUMENTO) que junta más semáforos
+  var IW = Math.round(W * .44), IH = Math.round(IW * .78), HB = Math.round(26 * k), AUM = 2.6;
+  var xy = pts.map(conv0), vw = IW / AUM, vh = (IH - HB) / AUM, mejor = [], cx = 0, cy = 0;
+  xy.forEach(function(a){ [[0,0],[.25,0],[-.25,0],[0,.25],[0,-.25]].forEach(function(d){ var qx = a.x + d[0] * vw, qy = a.y + d[1] * vh;
+    var dentro = xy.filter(function(b){ return Math.abs(b.x - qx) < vw * .45 && Math.abs(b.y - qy) < vh * .45; });
+    if (dentro.length > mejor.length){ mejor = dentro; cx = qx; cy = qy; } }); });
+  var grupo = mejor;
+  var usaRec = grupo.length >= 10 && grupo.length < pts.length;
+  var ley = leyendaMega(W, k), tit = tituloMedida(W, k);
+  var cv = document.createElement('canvas'); cv.width = W; cv.height = tit.alto + H + ley.alto;
+  var g = cv.getContext('2d'), filtro = 'saturate(.3) contrast(.92) brightness(1.06)';
+  var mapa = document.createElement('canvas'); mapa.width = W; mapa.height = H;
+  var ins = null, zI, cI, esq;
+  var tareas = [pintarCuadros(mapa.getContext('2d'), c0.x, c0.y, zf, W, H, filtro)];
+  if (usaRec){
+    zI = zf + Math.log(AUM) / Math.LN2;
+    cI = L.point(cx - W / 2 + c0.x, cy + HB / 2 / AUM - H / 2 + c0.y).multiplyBy(AUM);
+    // esquina con menos puntos (y que no tape la zona densa)
+    var M = 14 * k, cands = [[W - IW - M, M], [M, M], [W - IW - M, H - IH - M], [M, H - IH - M]];
+    var costo = cands.map(function(c){ return xy.filter(function(a){ return a.x > c[0] - 10 && a.x < c[0] + IW + 10 && a.y > c[1] - 10 && a.y < c[1] + IH + 10; }).length; });
+    esq = cands[costo.indexOf(Math.min.apply(null, costo))];
+    ins = document.createElement('canvas'); ins.width = IW; ins.height = IH;
+    tareas.push(pintarCuadros(ins.getContext('2d'), cI.x, cI.y, zI, IW, IH, filtro));
+  }
+  return Promise.all(tareas).then(function(){
+    g.drawImage(mapa, 0, tit.alto);
+    g.save(); g.translate(0, tit.alto);
+    var r = 7.5 * k;
+    dibujarPuntos(g, pts, conv0, r);
+    if (ins){
+      var ig = ins.getContext('2d'); function convI(p){ var q = MAPA.project(p.ll, zI); return { x:q.x - cI.x + IW / 2, y:q.y - cI.y + IH / 2 }; }
+      dibujarPuntos(ig, pts, convI, r * 1.05);
+      // marco en el mapa general
+      var fw = IW / AUM, fh = IH / AUM, fx0 = cx - fw / 2, fy0 = cy + HB / 2 / AUM - fh / 2;
+      g.setLineDash([8 * k, 5 * k]); g.lineWidth = 2.5 * k; g.strokeStyle = '#0b1120'; g.strokeRect(fx0, fy0, fw, fh); g.setLineDash([]);
+      g.strokeStyle = 'rgba(11,17,32,.55)'; g.lineWidth = 1.5 * k; g.beginPath();
+      var ax = esq[0] + (esq[0] > W / 2 ? 0 : IW), bxp = esq[0] > W / 2 ? fx0 + fw : fx0;
+      g.moveTo(bxp, esq[1] > H / 2 ? fy0 + fh : fy0); g.lineTo(ax, esq[1] > H / 2 ? esq[1] + IH : esq[1]); g.stroke();
+      g.save(); g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = 16 * k; g.fillStyle = '#fff'; g.fillRect(esq[0] - 4 * k, esq[1] - 4 * k, IW + 8 * k, IH + 8 * k); g.restore();
+      g.drawImage(ins, esq[0], esq[1]);
+      var fb = Math.round(12.5 * k), hb = HB; g.fillStyle = 'rgba(11,17,32,.88)'; g.fillRect(esq[0], esq[1], IW, hb);
+      g.fillStyle = '#fff'; g.font = '800 ' + fb + 'px sans-serif'; g.textBaseline = 'middle'; g.textAlign = 'left';
+      g.fillText('🔍 Centro ampliado ×' + AUM + ' · ' + grupo.length + ' semáforos', esq[0] + fb * .7, esq[1] + hb / 2);
+    }
+    var fa = Math.round(11 * k), at = atribucionImg(BASES[BASE_MAPA].attr);
+    g.font = fa + 'px sans-serif'; g.textBaseline = 'alphabetic'; var w = g.measureText(at).width + fa;
+    g.fillStyle = 'rgba(255,255,255,.8)'; g.fillRect(W - w, H - fa * 1.7, w, fa * 1.7); g.fillStyle = '#111827'; g.fillText(at, W - w + fa / 2, H - fa * .5);
+    g.restore();
+    dibujarLeyendaMega(g, ley, tit.alto + H, W);
+    dibujarTitulo(g, tit, W);
+    return new Promise(function(res, rej){ cv.toBlob(function(b){ b ? res(b) : rej(new Error('sin imagen')); }, 'image/png'); });
   });
 }
 // Franja superior de la imagen con el nombre del evento (sin nombre = sin franja).
@@ -2583,6 +2712,7 @@ function eventos(){
   $('evBtnArea').addEventListener('click', function(){ modoArea(!AREA.activo); if (AREA.activo) aviso('Arrastra un recuadro sobre el mapa.'); });
   $('evBtnBase').addEventListener('click', cambiarBase);
   $('evBtnFijar').addEventListener('click', function(){ if (MAPA) fijarVista(); });
+  $('evBtnMega').addEventListener('click', alternarMega);
   $('evBtnReagrupar').addEventListener('click', function(){ agruparTodo(); todo(); aviso('✓ Corredores reagrupados por calle.'); });
   $('evBtnNuevoCor').addEventListener('click', function(){
     var ncId = nuevoId(); ABIERTO[ncId] = true;
@@ -2660,7 +2790,7 @@ return {
   },
   encuadrar: function(){ encuadrar(); },
   paraCompartir: function(){   // copia de los datos del evento (sin preferencias de pantalla)
-    var o = {}; ['nombre','zona','tipo','enc','hora','fase','monit','nota','sel','cor','asig','inter','manual','horaAuto'].forEach(function(k){ o[k] = JSON.parse(JSON.stringify(S[k])); });
+    var o = {}; ['nombre','zona','tipo','enc','hora','fase','monit','nota','sel','cor','asig','inter','manual','horaAuto','mega'].forEach(function(k){ o[k] = JSON.parse(JSON.stringify(S[k])); });
     return o;
   },
   cargarCompartido: function(x){   // reemplaza el evento por uno compartido (pasa por la misma limpieza que el guardado); devuelve el anterior
