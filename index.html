@@ -2669,7 +2669,7 @@ function bajarBlob(b){ var u = URL.createObjectURL(b), a = document.createElemen
    Antes de copiar o descargar, la primera vez (o si cambió mucho la lista), muestra la imagen y pregunta. */
 function zoomPorPreguntar(){
   if (!MAPA || !esMega() || (S.zoom && S.zoom.off)) return false;
-  var pl = planMega(); if (!pl.usaRec) return false;
+  // pregunta aunque no salga cuadro automático: así se puede agregar uno a mano
   var n = S.zoom && S.zoom.n; if (n === undefined) return true;
   return Math.abs(S.sel.length - n) >= Math.max(3, Math.round(n * .2));
 }
@@ -2729,6 +2729,9 @@ function mostrarAjusteZoom(){ $('zmCtrl').hidden = false; $('zmTip').hidden = fa
 function ponerImgZoom(b){
   if (!ZM) return; if (ZM.url) URL.revokeObjectURL(ZM.url);
   ZM.blob = b; ZM.url = URL.createObjectURL(b); $('zmImg').src = ZM.url; $('zmCarga').hidden = true;
+  var sin = ULT_MEGA && !ULT_MEGA.usaRec;
+  $('zmTit').textContent = sin ? (S.zoom && S.zoom.off ? 'La imagen va sin cuadro de zoom' : 'Esta imagen no tiene cuadro de zoom. ¿Quieres agregar uno?') : '¿Se ve bien el cuadro de zoom?';
+  $('zmAjustar').textContent = sin ? '✎ Agregar cuadro de zoom' : '✎ Ajustar';
   if (ULT_MEGA) $('zmAum').textContent = '×' + ULT_MEGA.AUM;
 }
 function rehacerZoom(){
@@ -2776,7 +2779,7 @@ function pintarAjusteZoom(){
     if (S.zoom && S.zoom.off) t = 'Sin cuadro de zoom · toca para ponerlo';
     else if (MAPA){ var pl = planMega();
       t = pl.usaRec ? (pl.auto ? 'Automático' : 'Elegido a mano') + ' · ×' + pl.AUM + ' · ' + pl.grupo + ' semáforo' + (pl.grupo === 1 ? '' : 's')
-                    : 'No hace falta: no hay un grupo de semáforos juntos'; }
+                    : 'Sin cuadro automático (no hay un grupo junto) · toca para agregar uno'; }
   } catch(e){}
   $('evZoomEst').textContent = t;
 }
@@ -2882,7 +2885,7 @@ function cargarPlan(i){
   x.uso = Date.now(); escribirPlanes(p); VER_TODOS = false; $('evPlanBuscar').value = '';
   var copia = JSON.stringify(S), abiertoAntes = JSON.parse(JSON.stringify(ABIERTO)), fijaAntes = FIJA;
   var sel = x.sel.filter(function(k, j, a){ return typeof k === 'string' && porKey(k) && a.indexOf(k) === j; }), faltan = x.sel.length - sel.length;
-  S.sel = sel; S.inter = {}; S.asig = {}; S.manual = true;
+  S.sel = sel; S.inter = {}; S.asig = {}; S.manual = true; S.zoom = {}; S.mega = '';
   S.cor = (Array.isArray(x.cor) ? x.cor : []).filter(function(c){ return esObjeto(c) && typeof c.id === 'string'; }).map(function(c){ var o = JSON.parse(JSON.stringify(c)); delete o.manualVacio; if (typeof o.nombre !== 'string') o.nombre = 'Corredor'; if (typeof o.color !== 'string') o.color = COLOR_OTRAS; return o; });
   sel.forEach(function(k){ var id = esObjeto(x.asig) && x.asig[k]; S.asig[k] = corPorId(id) ? id : corOtras().id; });
   limpiarVacios();
