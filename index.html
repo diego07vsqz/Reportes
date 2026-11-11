@@ -618,6 +618,29 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
 .chip.zc{padding-left:14px}
 .zc .zn{display:inline-block;margin-left:6px;padding:0 6px;border-radius:999px;font-size:10.5px;font-weight:800;color:#fff;background:var(--zc);vertical-align:1px}
 @media (prefers-reduced-motion:reduce){ .entra,.salta,.vista-entra,.esq-mapa::before{animation:none!important} }
+
+/* ══ VENTANA DEL CUADRO DE ZOOM ══ */
+.zm-caja{width:min(860px,100%);max-height:calc(100vh - 32px);overflow:auto;gap:12px}
+.zm-cab{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:17px}
+.zm-img{position:relative;border-radius:14px;overflow:hidden;background:#e5e7eb;line-height:0;touch-action:auto;user-select:none;-webkit-user-select:none}
+.zm-img{display:flex;justify-content:center}
+.zm-img img{max-width:100%;max-height:min(58vh,640px);width:auto;height:auto;display:block}
+.zm-img.editable{cursor:crosshair;touch-action:none}
+.zm-sel{position:absolute;border:2.5px dashed #0b1120;background:rgba(124,58,237,.18);pointer-events:none;border-radius:3px}
+.zm-carga{position:absolute;inset:0;display:grid;place-items:center;background:rgba(255,255,255,.55);font:800 15px/1 system-ui,sans-serif;color:#0b1120}
+.zm-tip{margin:0;font-size:13px;color:var(--muted)}
+.zm-ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.zm-g{display:flex;align-items:center;gap:4px;padding:4px 6px;border-radius:12px;border:1px solid var(--line);background:color-mix(in srgb,var(--fg) 4%,transparent)}
+.zm-g span{font-size:12px;font-weight:700;color:var(--muted);margin-right:2px}
+.zm-g button,.zm-auto{min-width:36px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--fg);font-weight:800;cursor:pointer}
+.zm-g b{min-width:44px;text-align:center;font-size:13px}
+.zm-auto{padding:0 12px}
+.zm-acc{display:flex;flex-wrap:wrap;gap:8px}
+.zm-acc button{flex:1 1 160px;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--fg);font-weight:800;cursor:pointer}
+.zm-acc .btn-blue{background:var(--acc);color:var(--on-acc);border-color:transparent}
+.zm-btn{display:block;margin:6px 0 0;padding:6px 2px;border:0;background:none;color:var(--acc);font-weight:800;font-size:13.5px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.zm-btn[hidden]{display:none}
+@media (max-width:640px){ .zm-caja{max-height:92vh} .zm-acc button{flex:1 1 100%} }
 </style>
 </head>
 <body>
@@ -803,6 +826,7 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
           <button type="button" class="btn-blue bp" id="evBtnMapaCopiar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><g class="pin"><path d="M12 15.5s-3.5-3-3.5-5.5a3.5 3.5 0 0 1 7 0c0 2.5-3.5 5.5-3.5 5.5z"/><circle cx="12" cy="10" r="1.2" fill="currentColor"/></g></svg>Copiar mapa</button>
           <button type="button" class="bp" id="evBtnMapaBajar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/><g class="fl"><path d="M12 3v11"/><path d="M7.5 9.5L12 14l4.5-4.5"/></g></svg>Descargar mapa</button>
         </div>
+        <button type="button" class="zm-btn" id="evBtnZoom" hidden>✎ Ajustar cuadro de zoom</button>
         <p class="hint">La imagen se centra sola en los semáforos del evento, aunque muevas el mapa. Usa 📌 Fijar vista si quieres otro encuadre.</p>
         <div class="acc-fila">
           <button type="button" class="btn-compartir" id="evCompartir" title="Crea un enlace para abrir este evento en otra máquina"><span class="cp-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="14" height="10" rx="1.6"/><path d="M1 18.5h17"/><g class="cp-fl"><path d="M15 3h6v6"/><path d="M21 3l-7.5 7.5"/></g></svg></span><b>Abrir en otra PC</b><small>Enlace con este evento</small></button>
@@ -1237,8 +1261,8 @@ function abrirGoogle(la, lo){
 }
 /* ══ PROVEEDORES DEL MAPA DE CALLES ══ */
 var CALLE_PROV = [                                 // en orden de preferencia; todos gratis y sin clave
+  // (CARTO quitado: ahora pide clave y devuelve cuadros con la marca "API KEY REQUIRED")
   { n:'OpenStreetMap', url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attr:'© OpenStreetMap' },
-  { n:'CARTO', url:'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', attr:'© OpenStreetMap · © CARTO' },
   { n:'Esri', url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', attr:'© Esri' }
 ];
 var CALLE_I = 0;                                   // proveedor en uso (sube si el actual falla)
@@ -1916,7 +1940,7 @@ var ZONA = leerZona('evento');   // zona del mapa ('' = todas)
 // Estado vacío de un evento.
 function nuevoEstado(){
   return { nombre:'', zona:'', tipo:0, enc:0, hora:'', fase:0, monit:0, nota:'',
-           sel:[], cor:[], asig:{}, inter:{}, manual:false, barra:true, detalle:false, horaAuto:true, mega:'' };
+           sel:[], cor:[], asig:{}, inter:{}, manual:false, barra:true, detalle:false, horaAuto:true, mega:'', zoom:{} };
 }
 
 /* ══ UTILIDADES ══ */
@@ -1928,6 +1952,17 @@ function horaAhora(){ var d = new Date(); return pad(d.getHours()) + ':' + pad(d
 function guardar(){ try { localStorage.setItem(LS_EVENTO, JSON.stringify(S)); } catch(e){} }
 // true si es un objeto normal (no lista, no null).
 function esObjeto(v){ return !!v && typeof v === 'object' && !Array.isArray(v); }
+// Cuadro de zoom del megaevento: { lat, lng } centro elegido · aum aumento · esq esquina (-1 auto, 0 ↗, 1 ↖, 2 ↘, 3 ↙) · off sin cuadro · n semáforos al aprobarlo.
+function limpiarZoom(z){
+  var r = {}; if (!esObjeto(z)) return r;
+  function num(v){ return typeof v === 'number' && isFinite(v); }
+  if (num(z.lat) && num(z.lng) && Math.abs(z.lat) <= 90 && Math.abs(z.lng) <= 180){ r.lat = z.lat; r.lng = z.lng; }
+  if (num(z.aum) && z.aum >= 1.2 && z.aum <= 5) r.aum = Math.round(z.aum * 10) / 10;
+  if (num(z.esq) && z.esq % 1 === 0 && z.esq >= 0 && z.esq <= 3) r.esq = z.esq;
+  if (z.off === true) r.off = true;
+  if (num(z.n) && z.n >= 0 && z.n % 1 === 0) r.n = z.n;
+  return r;
+}
 // Limpia el evento guardado: solo campos con el tipo correcto, índices válidos, semáforos existentes.
 function sanear(x){   // estado guardado de otra versión o dañado → solo campos con el tipo correcto
   var n = nuevoEstado();
@@ -1944,6 +1979,7 @@ function sanear(x){   // estado guardado de otra versión o dañado → solo cam
     c.nombre = typeof c.nombre === 'string' ? c.nombre : 'Corredor'; c.color = typeof c.color === 'string' ? c.color : COLOR_OTRAS; return c; });
   Object.keys(n.asig).forEach(function(k){ if (typeof n.asig[k] !== 'string') delete n.asig[k]; });
   if (['', 'si', 'no'].indexOf(n.mega) < 0) n.mega = '';
+  n.zoom = limpiarZoom(n.zoom);
   return n;
 }
 // Recupera el evento guardado; descarta semáforos que ya no existen.
@@ -2325,7 +2361,8 @@ function imagenMapa(){
   var zz = Math.max(Math.ceil(z), Math.min(zMax, Math.floor(z) + 2, Math.round(z + Math.log(m) / Math.LN2)));   // nivel entero de los cuadros
   var dz = zz - z, e = W / (tam.x * Math.pow(2, dz));   // escala exacta (sirve con zoom fraccionario)
   var c = MAPA.project(v.centro, zz), ox = c.x - (W / e) / 2, oy = c.y - (H / e) / 2, n = Math.pow(2, zz);
-  var ley = leyendaMedida(W, Math.min(m, 1.6)), tit = tituloMedida(W, Math.min(m, 1.6));
+  var ley = leyendaMega(W, Math.min(m, 1.6)), leyNueva = !!ley.alto; if (!leyNueva) ley = leyendaMedida(W, Math.min(m, 1.6));
+  var tit = tituloMedida(W, Math.min(m, 1.6));
   var cv = document.createElement('canvas'); cv.width = W; cv.height = tit.alto + H + ley.alto;
   var g = cv.getContext('2d'); g.translate(0, tit.alto);   // el mapa va debajo de la franja de título
   g.fillStyle = '#e5e7eb'; g.fillRect(0, 0, W, H);
@@ -2347,13 +2384,13 @@ function imagenMapa(){
       var p = MAPA.project([s.la, s.lo], zz), x = (p.x - ox) * e, y = (p.y - oy) * e;
       var o = sep.OFF[key] || [0, 0], ix = x + o[0] * m, iy = y + o[1] * m;
       if (o[0] || o[1]){ g.strokeStyle = col; g.lineWidth = 2 * m; g.beginPath(); g.moveTo(x, y); g.lineTo(ix, iy); g.stroke(); g.fillStyle = col; g.beginPath(); g.arc(x, y, 3 * m, 0, Math.PI * 2); g.fill(); }
-      dibujarIcono(g, ix, iy, sep.TAM * m * 0.8, hecho, col);
+      iconoMega(g, ix, iy, sep.TAM * m * 0.8, hecho, col);
     });
     var fa = Math.round(11 * k), at = atribucionImg(BASES[BASE_MAPA].attr);
     g.font = fa + 'px sans-serif'; g.textBaseline = 'alphabetic'; var w = g.measureText(at).width + fa;
     g.fillStyle = 'rgba(255,255,255,.8)'; g.fillRect(W - w, H - fa * 1.7, w, fa * 1.7);
     g.fillStyle = '#111827'; g.fillText(at, W - w + fa / 2, H - fa * .5);
-    dibujarLeyenda(g, ley, H, W);
+    if (leyNueva) dibujarLeyendaMega(g, ley, H, W); else dibujarLeyenda(g, ley, H, W);
     g.setTransform(1, 0, 0, 1, 0, 0); dibujarTitulo(g, tit, W);
     return new Promise(function(res, rej){ try { cv.toBlob(function(b){ if (b) res(b); else rej(new Error('sin imagen')); }, 'image/png'); } catch(err){ rej(err); } });
   });
@@ -2364,12 +2401,18 @@ function imagenMapa(){
 var MEGA_DESDE = 15;
 function megaAuto(){ return S.sel.length > MEGA_DESDE; }
 function esMega(){ return S.mega === 'si' || (S.mega !== 'no' && megaAuto()); }
-function pintarMega(){ var b = $('evBtnMega'); if (!b) return; var on = esMega();
+function pintarMega(){ pintarAjusteZoom(); var b = $('evBtnMega'); if (!b) return; var on = esMega();
   b.setAttribute('aria-pressed', String(on));
   b.title = (on ? 'Imagen en modo megaevento' : 'Imagen normal') + (S.mega ? ' (elegido a mano · toca para volver a automático)' : ' (automático: más de ' + MEGA_DESDE + ' semáforos)'); }
 function alternarMega(){ var quiere = !esMega(); S.mega = (quiere === megaAuto()) ? '' : (quiere ? 'si' : 'no'); pintarMega(); guardar();
   aviso(quiere ? '🔍 La imagen del mapa saldrá en modo megaevento.' : 'La imagen del mapa saldrá normal.'); }
 // pinta cuadros del mapa para una vista (centro en px del zoom zf, zoom fraccionario) en un rectángulo
+var TILES_MEGA = {}, TILES_N = 0;
+function tileCache(url){
+  if (!TILES_MEGA[url]){ if (++TILES_N > 400){ TILES_MEGA = {}; TILES_N = 1; }
+    TILES_MEGA[url] = cargarTile(url).then(function(im){ if (!im) delete TILES_MEGA[url]; return im; }); }
+  return TILES_MEGA[url];
+}
 function pintarCuadros(g, cx, cy, zf, W, H, filtro){
   var zMax = (BASE_MAPA === 'sat' ? 18 : 19), zz = Math.min(zMax, Math.ceil(zf)), e = Math.pow(2, zf - zz), n = Math.pow(2, zz);
   var c = L.point(cx, cy).multiplyBy(Math.pow(2, zz - zf)), ox = c.x - (W / e) / 2, oy = c.y - (H / e) / 2, t = [];
@@ -2377,7 +2420,7 @@ function pintarCuadros(g, cx, cy, zf, W, H, filtro){
   for (var tx = Math.floor(ox / 256); tx <= Math.floor((ox + W / e) / 256); tx++) for (var ty = Math.floor(oy / 256); ty <= Math.floor((oy + H / e) / 256); ty++){
     if (ty < 0 || ty >= n) continue;
     (function(tx, ty){ var url = BASES[BASE_MAPA].url.replace('{z}', zz).replace('{x}', ((tx % n) + n) % n).replace('{y}', ty);
-      t.push(cargarTile(url).then(function(im){ if (!im) return; g.save(); if (filtro) g.filter = filtro; g.drawImage(im, Math.floor((tx * 256 - ox) * e), Math.floor((ty * 256 - oy) * e), Math.ceil(256 * e) + 1, Math.ceil(256 * e) + 1); g.restore(); })); })(tx, ty);
+      t.push(tileCache(url).then(function(im){ if (!im) return; g.save(); if (filtro) g.filter = filtro; g.drawImage(im, Math.floor((tx * 256 - ox) * e), Math.floor((ty * 256 - oy) * e), Math.ceil(256 * e) + 1, Math.ceil(256 * e) + 1); g.restore(); })); })(tx, ty);
   }
   return Promise.all(t).then(function(){ if (filtro){ g.fillStyle = 'rgba(255,255,255,.28)'; g.fillRect(0, 0, W, H); } });
 }
@@ -2403,7 +2446,7 @@ function dibujarPuntos(g, pts, conv, r){
 }
 function leyendaMega(W, k){
   var cors = S.cor.filter(function(c){ return semsDe(c).length; }); if (!cors.length) return { alto:0 };
-  var fs = Math.round(14 * k), pad = Math.round(14 * k), cols = W >= 900 ? 3 : 2, filas = Math.ceil(cors.length / cols);
+  var fs = Math.round(14 * k), pad = Math.round(14 * k), cols = Math.min(W >= 900 ? 3 : 2, cors.length), filas = Math.ceil(cors.length / cols);
   var celda = Math.round(fs * 2.7), izq = Math.round(W * .2);
   var minimo = Math.round(fs * 6.2);   // alto mínimo para que el total (número + texto + barra) quepa sin encimarse
   var cuerpo = Math.max(celda * filas, minimo);
@@ -2439,38 +2482,63 @@ function dibujarLeyendaMega(g, Lg, y0, W){
     if (h){ caja(bx2, by2, Math.max(fs * .32, bw2 * h / ks.length), fs * .32, fs * .16); g.fillStyle = c.color; g.fill(); }
   });
 }
-function imagenMega(){
-  if (!MAPA) return Promise.reject(new Error('sin mapa'));
+// Base de la imagen megaevento y el cuadro de zoom (sin descargar nada).
+function planMega(){
   var tam = MAPA.getSize(), v = vistaCaptura(), m = MAPA_IMG_ANCHO / tam.x, W = MAPA_IMG_ANCHO, H = Math.round(tam.y * W / tam.x), k = Math.min(m, 1.6);
   var zf = v.z + Math.log(m) / Math.LN2, c0 = MAPA.project(v.centro, zf);
   var pts = S.sel.map(function(key){ var s = porKey(key); if (!tieneCoord(s)) return null; var cor = corPorId(S.asig[key]);
     return { ll:[s.la, s.lo], col:cor ? cor.color : COLOR_OTRAS, hecho:!!S.inter[key] }; }).filter(Boolean);
   function conv0(p){ var q = MAPA.project(p.ll, zf); return { x:q.x - c0.x + W / 2, y:q.y - c0.y + H / 2 }; }
-  // zona densa: la ventana (tamaño del recuadro ÷ AUMENTO) que junta más semáforos
-  var IW = Math.round(W * .44), IH = Math.round(IW * .78), HB = Math.round(26 * k), AUM = 2.6;
-  var xy = pts.map(conv0), vw = IW / AUM, vh = (IH - HB) / AUM, mejor = [], cx = 0, cy = 0;
-  xy.forEach(function(a){ [[0,0],[.25,0],[-.25,0],[0,.25],[0,-.25]].forEach(function(d){ var qx = a.x + d[0] * vw, qy = a.y + d[1] * vh;
-    var dentro = xy.filter(function(b){ return Math.abs(b.x - qx) < vw * .45 && Math.abs(b.y - qy) < vh * .45; });
-    if (dentro.length > mejor.length){ mejor = dentro; cx = qx; cy = qy; } }); });
-  var grupo = mejor;
-  var usaRec = grupo.length >= 10 && grupo.length < pts.length;
+  var IW = Math.round(W * .44), IH = Math.round(IW * .78), HB = Math.round(26 * k), xy = pts.map(conv0), Z = S.zoom || {};
+  var AUM = 2.6, cx = 0, cy = 0, usaRec = false, auto = true;
+  if (Z.lat !== undefined){   // zona elegida a mano
+    var q = MAPA.project([Z.lat, Z.lng], zf); cx = q.x - c0.x + W / 2; cy = q.y - c0.y + H / 2; AUM = Z.aum || AUM; usaRec = true; auto = false;
+  } else {   // automático: la ventana que junta más semáforos, luego se encuadra para no cortar ninguno
+    var vw = IW / AUM, vh = (IH - HB) / AUM, mejor = [];
+    xy.forEach(function(a){ [[0,0],[.25,0],[-.25,0],[0,.25],[0,-.25]].forEach(function(d){ var qx = a.x + d[0] * vw, qy = a.y + d[1] * vh;
+      var dentro = xy.filter(function(b){ return Math.abs(b.x - qx) < vw * .45 && Math.abs(b.y - qy) < vh * .45; });
+      if (dentro.length > mejor.length){ mejor = dentro; cx = qx; cy = qy; } }); });
+    usaRec = mejor.length >= 10 && mejor.length < pts.length;
+    if (usaRec){
+      var x0 = Math.min.apply(null, mejor.map(function(a){ return a.x; })), x1 = Math.max.apply(null, mejor.map(function(a){ return a.x; }));
+      var y0 = Math.min.apply(null, mejor.map(function(a){ return a.y; })), y1 = Math.max.apply(null, mejor.map(function(a){ return a.y; }));
+      var marg = 26 * k; cx = (x0 + x1) / 2; cy = (y0 + y1) / 2;
+      AUM = Math.max(1.6, Math.min(2.6, (IW - marg * 2) / Math.max(1, x1 - x0) , (IH - HB - marg * 2) / Math.max(1, y1 - y0)));
+      if (Z.aum) AUM = Z.aum;
+    }
+  }
+  if (Z.off) usaRec = false;
+  AUM = Math.round(AUM * 10) / 10;
+  var fw = IW / AUM, fh = (IH - HB) / AUM;
+  var grupo = xy.filter(function(a){ return Math.abs(a.x - cx) <= fw / 2 && Math.abs(a.y - cy) <= fh / 2; }).length;
+  var M = 14 * k, cands = [[W - IW - M, M], [M, M], [W - IW - M, H - IH - M], [M, H - IH - M]], esqI;
+  if (Z.esq !== undefined) esqI = Z.esq;
+  else { var costo = cands.map(function(c){ return xy.filter(function(a){ return a.x > c[0] - 10 && a.x < c[0] + IW + 10 && a.y > c[1] - 10 && a.y < c[1] + IH + 10; }).length; });
+    esqI = costo.indexOf(Math.min.apply(null, costo)); }
+  return { W:W, H:H, k:k, zf:zf, c0:c0, pts:pts, conv0:conv0, IW:IW, IH:IH, HB:HB, AUM:AUM, cx:cx, cy:cy, fw:fw, fh:fh, usaRec:usaRec, auto:auto, grupo:grupo, esqI:esqI, esq:cands[esqI] };
+}
+// Punto de la imagen (x, y dentro del mapa) → coordenadas.
+function megaLatLng(pl, x, y){ return MAPA.unproject(L.point(x - pl.W / 2 + pl.c0.x, y - pl.H / 2 + pl.c0.y), pl.zf); }
+var ULT_MEGA = null;   // último plan dibujado (lo usa la ventana de ajuste)
+function imagenMega(){
+  if (!MAPA) return Promise.reject(new Error('sin mapa'));
+  var pl = planMega(), W = pl.W, H = pl.H, k = pl.k, zf = pl.zf, c0 = pl.c0, pts = pl.pts, conv0 = pl.conv0;
+  var IW = pl.IW, IH = pl.IH, HB = pl.HB, AUM = pl.AUM, cx = pl.cx, cy = pl.cy, usaRec = pl.usaRec, esq = pl.esq, grupo = { length:pl.grupo };
   var ley = leyendaMega(W, k), tit = tituloMedida(W, k);
   var cv = document.createElement('canvas'); cv.width = W; cv.height = tit.alto + H + ley.alto;
   var g = cv.getContext('2d'), filtro = 'saturate(.3) contrast(.92) brightness(1.06)';
   var mapa = document.createElement('canvas'); mapa.width = W; mapa.height = H;
-  var ins = null, zI, cI, esq;
+  var ins = null, zI, cI;
   var tareas = [pintarCuadros(mapa.getContext('2d'), c0.x, c0.y, zf, W, H, filtro)];
   if (usaRec){
     zI = zf + Math.log(AUM) / Math.LN2;
-    cI = L.point(cx - W / 2 + c0.x, cy + HB / 2 / AUM - H / 2 + c0.y).multiplyBy(AUM);
-    // esquina con menos puntos (y que no tape la zona densa)
-    var M = 14 * k, cands = [[W - IW - M, M], [M, M], [W - IW - M, H - IH - M], [M, H - IH - M]];
-    var costo = cands.map(function(c){ return xy.filter(function(a){ return a.x > c[0] - 10 && a.x < c[0] + IW + 10 && a.y > c[1] - 10 && a.y < c[1] + IH + 10; }).length; });
-    esq = cands[costo.indexOf(Math.min.apply(null, costo))];
+    // la parte visible (bajo la franja del título) corresponde exactamente al marco punteado
+    cI = L.point(cx - W / 2 + c0.x, cy - HB / 2 / AUM - H / 2 + c0.y).multiplyBy(AUM);
     ins = document.createElement('canvas'); ins.width = IW; ins.height = IH;
     tareas.push(pintarCuadros(ins.getContext('2d'), cI.x, cI.y, zI, IW, IH, filtro));
   }
   return Promise.all(tareas).then(function(){
+    pl.tit = tit.alto; ULT_MEGA = pl;
     g.drawImage(mapa, 0, tit.alto);
     g.save(); g.translate(0, tit.alto);
     var r = 7.5 * k;
@@ -2479,7 +2547,7 @@ function imagenMega(){
       var ig = ins.getContext('2d'); function convI(p){ var q = MAPA.project(p.ll, zI); return { x:q.x - cI.x + IW / 2, y:q.y - cI.y + IH / 2 }; }
       dibujarPuntos(ig, pts, convI, r * 1.05);
       // marco en el mapa general
-      var fw = IW / AUM, fh = IH / AUM, fx0 = cx - fw / 2, fy0 = cy + HB / 2 / AUM - fh / 2;
+      var fw = pl.fw, fh = pl.fh, fx0 = cx - fw / 2, fy0 = cy - fh / 2;
       g.setLineDash([8 * k, 5 * k]); g.lineWidth = 2.5 * k; g.strokeStyle = '#0b1120'; g.strokeRect(fx0, fy0, fw, fh); g.setLineDash([]);
       g.strokeStyle = 'rgba(11,17,32,.55)'; g.lineWidth = 1.5 * k; g.beginPath();
       var ax = esq[0] + (esq[0] > W / 2 ? 0 : IW), bxp = esq[0] > W / 2 ? fx0 + fw : fx0;
@@ -2488,7 +2556,7 @@ function imagenMega(){
       g.drawImage(ins, esq[0], esq[1]);
       var fb = Math.round(12.5 * k), hb = HB; g.fillStyle = 'rgba(11,17,32,.88)'; g.fillRect(esq[0], esq[1], IW, hb);
       g.fillStyle = '#fff'; g.font = '800 ' + fb + 'px sans-serif'; g.textBaseline = 'middle'; g.textAlign = 'left';
-      g.fillText('🔍 Centro ampliado ×' + AUM + ' · ' + grupo.length + ' semáforos', esq[0] + fb * .7, esq[1] + hb / 2);
+      g.fillText('🔍 ' + (pl.auto ? 'Centro ampliado' : 'Zona ampliada') + ' ×' + AUM + ' · ' + grupo.length + ' semáforos', esq[0] + fb * .7, esq[1] + hb / 2);
     }
     var fa = Math.round(11 * k), at = atribucionImg(BASES[BASE_MAPA].attr);
     g.font = fa + 'px sans-serif'; g.textBaseline = 'alphabetic'; var w = g.measureText(at).width + fa;
@@ -2568,6 +2636,109 @@ function dibujarIcono(g, x, y, s, hecho, aro){   // mismo ícono del mapa, en la
 }
 // Descarga un archivo generado en el navegador.
 function bajarBlob(b){ var u = URL.createObjectURL(b), a = document.createElement('a'); a.href = u; a.download = 'mapa-evento.png'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(u); }, 4000); }
+/* ══ AJUSTE DEL CUADRO DE ZOOM (megaevento) ══
+   Antes de copiar o descargar, la primera vez (o si cambió mucho la lista), muestra la imagen y pregunta. */
+function zoomPorPreguntar(){
+  if (!MAPA || !esMega() || (S.zoom && S.zoom.off)) return false;
+  var pl = planMega(); if (!pl.usaRec) return false;
+  var n = S.zoom && S.zoom.n; if (n === undefined) return true;
+  return Math.abs(S.sel.length - n) >= Math.max(3, Math.round(n * .2));
+}
+function copiarBlobMapa(b, id){
+  function bajar(t){ bajarBlob(b); aviso(t); confirmarBoton([id], 'descargado'); }
+  if (navigator.clipboard && navigator.clipboard.write && typeof ClipboardItem !== 'undefined'){
+    try { navigator.clipboard.write([new ClipboardItem({ 'image/png': b })]).then(function(){ aviso('✓ Mapa copiado. Pégalo en WhatsApp.'); confirmarBoton([id], 'copiado'); }).catch(function(){ bajar('No se pudo copiar. Mapa descargado.'); }); return; } catch(e){}
+  }
+  bajar('Mapa descargado.');
+}
+var ZM = null;   // ventana abierta: { accion:'copiar'|'bajar'|'ver', blob, url, turno }
+function abrirZoom(accion, blob){
+  cerrarZoom();
+  var f = document.createElement('div'); f.className = 'cp-fondo zm-fondo'; f.id = 'zmFondo';
+  f.innerHTML = '<div class="cp-caja zm-caja" role="dialog" aria-modal="true" aria-labelledby="zmTit">' +
+    '<div class="zm-cab"><b id="zmTit">¿Se ve bien el cuadro de zoom?</b><button type="button" class="cp-x" id="zmX" aria-label="Cerrar">×</button></div>' +
+    '<div class="zm-img" id="zmImgCaja"><img id="zmImg" alt="Vista previa del mapa" draggable="false"><div class="zm-sel" id="zmSel" hidden></div><div class="zm-carga" id="zmCarga" hidden>⏳ Armando…</div></div>' +
+    '<p class="zm-tip" id="zmTip" hidden>✎ Arrastra sobre la imagen para elegir la zona, o toca un punto para centrarla.</p>' +
+    '<div class="zm-ctrl" id="zmCtrl" hidden>' +
+      '<div class="zm-g"><span>Mover</span><button type="button" data-mv="-1,0" aria-label="Izquierda">←</button><button type="button" data-mv="0,-1" aria-label="Arriba">↑</button><button type="button" data-mv="0,1" aria-label="Abajo">↓</button><button type="button" data-mv="1,0" aria-label="Derecha">→</button></div>' +
+      '<div class="zm-g"><span>Zona</span><button type="button" data-au="-0.3" title="Zona más grande (menos aumento)">＋</button><b id="zmAum">×2.6</b><button type="button" data-au="0.3" title="Zona más chica (más aumento)">－</button></div>' +
+      '<div class="zm-g"><span>Cuadro</span><button type="button" data-es="1" aria-label="Arriba izquierda">↖</button><button type="button" data-es="0" aria-label="Arriba derecha">↗</button><button type="button" data-es="3" aria-label="Abajo izquierda">↙</button><button type="button" data-es="2" aria-label="Abajo derecha">↘</button></div>' +
+      '<button type="button" class="zm-auto" id="zmAuto">↺ Automático</button>' +
+    '</div>' +
+    '<div class="zm-acc"><button type="button" class="btn-blue" id="zmOk"></button><button type="button" id="zmAjustar">✎ Ajustar</button><button type="button" id="zmSin">✕ Sin cuadro de zoom</button></div>' +
+  '</div>';
+  document.body.appendChild(f);
+  ZM = { accion:accion, blob:null, url:null, turno:0 };
+  $('zmOk').textContent = accion === 'copiar' ? '✓ Usar así y copiar' : accion === 'bajar' ? '✓ Usar así y descargar' : '✓ Listo';
+  if (accion === 'ver') mostrarAjusteZoom();
+  f.addEventListener('click', function(e){ if (e.target === f) cerrarZoom(); });
+  $('zmX').addEventListener('click', cerrarZoom);
+  $('zmAjustar').addEventListener('click', mostrarAjusteZoom);
+  $('zmSin').addEventListener('click', function(){ S.zoom = { off:true, n:S.sel.length }; guardar(); var a = ZM.accion; cerrarZoom(); aviso('Listo: el mapa sale sin cuadro de zoom.'); if (a !== 'ver') accionMapa(a, true); });
+  $('zmOk').addEventListener('click', function(){
+    if (!ZM || !ZM.blob) return;
+    var a = ZM.accion, b = ZM.blob; S.zoom.n = S.sel.length; guardar(); cerrarZoom();
+    if (a === 'copiar') copiarBlobMapa(b, 'evBtnMapaCopiar');
+    else if (a === 'bajar'){ bajarBlob(b); aviso('✓ Mapa descargado.'); confirmarBoton(['evBtnMapaBajar'], 'descargado'); }
+    else aviso('✓ Cuadro de zoom guardado.');
+  });
+  $('zmCtrl').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (!b || !ULT_MEGA) return; var pl = ULT_MEGA, z = zonaActual();
+    if (b.dataset.mv){ var d = b.dataset.mv.split(','); var ll = megaLatLng(pl, pl.cx + d[0] * pl.fw * .2, pl.cy + d[1] * pl.fh * .2); z.lat = ll.lat; z.lng = ll.lng; }
+    else if (b.dataset.au){ z.aum = Math.max(1.3, Math.min(5, Math.round((pl.AUM + Number(b.dataset.au)) * 10) / 10)); }
+    else if (b.dataset.es){ z.esq = Number(b.dataset.es); }
+    else if (b.id === 'zmAuto'){ z = {}; }
+    S.zoom = limpiarZoom(z); guardar(); rehacerZoom();
+  });
+  arrastreZoom();
+  if (blob) ponerImgZoom(blob); else rehacerZoom();
+}
+function zonaActual(){ var pl = ULT_MEGA, z = limpiarZoom(S.zoom); delete z.off;
+  if (z.lat === undefined && pl){ var ll = megaLatLng(pl, pl.cx, pl.cy); z.lat = ll.lat; z.lng = ll.lng; z.aum = pl.AUM; }
+  return z; }
+function mostrarAjusteZoom(){ $('zmCtrl').hidden = false; $('zmTip').hidden = false; $('zmAjustar').hidden = true; $('zmImgCaja').classList.add('editable'); }
+function ponerImgZoom(b){
+  if (!ZM) return; if (ZM.url) URL.revokeObjectURL(ZM.url);
+  ZM.blob = b; ZM.url = URL.createObjectURL(b); $('zmImg').src = ZM.url; $('zmCarga').hidden = true;
+  if (ULT_MEGA) $('zmAum').textContent = '×' + ULT_MEGA.AUM;
+}
+function rehacerZoom(){
+  if (!ZM) return; var t = ++ZM.turno; $('zmCarga').hidden = false;
+  imagenMapa().then(function(b){ if (ZM && t === ZM.turno) ponerImgZoom(b); }).catch(function(){ if (ZM && t === ZM.turno){ $('zmCarga').hidden = true; aviso('No se pudo armar la imagen.'); } });
+}
+// B · arrastrar sobre la imagen para elegir la zona (o tocar para centrarla)
+function arrastreZoom(){
+  var caja = $('zmImgCaja'), img = $('zmImg'), sel = $('zmSel'), ini = null;
+  function punto(e){ var r = img.getBoundingClientRect(), pl = ULT_MEGA; if (!pl || !r.width) return null;
+    var esc = pl.W / r.width; return { x:(e.clientX - r.left) * esc, y:(e.clientY - r.top) * esc - pl.tit, cx:e.clientX - r.left, cy:e.clientY - r.top }; }
+  caja.addEventListener('pointerdown', function(e){ if (!caja.classList.contains('editable') || e.button > 0) return; var p = punto(e); if (!p) return;
+    ini = p; try { caja.setPointerCapture(e.pointerId); } catch(x){} e.preventDefault(); });
+  caja.addEventListener('pointermove', function(e){ if (!ini) return; var p = punto(e); if (!p) return;
+    var r = img.getBoundingClientRect(), cr = caja.getBoundingClientRect(), ox = r.left - cr.left, oy = r.top - cr.top;
+    sel.hidden = false; sel.style.left = (ox + Math.min(ini.cx, p.cx)) + 'px'; sel.style.top = (oy + Math.min(ini.cy, p.cy)) + 'px';
+    sel.style.width = Math.abs(p.cx - ini.cx) + 'px'; sel.style.height = Math.abs(p.cy - ini.cy) + 'px'; });
+  function fin(e){ if (!ini) return; var p = punto(e) || ini, a = ini, pl = ULT_MEGA; ini = null; sel.hidden = true; if (!pl) return;
+    var z = zonaActual(), w = Math.abs(p.x - a.x), hh = Math.abs(p.y - a.y), mx = (p.x + a.x) / 2, my = (p.y + a.y) / 2;
+    if (my < 0 || my > pl.H) return;   // fuera del mapa (título o leyenda)
+    var ll = megaLatLng(pl, mx, my); z.lat = ll.lat; z.lng = ll.lng;
+    if (w > 20 * pl.k && hh > 20 * pl.k) z.aum = Math.max(1.3, Math.min(5, Math.min(pl.IW / w, (pl.IH - pl.HB) / hh)));
+    S.zoom = limpiarZoom(z); guardar(); rehacerZoom(); }
+  caja.addEventListener('pointerup', fin);
+  caja.addEventListener('pointercancel', function(){ ini = null; sel.hidden = true; });
+}
+function cerrarZoom(){ var f = $('zmFondo'); if (f) f.remove(); if (ZM && ZM.url) URL.revokeObjectURL(ZM.url); ZM = null; }
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && $('zmFondo')) cerrarZoom(); });
+// Copiar o descargar: si toca preguntar, arma la imagen y abre la ventana; si no, sigue directo.
+function accionMapa(accion, sinPreguntar){
+  if (!sinPreguntar && zoomPorPreguntar()){
+    var id = accion === 'copiar' ? 'evBtnMapaCopiar' : 'evBtnMapaBajar';
+    ocupado(id, imagenMapa()).then(function(b){ abrirZoom(accion, b); }).catch(function(){ aviso('No se pudo crear el mapa.'); });
+    return;
+  }
+  if (accion === 'copiar') copiarMapa();
+  else ocupado('evBtnMapaBajar', imagenMapa()).then(function(b){ bajarBlob(b); aviso('✓ Mapa descargado.'); confirmarBoton(['evBtnMapaBajar'], 'descargado'); }).catch(function(){ aviso('No se pudo crear el mapa.'); });
+}
+function pintarAjusteZoom(){ var b = $('evBtnZoom'); if (b) b.hidden = !esMega(); }
 // Botón "Copiar mapa"; si no se puede copiar, descarga.
 function copiarMapa(){
   var p = ocupado('evBtnMapaCopiar', imagenMapa());
@@ -2778,8 +2949,9 @@ function eventos(){
     }
   });
   $('evBtnCopy').addEventListener('click', copiar);
-  $('evBtnMapaCopiar').addEventListener('click', copiarMapa);
-  $('evBtnMapaBajar').addEventListener('click', function(){ ocupado('evBtnMapaBajar', imagenMapa()).then(function(b){ bajarBlob(b); aviso('✓ Mapa descargado.'); confirmarBoton(['evBtnMapaBajar'], 'descargado'); }).catch(function(){ aviso('No se pudo crear el mapa.'); }); });
+  $('evBtnMapaCopiar').addEventListener('click', function(){ accionMapa('copiar'); });
+  $('evBtnMapaBajar').addEventListener('click', function(){ accionMapa('bajar'); });
+  $('evBtnZoom').addEventListener('click', function(){ if (MAPA) abrirZoom('ver'); });
   $('evBtnNuevoEvento').addEventListener('click', nuevoEvento);
   document.addEventListener('mouseup', function(){ if (AREA.rect) areaFin({ latlng:AREA.ultimo || AREA.inicio }); });   // soltó fuera del mapa
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape') menuTipo(false); if (e.key === 'Escape' && AREA.activo){ if (AREA.rect){ MAPA.removeLayer(AREA.rect); AREA.rect = null; } modoArea(false); } });
@@ -2806,7 +2978,7 @@ return {
   },
   encuadrar: function(){ encuadrar(); },
   paraCompartir: function(){   // copia de los datos del evento (sin preferencias de pantalla)
-    var o = {}; ['nombre','zona','tipo','enc','hora','fase','monit','nota','sel','cor','asig','inter','manual','horaAuto','mega'].forEach(function(k){ o[k] = JSON.parse(JSON.stringify(S[k])); });
+    var o = {}; ['nombre','zona','tipo','enc','hora','fase','monit','nota','sel','cor','asig','inter','manual','horaAuto','mega','zoom'].forEach(function(k){ o[k] = JSON.parse(JSON.stringify(S[k])); });
     return o;
   },
   cargarCompartido: function(x){   // reemplaza el evento por uno compartido (pasa por la misma limpieza que el guardado); devuelve el anterior
@@ -2818,6 +2990,7 @@ return {
     return antes;
   },
   restaurar: function(x){ S = sanear(x); campos(); todo(); encuadrar(); },
+  zoomInfo: function(){ return ULT_MEGA; },   // último cuadro de zoom dibujado (pruebas)
   mapa: function(){ return MAPA; },        // solo lectura (pruebas / consola)
   estado: function(){ return S; }
 };
