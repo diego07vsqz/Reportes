@@ -1959,6 +1959,7 @@ function limpiarZoom(z){
   if (num(z.lat) && num(z.lng) && Math.abs(z.lat) <= 90 && Math.abs(z.lng) <= 180){ r.lat = z.lat; r.lng = z.lng; }
   if (num(z.aum) && z.aum >= 1.2 && z.aum <= 5) r.aum = Math.round(z.aum * 10) / 10;
   if (num(z.esq) && z.esq % 1 === 0 && z.esq >= 0 && z.esq <= 3) r.esq = z.esq;
+  if (num(z.asp) && z.asp >= .3 && z.asp <= 4) r.asp = Math.round(z.asp * 100) / 100;
   if (z.off === true) r.off = true;
   if (num(z.n) && z.n >= 0 && z.n % 1 === 0) r.n = z.n;
   return r;
@@ -2483,29 +2484,49 @@ function dibujarLeyendaMega(g, Lg, y0, W){
   });
 }
 // Base de la imagen megaevento y el cuadro de zoom (sin descargar nada).
+var MEGA_ESCALA = 1.5;   // la imagen megaevento sale 1.5× más grande (más nítida al hacer zoom en WhatsApp)
+var MEGA_AUM = 2.6;      // aumento normal del cuadro de zoom
+// Medidas del cuadro de zoom para una forma (asp = ancho/alto de la zona) con la misma área que el cuadro normal.
+function formaCuadro(W, H, HB, IW0, IH0, asp){
+  if (!asp || Math.abs(asp - IW0 / (IH0 - HB)) < .02) return { IW:IW0, IH:IH0 };
+  var A = IW0 * (IH0 - HB), nw = Math.sqrt(A * asp), nh = A / nw;
+  nw = Math.max(W * .3, Math.min(W * .6, nw)); nh = Math.max(H * .28, Math.min(H * .62 - HB, nh));
+  return { IW:Math.round(nw), IH:Math.round(nh + HB) };
+}
+// Base de la imagen megaevento y el cuadro de zoom (sin descargar nada).
 function planMega(){
-  var tam = MAPA.getSize(), v = vistaCaptura(), m = MAPA_IMG_ANCHO / tam.x, W = MAPA_IMG_ANCHO, H = Math.round(tam.y * W / tam.x), k = Math.min(m, 1.6);
+  var tam = MAPA.getSize(), v = vistaCaptura(), W = Math.round(MAPA_IMG_ANCHO * MEGA_ESCALA), m = W / tam.x, H = Math.round(tam.y * W / tam.x), k = Math.min(m / MEGA_ESCALA, 1.6) * MEGA_ESCALA;
   var zf = v.z + Math.log(m) / Math.LN2, c0 = MAPA.project(v.centro, zf);
   var pts = S.sel.map(function(key){ var s = porKey(key); if (!tieneCoord(s)) return null; var cor = corPorId(S.asig[key]);
     return { ll:[s.la, s.lo], col:cor ? cor.color : COLOR_OTRAS, hecho:!!S.inter[key] }; }).filter(Boolean);
   function conv0(p){ var q = MAPA.project(p.ll, zf); return { x:q.x - c0.x + W / 2, y:q.y - c0.y + H / 2 }; }
-  var IW = Math.round(W * .44), IH = Math.round(IW * .78), HB = Math.round(26 * k), xy = pts.map(conv0), Z = S.zoom || {};
-  var AUM = 2.6, cx = 0, cy = 0, usaRec = false, auto = true;
-  if (Z.lat !== undefined){   // zona elegida a mano
+  var IW0 = Math.round(W * .44), IH0 = Math.round(IW0 * .78), HB = Math.round(26 * k), IW = IW0, IH = IH0, asp = IW0 / (IH0 - HB);
+  var xy = pts.map(conv0), Z = S.zoom || {}, marg = 26 * k;
+  var AUM = MEGA_AUM, cx = 0, cy = 0, usaRec = false, auto = true;
+  if (Z.lat !== undefined){   // zona elegida a mano (con su forma si se dibujó)
+    if (Z.asp){ var f = formaCuadro(W, H, HB, IW0, IH0, Z.asp); IW = f.IW; IH = f.IH; asp = Z.asp; }
     var q = MAPA.project([Z.lat, Z.lng], zf); cx = q.x - c0.x + W / 2; cy = q.y - c0.y + H / 2; AUM = Z.aum || AUM; usaRec = true; auto = false;
-  } else {   // automático: la ventana que junta más semáforos, luego se encuadra para no cortar ninguno
-    var vw = IW / AUM, vh = (IH - HB) / AUM, mejor = [];
-    xy.forEach(function(a){ [[0,0],[.25,0],[-.25,0],[0,.25],[0,-.25]].forEach(function(d){ var qx = a.x + d[0] * vw, qy = a.y + d[1] * vh;
-      var dentro = xy.filter(function(b){ return Math.abs(b.x - qx) < vw * .45 && Math.abs(b.y - qy) < vh * .45; });
-      if (dentro.length > mejor.length){ mejor = dentro; cx = qx; cy = qy; } }); });
-    usaRec = mejor.length >= 10 && mejor.length < pts.length;
-    if (usaRec){
-      var x0 = Math.min.apply(null, mejor.map(function(a){ return a.x; })), x1 = Math.max.apply(null, mejor.map(function(a){ return a.x; }));
-      var y0 = Math.min.apply(null, mejor.map(function(a){ return a.y; })), y1 = Math.max.apply(null, mejor.map(function(a){ return a.y; }));
-      var marg = 26 * k; cx = (x0 + x1) / 2; cy = (y0 + y1) / 2;
-      AUM = Math.max(1.6, Math.min(2.6, (IW - marg * 2) / Math.max(1, x1 - x0) , (IH - HB - marg * 2) / Math.max(1, y1 - y0)));
-      if (Z.aum) AUM = Z.aum;
-    }
+  } else {   // automático: la ventana que junta más semáforos; prueba formas (cuadrada, ancha, alta) sin bajar el aumento
+    var prueba = function(s){
+      var f = formaCuadro(W, H, HB, IW0, IH0, s), vw = f.IW / MEGA_AUM, vh = (f.IH - HB) / MEGA_AUM, mejor = [], qx0 = 0, qy0 = 0;
+      xy.forEach(function(a){ [[0,0],[.25,0],[-.25,0],[0,.25],[0,-.25]].forEach(function(d){ var qx = a.x + d[0] * vw, qy = a.y + d[1] * vh;
+        var dentro = xy.filter(function(b){ return Math.abs(b.x - qx) < vw * .45 && Math.abs(b.y - qy) < vh * .45; });
+        if (dentro.length > mejor.length){ mejor = dentro; qx0 = qx; qy0 = qy; } }); });
+      var r = { s:s, IW:f.IW, IH:f.IH, mejor:mejor, cx:qx0, cy:qy0, aum:MEGA_AUM };
+      if (mejor.length){
+        var x0 = Math.min.apply(null, mejor.map(function(a){ return a.x; })), x1 = Math.max.apply(null, mejor.map(function(a){ return a.x; }));
+        var y0 = Math.min.apply(null, mejor.map(function(a){ return a.y; })), y1 = Math.max.apply(null, mejor.map(function(a){ return a.y; }));
+        r.cx = (x0 + x1) / 2; r.cy = (y0 + y1) / 2;   // se encuadra para no cortar ninguno
+        r.aum = Math.max(1.6, Math.min(MEGA_AUM, (f.IW - marg * 2) / Math.max(1, x1 - x0), (f.IH - HB - marg * 2) / Math.max(1, y1 - y0)));
+      }
+      return r;
+    };
+    var base = prueba(asp), elegido = base;
+    [asp * .6, asp * 1.6, asp * 2.2].forEach(function(s){ var r = prueba(s);
+      if (r.mejor.length > elegido.mejor.length && r.aum >= base.aum - .05) elegido = r; });   // otra forma solo si junta más sin perder aumento
+    IW = elegido.IW; IH = elegido.IH; asp = elegido.s; cx = elegido.cx; cy = elegido.cy;
+    usaRec = elegido.mejor.length >= 10 && elegido.mejor.length < pts.length;
+    if (usaRec) AUM = Z.aum || elegido.aum;
   }
   if (Z.off) usaRec = false;
   AUM = Math.round(AUM * 10) / 10;
@@ -2515,7 +2536,7 @@ function planMega(){
   if (Z.esq !== undefined) esqI = Z.esq;
   else { var costo = cands.map(function(c){ return xy.filter(function(a){ return a.x > c[0] - 10 && a.x < c[0] + IW + 10 && a.y > c[1] - 10 && a.y < c[1] + IH + 10; }).length; });
     esqI = costo.indexOf(Math.min.apply(null, costo)); }
-  return { W:W, H:H, k:k, zf:zf, c0:c0, pts:pts, conv0:conv0, IW:IW, IH:IH, HB:HB, AUM:AUM, cx:cx, cy:cy, fw:fw, fh:fh, usaRec:usaRec, auto:auto, grupo:grupo, esqI:esqI, esq:cands[esqI] };
+  return { W:W, H:H, k:k, zf:zf, c0:c0, pts:pts, conv0:conv0, IW:IW, IH:IH, IW0:IW0, IH0:IH0, asp:asp, HB:HB, AUM:AUM, cx:cx, cy:cy, fw:fw, fh:fh, usaRec:usaRec, auto:auto, grupo:grupo, esqI:esqI, esq:cands[esqI] };
 }
 // Punto de la imagen (x, y dentro del mapa) → coordenadas.
 function megaLatLng(pl, x, y){ return MAPA.unproject(L.point(x - pl.W / 2 + pl.c0.x, y - pl.H / 2 + pl.c0.y), pl.zf); }
@@ -2548,13 +2569,15 @@ function imagenMega(){
       dibujarPuntos(ig, pts, convI, r * 1.05);
       // marco en el mapa general
       var fw = pl.fw, fh = pl.fh, fx0 = cx - fw / 2, fy0 = cy - fh / 2;
-      g.setLineDash([8 * k, 5 * k]); g.lineWidth = 2.5 * k; g.strokeStyle = '#0b1120'; g.strokeRect(fx0, fy0, fw, fh); g.setLineDash([]);
-      g.strokeStyle = 'rgba(11,17,32,.55)'; g.lineWidth = 1.5 * k; g.beginPath();
+      g.fillStyle = 'rgba(124,58,237,.08)'; g.fillRect(fx0, fy0, fw, fh);   // zona ampliada (morado = mismo color del cuadro)
+      g.setLineDash([8 * k, 5 * k]); g.lineWidth = 2.5 * k; g.strokeStyle = '#7c3aed'; g.strokeRect(fx0, fy0, fw, fh); g.setLineDash([]);
+      g.strokeStyle = 'rgba(124,58,237,.85)'; g.lineWidth = 2.2 * k; g.beginPath();
       var ax = esq[0] + (esq[0] > W / 2 ? 0 : IW), bxp = esq[0] > W / 2 ? fx0 + fw : fx0;
       g.moveTo(bxp, esq[1] > H / 2 ? fy0 + fh : fy0); g.lineTo(ax, esq[1] > H / 2 ? esq[1] + IH : esq[1]); g.stroke();
       g.save(); g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = 16 * k; g.fillStyle = '#fff'; g.fillRect(esq[0] - 4 * k, esq[1] - 4 * k, IW + 8 * k, IH + 8 * k); g.restore();
       g.drawImage(ins, esq[0], esq[1]);
-      var fb = Math.round(12.5 * k), hb = HB; g.fillStyle = 'rgba(11,17,32,.88)'; g.fillRect(esq[0], esq[1], IW, hb);
+      g.lineWidth = 3.5 * k; g.strokeStyle = '#7c3aed'; g.strokeRect(esq[0] - 1.5 * k, esq[1] - 1.5 * k, IW + 3 * k, IH + 3 * k);
+      var fb = Math.round(12.5 * k), hb = HB; g.fillStyle = '#4c1d95'; g.fillRect(esq[0], esq[1], IW, hb);
       g.fillStyle = '#fff'; g.font = '800 ' + fb + 'px sans-serif'; g.textBaseline = 'middle'; g.textAlign = 'left';
       g.fillText('🔍 ' + (pl.auto ? 'Centro ampliado' : 'Zona ampliada') + ' ×' + AUM + ' · ' + grupo.length + ' semáforos', esq[0] + fb * .7, esq[1] + hb / 2);
     }
@@ -2694,7 +2717,7 @@ function abrirZoom(accion, blob){
   if (blob) ponerImgZoom(blob); else rehacerZoom();
 }
 function zonaActual(){ var pl = ULT_MEGA, z = limpiarZoom(S.zoom); delete z.off;
-  if (z.lat === undefined && pl){ var ll = megaLatLng(pl, pl.cx, pl.cy); z.lat = ll.lat; z.lng = ll.lng; z.aum = pl.AUM; }
+  if (z.lat === undefined && pl){ var ll = megaLatLng(pl, pl.cx, pl.cy); z.lat = ll.lat; z.lng = ll.lng; z.aum = pl.AUM; z.asp = pl.asp; }
   return z; }
 function mostrarAjusteZoom(){ $('zmCtrl').hidden = false; $('zmTip').hidden = false; $('zmAjustar').hidden = true; $('zmImgCaja').classList.add('editable'); }
 function ponerImgZoom(b){
@@ -2721,7 +2744,8 @@ function arrastreZoom(){
     var z = zonaActual(), w = Math.abs(p.x - a.x), hh = Math.abs(p.y - a.y), mx = (p.x + a.x) / 2, my = (p.y + a.y) / 2;
     if (my < 0 || my > pl.H) return;   // fuera del mapa (título o leyenda)
     var ll = megaLatLng(pl, mx, my); z.lat = ll.lat; z.lng = ll.lng;
-    if (w > 20 * pl.k && hh > 20 * pl.k) z.aum = Math.max(1.3, Math.min(5, Math.min(pl.IW / w, (pl.IH - pl.HB) / hh)));
+    if (w > 20 * pl.k && hh > 20 * pl.k){ z.asp = Math.max(.3, Math.min(4, w / hh)); var fc = formaCuadro(pl.W, pl.H, pl.HB, pl.IW0, pl.IH0, z.asp);
+      z.aum = Math.max(1.3, Math.min(5, Math.min(fc.IW / w, (fc.IH - pl.HB) / hh))); }
     S.zoom = limpiarZoom(z); guardar(); rehacerZoom(); }
   caja.addEventListener('pointerup', fin);
   caja.addEventListener('pointercancel', function(){ ini = null; sel.hidden = true; });
