@@ -638,8 +638,13 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
 .zm-acc{display:flex;flex-wrap:wrap;gap:8px}
 .zm-acc button{flex:1 1 160px;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--fg);font-weight:800;cursor:pointer}
 .zm-acc .btn-blue{background:var(--acc);color:var(--on-acc);border-color:transparent}
-.zm-btn{display:block;margin:6px 0 0;padding:6px 2px;border:0;background:none;color:var(--acc);font-weight:800;font-size:13.5px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.zm-btn{display:flex;align-items:center;gap:12px;width:100%;margin-top:10px;padding:10px 14px 10px 10px;border-radius:18px;border:0;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;cursor:pointer;font:inherit;text-align:left;box-shadow:0 10px 24px -12px #7c3aed;transition:transform .15s,box-shadow .2s}
+.zm-btn:hover{box-shadow:0 14px 28px -12px #7c3aed}
+.zm-btn:focus-visible{outline:3px solid #c4b5fd;outline-offset:2px}
 .zm-btn[hidden]{display:none}
+.zm-btn-ic{flex:none;width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:rgba(255,255,255,.18)}
+.zm-btn-t{display:grid;flex:1;min-width:0}.zm-btn-t b{font-size:15.5px}.zm-btn-t small{font-size:12.5px;opacity:.88}
+.zm-btn-f{font-size:26px;font-weight:300;opacity:.9;line-height:1}
 @media (max-width:640px){ .zm-caja{max-height:92vh} .zm-acc button{flex:1 1 100%} }
 </style>
 </head>
@@ -826,7 +831,7 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
           <button type="button" class="btn-blue bp" id="evBtnMapaCopiar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><g class="pin"><path d="M12 15.5s-3.5-3-3.5-5.5a3.5 3.5 0 0 1 7 0c0 2.5-3.5 5.5-3.5 5.5z"/><circle cx="12" cy="10" r="1.2" fill="currentColor"/></g></svg>Copiar mapa</button>
           <button type="button" class="bp" id="evBtnMapaBajar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/><g class="fl"><path d="M12 3v11"/><path d="M7.5 9.5L12 14l4.5-4.5"/></g></svg>Descargar mapa</button>
         </div>
-        <button type="button" class="zm-btn" id="evBtnZoom" hidden>✎ Ajustar cuadro de zoom</button>
+        <button type="button" class="zm-btn" id="evBtnZoom" hidden title="Elige qué zona sale agrandada en la imagen del mapa"><span class="zm-btn-ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4" width="13" height="10" rx="1.5" stroke-dasharray="3 2.2"/><circle cx="16" cy="15" r="4.2"/><path d="M19 18l3 3"/></svg></span><span class="zm-btn-t"><b>Cuadro de zoom</b><small id="evZoomEst">Automático</small></span><span class="zm-btn-f" aria-hidden="true">›</span></button>
         <p class="hint">La imagen se centra sola en los semáforos del evento, aunque muevas el mapa. Usa 📌 Fijar vista si quieres otro encuadre.</p>
         <div class="acc-fila">
           <button type="button" class="btn-compartir" id="evCompartir" title="Crea un enlace para abrir este evento en otra máquina"><span class="cp-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="14" height="10" rx="1.6"/><path d="M1 18.5h17"/><g class="cp-fl"><path d="M15 3h6v6"/><path d="M21 3l-7.5 7.5"/></g></svg></span><b>Abrir en otra PC</b><small>Enlace con este evento</small></button>
@@ -2726,7 +2731,7 @@ function ponerImgZoom(b){
   if (ULT_MEGA) $('zmAum').textContent = '×' + ULT_MEGA.AUM;
 }
 function rehacerZoom(){
-  if (!ZM) return; var t = ++ZM.turno; $('zmCarga').hidden = false;
+  if (!ZM) return; var t = ++ZM.turno; $('zmCarga').hidden = false; pintarAjusteZoom();
   imagenMapa().then(function(b){ if (ZM && t === ZM.turno) ponerImgZoom(b); }).catch(function(){ if (ZM && t === ZM.turno){ $('zmCarga').hidden = true; aviso('No se pudo armar la imagen.'); } });
 }
 // B · arrastrar sobre la imagen para elegir la zona (o tocar para centrarla)
@@ -2750,7 +2755,7 @@ function arrastreZoom(){
   caja.addEventListener('pointerup', fin);
   caja.addEventListener('pointercancel', function(){ ini = null; sel.hidden = true; });
 }
-function cerrarZoom(){ var f = $('zmFondo'); if (f) f.remove(); if (ZM && ZM.url) URL.revokeObjectURL(ZM.url); ZM = null; }
+function cerrarZoom(){ var f = $('zmFondo'); if (f) f.remove(); if (ZM && ZM.url) URL.revokeObjectURL(ZM.url); ZM = null; pintarAjusteZoom(); }
 document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && $('zmFondo')) cerrarZoom(); });
 // Copiar o descargar: si toca preguntar, arma la imagen y abre la ventana; si no, sigue directo.
 function accionMapa(accion, sinPreguntar){
@@ -2762,7 +2767,18 @@ function accionMapa(accion, sinPreguntar){
   if (accion === 'copiar') copiarMapa();
   else ocupado('evBtnMapaBajar', imagenMapa()).then(function(b){ bajarBlob(b); aviso('✓ Mapa descargado.'); confirmarBoton(['evBtnMapaBajar'], 'descargado'); }).catch(function(){ aviso('No se pudo crear el mapa.'); });
 }
-function pintarAjusteZoom(){ var b = $('evBtnZoom'); if (b) b.hidden = !esMega(); }
+// Botón morado "Cuadro de zoom": visible solo en megaevento, con el estado actual del cuadro.
+function pintarAjusteZoom(){
+  var b = $('evBtnZoom'); if (!b) return; b.hidden = !esMega(); if (b.hidden) return;
+  var t = 'Toca para elegir qué zona se agranda';
+  try {
+    if (S.zoom && S.zoom.off) t = 'Sin cuadro de zoom · toca para ponerlo';
+    else if (MAPA){ var pl = planMega();
+      t = pl.usaRec ? (pl.auto ? 'Automático' : 'Elegido a mano') + ' · ×' + pl.AUM + ' · ' + pl.grupo + ' semáforo' + (pl.grupo === 1 ? '' : 's')
+                    : 'No hace falta: no hay un grupo de semáforos juntos'; }
+  } catch(e){}
+  $('evZoomEst').textContent = t;
+}
 // Botón "Copiar mapa"; si no se puede copiar, descarga.
 function copiarMapa(){
   var p = ocupado('evBtnMapaCopiar', imagenMapa());
