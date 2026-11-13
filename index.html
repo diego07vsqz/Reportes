@@ -2879,9 +2879,10 @@ function enviarRegVilla(){
       }
       throw new Error(r && r.error || 'sin respuesta');
     })
-    .catch(function(){
+    .catch(function(err){
       REG_ENVIANDO = false; var n = regCola().length;
-      pintarReg('⏳ Registro Villa: ' + n + ' envío' + (n === 1 ? '' : 's') + ' pendiente' + (n === 1 ? '' : 's') + ' · se reintenta solo');
+      try { console.warn('Registro Villa:', err); } catch(x){}
+      pintarReg('⏳ Registro Villa: ' + n + ' envío' + (n === 1 ? '' : 's') + ' pendiente' + (n === 1 ? '' : 's') + ' · el Apps Script no respondió · se reintenta solo');
       clearTimeout(REG_RETRY); REG_RETRY = setTimeout(enviarRegVilla, 60000);
     });
 }
