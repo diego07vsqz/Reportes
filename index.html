@@ -2806,13 +2806,14 @@ function copiarMapa(){
 
 
 /* ══ REGISTRO VILLA NAVIDEÑA → Apps Script "Monitoreo de Semáforos Intervenidos" (hoja Registros) ══
-   Solo para el evento "Villa Navideña 2026". Al copiar el reporte, manda los semáforos RECIÉN
-   intervenidos (no repite). Si falla, queda en cola y se reintenta. El reporte se copia igual. */
+   Solo para el evento "Villa Navideña 2026". Al copiar el reporte, manda TODOS los semáforos
+   intervenidos en ese momento (cada reporte de 15 min queda registrado; copiar 2 veces el mismo no duplica). Si falla, queda en cola y se reintenta. El reporte se copia igual. */
 var REG_URL_FIJA = '';           // dirección /exec del Apps Script (puente)
 var REG_CLAVE = 'villa-2026-ups';       // igual que CLAVE_WEB en el Apps Script
 var REG_EVENTO = 'Villa Navideña 2026'; // único evento que se registra
 var REG_TECNICOS = ['Luis', 'Félix', 'Diego', 'Gilberth'];
-var LS_REG_URL = 'ups_reg_url', LS_REG_TEC = 'ups_reg_tecnico', LS_REG_COLA = 'ups_reg_cola', LS_REG_ENV = 'ups_reg_enviados';
+var LS_REG_URL = 'ups_reg_url', LS_REG_TEC = 'ups_reg_tecnico', LS_REG_COLA = 'ups_reg_cola', LS_REG_FIRMA = 'ups_reg_firma';
+function hoyFirma(){ var d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
 var REG_ENVIANDO = false, REG_RETRY = null;
 function lsLeer(k, d){ try { var v = localStorage.getItem(k); return v === null ? d : v; } catch(e){ return d; } }
 function lsPoner(k, v){ try { localStorage.setItem(k, v); return true; } catch(e){ return false; } }
@@ -2836,13 +2837,14 @@ function pintarReg(t){
 function registrarVilla(){
   try {
     if (!esEventoVilla()) return;
-    var env = lsJSON(LS_REG_ENV, {}); if (typeof env !== 'object' || Array.isArray(env)) env = {};
-    var clave = regNorm(REG_EVENTO), ya = Array.isArray(env[clave]) ? env[clave] : [];
+    // Cada reporte manda TODOS los intervenidos en ese momento (aunque ya se hayan mandado antes).
     var actuales = S.sel.filter(function(k){ return S.inter[k]; });
-    ya = ya.filter(function(k){ return actuales.indexOf(k) >= 0; });   // si lo desmarcaste, la próxima vez cuenta como nuevo
-    var nuevos = actuales.filter(function(k){ return ya.indexOf(k) < 0; });
-    env[clave] = ya.concat(nuevos); lsPoner(LS_REG_ENV, JSON.stringify(env));
-    if (!nuevos.length){ pintarReg('📋 Registro Villa: sin intervenciones nuevas en este reporte'); return; }
+    if (!actuales.length){ pintarReg('📋 Registro Villa: este reporte no tiene semáforos intervenidos'); return; }
+    var horaF = fmtHora(S.hora) ? fmtHora(S.hora) : fmtHora(horaAhora());
+    var firma = regNorm(S.nombre) + '|' + hoyFirma() + '|' + horaF + '|' + actuales.slice().sort().join(',');
+    if (lsLeer(LS_REG_FIRMA, '') === firma){ pintarReg('📋 Registro Villa: este mismo reporte ya se envió (' + horaF + ')'); return; }   // copiar 2 veces el mismo = 1 envío
+    lsPoner(LS_REG_FIRMA, firma);
+    var nuevos = actuales;
     var hora = fmtHora(S.hora) ? fmtHora(S.hora) : fmtHora(horaAhora());
     var sems = nuevos.map(function(k){ var s = porKey(k); if (!s) return null; var cor = corPorId(S.asig[k]);
       return { codigo:s.id || k, corredor:cor ? (cor.nombre || '') : '', interseccion:s.d || '', municipio:s.c || '', coords:tieneCoord(s) ? s.la + ', ' + s.lo : '' }; }).filter(Boolean);
