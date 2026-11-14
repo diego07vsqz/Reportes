@@ -648,9 +648,19 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
 @media (max-width:640px){ .zm-caja{max-height:92vh} .zm-acc button{flex:1 1 100%} }
 
 /* ══ REGISTRO VILLA NAVIDEÑA ══ */
-.reg-est{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:8px 2px 0;font-size:13px;color:var(--muted)}
+.reg-est{display:flex;align-items:center;gap:12px;margin-top:10px;padding:8px 10px;border-radius:16px;background:var(--card);border:1px solid var(--line)}
 .reg-est[hidden]{display:none}
-.reg-est button{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:999px;padding:4px 10px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+.reg-sem{flex:none;display:grid;gap:3px;padding:5px 6px;border-radius:8px;background:#111827}
+.reg-sem i{width:8px;height:8px;border-radius:50%;background:#374151;transition:background .2s,box-shadow .2s}
+.reg-est[data-luz="r"] .reg-sem .r{background:#ef4444;box-shadow:0 0 8px #ef4444}
+.reg-est[data-luz="a"] .reg-sem .a{background:#f59e0b;box-shadow:0 0 8px #f59e0b}
+.reg-est[data-luz="v"] .reg-sem .v{background:#22c55e;box-shadow:0 0 8px #22c55e}
+.reg-t{display:grid;flex:1;min-width:0}
+.reg-t b{font-size:14px;color:var(--fg)}
+.reg-t small{font-size:12px;color:var(--muted);line-height:1.35}
+.reg-est button{flex:none;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.reg-est[data-luz="r"]{border-color:color-mix(in srgb,#ef4444 55%,var(--line))}
+.reg-est[data-luz="r"] button{background:#ef4444;border-color:#ef4444;color:#fff}
 .reg-p{margin:0;font-size:14px;color:var(--muted);line-height:1.45}
 .reg-l{display:grid;gap:6px;font-size:13px;font-weight:700}
 .reg-l select,.reg-i{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:inherit}
@@ -837,7 +847,7 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
         </div>
         <textarea id="evOut" readonly tabindex="-1" aria-hidden="true"></textarea>
         <button type="button" class="btn-copy bp" id="evBtnCopy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g class="h1"><rect x="4" y="7" width="11" height="13" rx="2"/></g><g class="h2"><rect x="9" y="3" width="11" height="13" rx="2" fill="currentColor" fill-opacity=".15"/></g></svg>Copiar reporte</button>
-        <p class="reg-est" id="evRegEst" hidden><span id="evRegTxt"></span> <button type="button" id="evRegConf">⚙️ Técnico</button></p>
+        <div class="reg-est" id="evRegEst" data-luz="v" role="status" aria-live="polite" hidden><span class="reg-sem" aria-hidden="true"><i class="r"></i><i class="a"></i><i class="v"></i></span><span class="reg-t"><b id="evRegTit">Dashboard conectado</b><small id="evRegTxt"></small></span><button type="button" id="evRegConf" title="Técnico y dirección del Apps Script">⚙️ Ajustes</button></div>
         <div class="mapbtns">
           <button type="button" class="btn-blue bp" id="evBtnMapaCopiar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><g class="pin"><path d="M12 15.5s-3.5-3-3.5-5.5a3.5 3.5 0 0 1 7 0c0 2.5-3.5 5.5-3.5 5.5z"/><circle cx="12" cy="10" r="1.2" fill="currentColor"/></g></svg>Copiar mapa</button>
           <button type="button" class="bp" id="evBtnMapaBajar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/><g class="fl"><path d="M12 3v11"/><path d="M7.5 9.5L12 14l4.5-4.5"/></g></svg>Descargar mapa</button>
@@ -2824,25 +2834,35 @@ function regUrl(){ var u = REG_URL_FIJA || lsLeer(LS_REG_URL, ''); return /^http
 function regTecnico(){ return lsLeer(LS_REG_TEC, '').trim(); }
 function regCola(){ var c = lsJSON(LS_REG_COLA, []); return Array.isArray(c) ? c : []; }
 // Línea de estado bajo "Copiar reporte" (solo en la Villa).
-function pintarReg(t){
+// Estado del registro (barra con mini semáforo): luz 'v' verde, 'a' amarilla, 'r' roja.
+// Sin argumentos muestra el estado general; con (luz, título, detalle) muestra un aviso puntual.
+var REG_ULT = 'ups_reg_ultimo';
+function pintarReg(luz, titulo, detalle){
   var e = $('evRegEst'); if (!e) return;
   if (!esEventoVilla()){ e.hidden = true; return; }
   e.hidden = false;
-  if (!t){ var n = regCola().length;
-    t = !regUrl() ? '🔗 Registro Villa: falta conectar' : !regTecnico() ? '⚠️ Registro Villa: elige el técnico' :
-        n ? '⏳ Registro Villa: ' + n + ' envío' + (n === 1 ? '' : 's') + ' pendiente' + (n === 1 ? '' : 's') : '📋 Registro Villa: conectado · técnico ' + regTecnico(); }
-  $('evRegTxt').textContent = t;
+  var tec = regTecnico(), ult = lsLeer(REG_ULT, ''), n = regCola().length;
+  var base = (tec ? 'Registra: ' + tec : 'Sin técnico') + (ult ? ' · último envío ' + ult : '');
+  if (!luz){
+    if (!regUrl()){ luz = 'r'; titulo = 'Falta conectar el dashboard'; detalle = 'Toca ⚙️ Ajustes y pega la dirección /exec'; }
+    else if (!tec){ luz = 'r'; titulo = 'Falta elegir el técnico'; detalle = 'Toca ⚙️ Ajustes para elegirlo'; }
+    else if (n){ luz = 'a'; titulo = n + ' envío' + (n === 1 ? '' : 's') + ' pendiente' + (n === 1 ? '' : 's'); detalle = base + ' · se reintenta solo'; }
+    else { luz = 'v'; titulo = 'Dashboard conectado'; detalle = base; }
+  }
+  e.setAttribute('data-luz', luz);
+  $('evRegTit').textContent = titulo;
+  $('evRegTxt').textContent = detalle || base;
 }
-// Al copiar: arma el envío con los recién intervenidos y lo pone en cola.
+// Al copiar: arma el envío con todos los intervenidos y lo pone en cola.
 function registrarVilla(){
   try {
     if (!esEventoVilla()) return;
     // Cada reporte manda TODOS los intervenidos en ese momento (aunque ya se hayan mandado antes).
     var actuales = S.sel.filter(function(k){ return S.inter[k]; });
-    if (!actuales.length){ pintarReg('📋 Registro Villa: este reporte no tiene semáforos intervenidos'); return; }
+    if (!actuales.length){ pintarReg('v', 'Dashboard conectado', 'Este reporte no tiene semáforos intervenidos · no se envió nada'); return; }
     var horaF = fmtHora(S.hora) ? fmtHora(S.hora) : fmtHora(horaAhora());
     var firma = regNorm(S.nombre) + '|' + hoyFirma() + '|' + horaF + '|' + actuales.slice().sort().join(',');
-    if (lsLeer(LS_REG_FIRMA, '') === firma){ pintarReg('📋 Registro Villa: este mismo reporte ya se envió (' + horaF + ')'); return; }   // copiar 2 veces el mismo = 1 envío
+    if (lsLeer(LS_REG_FIRMA, '') === firma){ pintarReg('v', 'Dashboard conectado', 'Este mismo reporte (' + horaF + ') ya se había enviado'); return; }   // copiar 2 veces el mismo = 1 envío
     lsPoner(LS_REG_FIRMA, firma);
     var nuevos = actuales;
     var hora = fmtHora(S.hora) ? fmtHora(S.hora) : fmtHora(horaAhora());
@@ -2861,7 +2881,7 @@ function enviarRegVilla(){
   var url = regUrl(), tec = regTecnico(), cola = regCola();
   if (!cola.length || REG_ENVIANDO){ pintarReg(); return; }
   if (!url || !tec){ pintarReg(); return; }
-  REG_ENVIANDO = true; pintarReg('📡 Registro Villa: enviando…');
+  REG_ENVIANDO = true; pintarReg('a', 'Enviando al dashboard…', 'Registra: ' + tec);
   var item = cola[0];
   fetch(url, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' },
     body:JSON.stringify({ clave:REG_CLAVE, evento:item.evento, tecnico:tec, observaciones:item.observaciones, semaforos:item.semaforos }) })
@@ -2871,12 +2891,13 @@ function enviarRegVilla(){
       if (r && r.ok){
         lsPoner(LS_REG_COLA, JSON.stringify(regCola().filter(function(x){ return x.id !== item.id; })));
         if (regCola().length) return enviarRegVilla();
-        pintarReg('✓ Registro Villa: ' + (r.n || 0) + ' semáforo' + (r.n === 1 ? '' : 's') + ' registrado' + (r.n === 1 ? '' : 's') + ' · ' + fmtHora(horaAhora()));
+        lsPoner(REG_ULT, fmtHora(horaAhora()));
+        pintarReg('v', 'Dashboard conectado', '✓ ' + (r.n || 0) + ' semáforo' + (r.n === 1 ? '' : 's') + ' registrado' + (r.n === 1 ? '' : 's') + ' · Registra: ' + tec + ' · ' + fmtHora(horaAhora()));
         return;
       }
       if (r && (r.error === 'clave' || r.error === 'evento')){   // rechazo definitivo: no reintentar ese envío
         lsPoner(LS_REG_COLA, JSON.stringify(regCola().filter(function(x){ return x.id !== item.id; })));
-        pintarReg(r.error === 'clave' ? '⚠️ Registro Villa: la clave no coincide con el Apps Script' : '⚠️ Registro Villa: el Apps Script rechazó el nombre del evento');
+        pintarReg('r', 'El dashboard rechazó el envío', r.error === 'clave' ? 'La clave no coincide con el Apps Script' : 'El Apps Script no reconoce el nombre del evento');
         return;
       }
       throw new Error(r && r.error || 'sin respuesta');
@@ -2884,7 +2905,7 @@ function enviarRegVilla(){
     .catch(function(err){
       REG_ENVIANDO = false; var n = regCola().length;
       try { console.warn('Registro Villa:', err); } catch(x){}
-      pintarReg('⏳ Registro Villa: ' + n + ' envío' + (n === 1 ? '' : 's') + ' pendiente' + (n === 1 ? '' : 's') + ' · el Apps Script no respondió · se reintenta solo');
+      pintarReg('a', n + ' envío' + (n === 1 ? '' : 's') + ' pendiente' + (n === 1 ? '' : 's'), 'El Apps Script no respondió · se reintenta solo');
       clearTimeout(REG_RETRY); REG_RETRY = setTimeout(enviarRegVilla, 60000);
     });
 }
@@ -2894,8 +2915,8 @@ function abrirRegConf(){
   var f = document.createElement('div'); f.className = 'cp-fondo'; f.id = 'regFondo';
   var tec = regTecnico(), otro = tec && REG_TECNICOS.indexOf(tec) < 0;
   f.innerHTML = '<div class="cp-caja" role="dialog" aria-modal="true" aria-labelledby="regTit">' +
-    '<div class="zm-cab"><b id="regTit">📋 Registro de la Villa Navideña</b><button type="button" class="cp-x" id="regX" aria-label="Cerrar">×</button></div>' +
-    '<p class="reg-p">Al copiar el reporte de <b>' + esc(REG_EVENTO) + '</b>, los semáforos recién intervenidos se guardan en la tabla <b>Registros</b> del dashboard.</p>' +
+    '<div class="zm-cab"><b id="regTit">⚙️ Registro en el dashboard</b><button type="button" class="cp-x" id="regX" aria-label="Cerrar">×</button></div>' +
+    '<p class="reg-p">Al copiar el reporte de <b>' + esc(REG_EVENTO) + '</b>, todos los semáforos intervenidos se guardan en la tabla <b>Registros</b> del dashboard.</p>' +
     '<label class="reg-l">Técnico<select id="regTec"><option value="">— Elige —</option>' + REG_TECNICOS.map(function(t){ return '<option' + (t === tec ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('') + '<option value="__otro"' + (otro ? ' selected' : '') + '>Otro…</option></select></label>' +
     '<input id="regOtro" class="reg-i" placeholder="Nombre del técnico" maxlength="60" value="' + (otro ? esc(tec) : '') + '"' + (otro ? '' : ' hidden') + '>' +
     (REG_URL_FIJA ? '' : '<label class="reg-l">Dirección del Apps Script (termina en /exec)<input id="regUrl" class="reg-i" placeholder="https://script.google.com/…/exec" value="' + esc(lsLeer(LS_REG_URL, '')) + '" spellcheck="false"></label>') +
