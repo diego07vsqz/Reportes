@@ -259,7 +259,7 @@ body[data-modo="evento"] .bar,body[data-modo="fallas"] .bar{display:none!importa
 #vistaEvento .prog span{display:block;height:100%;background:var(--ok);width:0;transition:width .2s}
 #vistaEvento .opciones label{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--muted)}
 #vistaEvento details.cor{display:block}
-#vistaEvento .cor > summary{list-style:none;display:grid;grid-template-columns:auto minmax(0,1fr) 56px 46px auto;gap:10px;align-items:center;cursor:pointer;font-weight:700;padding:2px 0}
+#vistaEvento .cor > summary{list-style:none;display:grid;grid-template-columns:auto auto minmax(0,1fr) 56px 46px auto;gap:10px;align-items:center;cursor:pointer;font-weight:700;padding:2px 0}
 #vistaEvento .cor > summary::-webkit-details-marker{display:none}
 #vistaEvento .cor > summary::after{content:"▾";color:var(--muted);transition:transform .15s}
 #vistaEvento .cor:not([open]) > summary::after{transform:rotate(-90deg)}
@@ -271,6 +271,21 @@ body[data-modo="evento"] .bar,body[data-modo="fallas"] .bar{display:none!importa
 #vistaEvento .cor.completo .cuenta{color:var(--ok)}
 #vistaEvento .cor > summary .cuenta{text-align:right}
 #vistaEvento .total .cor-pie{flex-wrap:wrap}
+#vistaEvento .ev-chips{display:flex;flex-wrap:wrap;gap:8px}
+#vistaEvento .ev-chip{border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:999px;padding:6px 13px;font-size:13px;font-weight:700;line-height:1.3;white-space:nowrap}
+#vistaEvento .ev-chip[hidden]{display:none}
+#vistaEvento .ev-chip:hover{border-color:var(--muted)}
+#vistaEvento .ev-chip.verde{background:var(--ok);border-color:var(--ok);color:var(--on-ok)}
+#vistaEvento .ev-chip.ambar{background:transparent;border-color:var(--gold);color:var(--gold)}
+#vistaEvento .ev-conf{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--gold);border-radius:12px;font-size:13px}
+#vistaEvento .ev-conf[hidden]{display:none}
+#vistaEvento .ev-conf > span{flex:1;min-width:180px}
+#vistaEvento .cor-chk{width:20px;height:20px;border-radius:6px;border:2px solid var(--muted);display:grid;place-items:center;font-size:12px;font-weight:900;line-height:1;color:var(--on-ok);cursor:pointer;flex:none}
+#vistaEvento .cor-chk:focus-visible{outline:2px solid var(--sel-line);outline-offset:2px}
+#vistaEvento .cor-chk.on{background:var(--ok);border-color:var(--ok)}
+#vistaEvento .cor-chk.mid{background:color-mix(in srgb,var(--ok) 35%,transparent);border-color:var(--ok);color:var(--fg)}
+#vistaEvento .cor-chk[aria-disabled="true"]{opacity:.35;cursor:default}
+@media (max-width:480px){#vistaEvento .cor > summary{grid-template-columns:auto auto minmax(0,1fr) 34px 40px auto;gap:8px}}
 #evTotalTxt{white-space:nowrap}
 #vistaEvento .planes-card{gap:10px;padding:14px 18px}
 #vistaEvento .plan-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
@@ -841,7 +856,8 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
         <h2><span class="num">3</span>Corredores e intervenidas</h2>
         <p class="hint">Se agrupan solos por calle en común. Cambia nombres, mueve semáforos de corredor y marca los intervenidos.</p>
         <div class="total">
-          <div class="cor-pie"><b id="evTotalTxt">0/0 intervenidas</b><span><button type="button" class="btn-ghost" id="evBtnPlegar">Cerrar todos</button><button type="button" class="btn-ghost" id="evBtnReagrupar">↻ Reagrupar automático</button></span></div>
+          <div class="cor-pie"><b id="evTotalTxt">0/0 intervenidas</b><span class="ev-chips"><button type="button" class="ev-chip" id="evBtnPlegar">▴ Cerrar todos</button><button type="button" class="ev-chip verde" id="evBtnMarcar">✓ Marcar todos</button><button type="button" class="ev-chip" id="evBtnReagrupar" title="Vuelve a armar los corredores por calle en común">↻ Reagrupar</button></span></div>
+          <div class="ev-conf" id="evMarcarConf" hidden><span>⚠️ ¿Desmarcar los <b id="evMarcarN">0</b> semáforos?</span><button type="button" class="ev-chip ambar" id="evMarcarSi">Sí, desmarcar</button><button type="button" class="ev-chip" id="evMarcarNo">Cancelar</button></div>
           <div class="prog"><span id="evProgBar"></span></div>
         </div>
         <div id="evCorredores" style="display:grid;gap:10px"></div>
@@ -2190,7 +2206,7 @@ function renderCorredores(){
   S.cor.forEach(function(c){
     var ks = semsDe(c), n = intervenidas(ks), pc = ks.length ? Math.round(n * 100 / ks.length) : 0;
     h += '<details class="cor' + (ks.length && n === ks.length ? ' completo' : '') + '" style="--c:' + c.color + '" data-cor="' + c.id + '"' + (estaAbierto(c) ? ' open' : '') + '>' +
-      '<summary><span class="punto"></span><span class="sum-nom">' + esc(c.nombre || 'Corredor') + '</span><span class="mini"><span style="width:' + pc + '%"></span></span><span class="cuenta">' + n + '/' + ks.length + '</span></summary>' +
+      '<summary><span class="cor-chk' + (ks.length && n === ks.length ? ' on' : n ? ' mid' : '') + '" role="checkbox" tabindex="0" data-chk="' + c.id + '" aria-checked="' + (ks.length && n === ks.length ? 'true' : n ? 'mixed' : 'false') + '"' + (ks.length ? '' : ' aria-disabled="true"') + ' aria-label="Marcar corredor ' + esc(c.nombre || 'Corredor') + ' como intervenido" title="' + (ks.length && n === ks.length ? 'Desmarcar' : 'Marcar') + ' todo el corredor">' + (ks.length && n === ks.length ? '✓' : n ? '–' : '') + '</span><span class="punto"></span><span class="sum-nom">' + esc(c.nombre || 'Corredor') + '</span><span class="mini"><span style="width:' + pc + '%"></span></span><span class="cuenta">' + n + '/' + ks.length + '</span></summary>' +
       '<div class="cuerpo"><div class="cor-head"><input type="text" value="' + esc(c.nombre) + '" data-nombre="' + c.id + '" aria-label="Nombre del corredor"></div>';
     ks.forEach(function(k){
       var s = porKey(k), on = !!S.inter[k]; if (!s) return;
@@ -2210,7 +2226,19 @@ function renderCorredores(){
   var tc = document.getElementById('tabCuenta');   // contador en la pestaña "Evento"
   if (tc){ tc.hidden = !tot; tc.textContent = n + '/' + tot; }
   $('evBtnPlegar').hidden = S.cor.length < 2;
-  $('evBtnPlegar').textContent = S.cor.some(estaAbierto) ? 'Cerrar todos' : 'Abrir todos';
+  $('evBtnPlegar').textContent = txtPlegar();
+  var bm = $('evBtnMarcar'), falta = tot - n;
+  bm.hidden = !tot;
+  bm.textContent = tot && !falta ? '✕ Desmarcar todos' : '✓ Marcar todos' + (n ? ' (' + falta + ')' : '');
+  bm.className = 'ev-chip ' + (tot && !falta ? 'ambar' : 'verde');
+  if (!tot || falta) $('evMarcarConf').hidden = true;   // la confirmación solo vale con todo marcado
+}
+function txtPlegar(){ return S.cor.some(estaAbierto) ? '▴ Cerrar todos' : '▾ Abrir todos'; }
+// Marca/desmarca todo un corredor desde su casilla (sin abrir ni cerrar la tarjeta).
+function marcarCorredor(id){
+  var c = corPorId(id), ks = semsDe(c); if (!ks.length) return;
+  var marcar = intervenidas(ks) < ks.length; ks.forEach(function(k){ S.inter[k] = marcar; }); todo();
+  var nb = document.querySelector('#evCorredores [data-chk="' + id + '"]'); if (nb) nb.focus();
 }
 // Barra de avance en texto: ▰▰▱▱▱▱▱▱▱▱ 20 %.
 function barraTexto(n, tot){ var b = tot ? Math.round(n * 10 / tot) : 0; return Array(b + 1).join('▰') + Array(10 - b + 1).join('▱') + ' ' + (tot ? Math.round(n * 100 / tot) : 0) + ' %'; }
@@ -3128,7 +3156,18 @@ function eventos(){
     var ins = $('evCorredores').querySelectorAll('[data-nombre]'); var ult = ins[S.cor.filter(function(c){ return !c.otras; }).length - 1]; if (ult){ ult.focus(); ult.select(); }
   });
   var cont = $('evCorredores');
-  cont.addEventListener('toggle', function(e){ var d = e.target; if (d.matches && d.matches('details.cor')){ ABIERTO[d.getAttribute('data-cor')] = d.open; $('evBtnPlegar').textContent = S.cor.some(estaAbierto) ? 'Cerrar todos' : 'Abrir todos'; } }, true);   // toggle no burbujea
+  cont.addEventListener('toggle', function(e){ var d = e.target; if (d.matches && d.matches('details.cor')){ ABIERTO[d.getAttribute('data-cor')] = d.open; $('evBtnPlegar').textContent = txtPlegar(); } }, true);   // toggle no burbujea
+  $('evBtnMarcar').addEventListener('click', function(){
+    var tot = S.sel.length, n = intervenidas(S.sel); if (!tot) return;
+    if (n === tot){ $('evMarcarN').textContent = tot; $('evMarcarConf').hidden = false; $('evMarcarNo').focus(); return; }
+    S.sel.forEach(function(k){ S.inter[k] = true; }); $('evMarcarConf').hidden = true; todo();
+  });
+  $('evMarcarSi').addEventListener('click', function(){ S.sel.forEach(function(k){ S.inter[k] = false; }); $('evMarcarConf').hidden = true; todo(); });
+  $('evMarcarNo').addEventListener('click', function(){ $('evMarcarConf').hidden = true; });
+  cont.addEventListener('keydown', function(e){
+    var t = e.target; if (!t.hasAttribute || !t.hasAttribute('data-chk')) return;
+    if (e.key === ' ' || e.key === 'Enter'){ e.preventDefault(); marcarCorredor(t.getAttribute('data-chk')); }
+  });
   $('evBtnPlegar').addEventListener('click', function(){ var abrir = !S.cor.some(estaAbierto); S.cor.forEach(function(c){ ABIERTO[c.id] = abrir; }); renderCorredores(); });
   $('evBtnGuardarPlan').addEventListener('click', guardarPlan);
   $('evPlanNombre').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); guardarPlan(); } else if (e.key === 'Escape') formPlan(false); });
@@ -3158,7 +3197,8 @@ function eventos(){
   });
   cont.addEventListener('click', function(e){
     var b;
-    if ((b = e.target.closest('[data-quitar]'))){ quitarSel(b.getAttribute('data-quitar')); todo(); }
+    if ((b = e.target.closest('[data-chk]'))){ e.preventDefault(); marcarCorredor(b.getAttribute('data-chk')); }   // no abre/cierra la tarjeta
+    else if ((b = e.target.closest('[data-quitar]'))){ quitarSel(b.getAttribute('data-quitar')); todo(); }
     else if ((b = e.target.closest('[data-todos]'))){ var c2 = corPorId(b.getAttribute('data-todos')), ks = semsDe(c2), marcar = intervenidas(ks) < ks.length; ks.forEach(function(k){ S.inter[k] = marcar; }); todo(); }
     else if ((b = e.target.closest('[data-borrar]'))){
       var id = b.getAttribute('data-borrar'), cb = corPorId(id), dentro = semsDe(cb);
