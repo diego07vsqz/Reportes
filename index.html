@@ -3346,16 +3346,18 @@ function renderFallas(){
 }
 
 /* ══ TEXTO ══ */
-// Formato tipo ficha: un dato por línea; la falla en mayúsculas con su emoji de color.
+// Formato en bloques: encabezado + fecha · falla y semáforo · seguimiento · notas (separados por línea vacía).
+// Sin semáforo o sin falla quedan las etiquetas vacías para ver qué falta.
 function generar(){
   var s = sem(), notas = limpiarWA($('faNotas').value), lin = [];
   var fecha = fmtFecha($('faFecha').value), hora = fmtHora($('faHora').value);
   lin.push('🇸🇻 *Centro Nacional de Operaciones de El Salvador CNOES*');
   lin.push('🚦 *SEMÁFOROS* 🚦');
+  lin.push('📅 ' + fecha + (fecha && hora ? ' · ' : '') + hora);
+  lin.push('');
   lin.push(S.fallas.length > 1 ? '⚠️ *REPORTE DE FALLAS*' : '⚠️ *REPORTE DE FALLA*');
-  lin.push('📅 *Fecha:* ' + fecha + (fecha && hora ? ' · ' : '') + hora);
-  lin.push('🚥 *Semáforo:* ' + (s && s.id && s.id !== 'NUEVO' ? s.id : (s ? 'sin código' : '')));
-  lin.push('📍 *Ubicación:* ' + (s ? limpiarWA(s.d) + (s.c ? ', ' + nombreZona(s.c) : '') : ''));
+  lin.push(s ? '🚥 *' + (s.id && s.id !== 'NUEVO' ? s.id : 'Sin código') + '*' : '🚥 *Semáforo:* ');   // sin semáforo: queda la etiqueta para ver qué falta
+  lin.push(s ? '📍 ' + limpiarWA(s.d) + (s.c ? ', ' + nombreZona(s.c) : '') : '📍 *Ubicación:* ');
   if (tieneCoord(s)) lin.push('🔗 https://maps.google.com/?q=' + s.la + ',' + s.lo);
   if ($('faWaze').checked) lin.push('🚗 *Fuente:* Reporte de Waze');   // sin enlace: la falla solo se vio en Waze
   if (S.fallas.length) S.fallas.forEach(function(i){ lin.push(FALLAS[i].e + ' *' + nombreReporte(i).toUpperCase() + '*'); });   // una línea por falla (POSIBLE … con Waze)
@@ -3366,8 +3368,8 @@ function generar(){
     : '¿No estás seguro de la falla? Marca <b>Reporte de Waze</b>: el reporte dirá <b>POSIBLE</b>.';
   if ($('faGestores').checked) seg.push('⚠️ Se necesita asistencia de gestores.');   // advertencia: falta algo
   if ($('faCuadrilla').checked) seg.push('✅ Reportado a cuadrilla.');                 // check: ya se hizo
-  if (seg.length){ lin.push('*Seguimiento:*'); seg.forEach(function(x){ lin.push(x); }); }
-  if (notas) lin.push('*Notas:* ' + notas);
+  if (seg.length){ lin.push('', '*Seguimiento:*'); seg.forEach(function(x){ lin.push(x); }); }   // línea vacía: separa la falla de lo que se hizo
+  if (notas) lin.push('', '*Notas:* ' + notas);
   $('faOut').value = lin.join('\n');
   pintarBurbuja($('faOut').value, 'faBurbuja');
   $('faDescMapa').textContent = etiquetaFalla();
