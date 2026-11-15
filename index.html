@@ -1979,6 +1979,7 @@ var TIPOS = [
   { b:'Navideño', e:'🎄' }
 ];
 var FASES = ['Ingreso', 'Durante', 'Salida', 'Cierre'];
+var FASES_E = ['➡️', '▶️', '⬅️', '🏁'];   // emoji de cada fase en el reporte (mismo orden que FASES)
 var MONITOREO = [
   'Se monitorean las cargas en sector, con mapa de calor.',
   'Sin novedad en el sector.',
@@ -2248,7 +2249,10 @@ function generar(){
   lin.push(ENCABEZADO);
   var nom = limpiarWA(S.nombre) || 'Evento', zona = limpiarWA(S.zona);
   lin.push(t.e + ' *' + nom + '*' + (zona ? ' – ' + zona : '') + ' ' + t.e);   // el * debe ir pegado al texto o WhatsApp no pone negrita
-  lin.push('⏱️ Fase: ' + (FASES[S.fase] || FASES[0]) + (S.hora ? ' · Actualización ' + fmtHora(S.hora) : ''));
+  var hoy = new Date(), fecha = pad(hoy.getDate()) + '/' + pad(hoy.getMonth() + 1) + '/' + hoy.getFullYear();   // fecha del día (automática)
+  lin.push('📅 ' + fecha + (S.hora ? ' · Actualización ' + fmtHora(S.hora) : ''));
+  var f = FASES[S.fase] ? S.fase : 0;
+  lin.push(FASES_E[f] + ' Fase: ' + FASES[f]);
   lin.push('');
   lin.push('🚦 *Intersecciones intervenidas: ' + n + '/' + tot + '* 🚦');
   if (S.barra) lin.push(barraTexto(n, tot));
