@@ -2002,21 +2002,14 @@ var S = nuevoEstado();
 var MAPA = null, CAPA = null, TILES = null, BASE_MAPA = 'calle', AREA = { activo:false, inicio:null, rect:null };
 var ZONA = leerZona('evento');   // zona del mapa ('' = todas)
 // Estado vacío de un evento.
-// Cambia la fase. Cierre pone "Se restablecen tiempos normales"; al salir de Cierre vuelve el mensaje que había antes
-// (solo si no lo cambiaron a mano mientras estaba en Cierre).
+// Cambia la fase (el mensaje final no cambia solo: se elige a mano en sus opciones).
 function cambiarFase(f){
-  var CIERRE = MONITOREO.length - 1, eraCierre = FASES[S.fase] === 'Cierre', esCierre = FASES[f] === 'Cierre';
-  if (esCierre && !eraCierre){ S.monitAntes = S.monit; S.monit = CIERRE; }
-  else if (!esCierre && eraCierre){
-    if (S.monit === CIERRE) S.monit = (S.monitAntes >= 0 && S.monitAntes < CIERRE) ? S.monitAntes : 0;   // sin dato previo: mensaje por defecto
-    S.monitAntes = -1;
-  }
   S.fase = f;
   if (S.horaAuto){ S.hora = horaAhora(); $('evHora').value = S.hora; }
   todo();
 }
 function nuevoEstado(){
-  return { nombre:'', zona:'', tipo:0, hora:'', fase:0, monit:0, monitAntes:-1, nota:'',   // monitAntes: mensaje final elegido antes de pasar a Cierre
+  return { nombre:'', zona:'', tipo:0, hora:'', fase:0, monit:0, nota:'',
            sel:[], cor:[], asig:{}, inter:{}, manual:false, barra:true, detalle:false, horaAuto:true, mega:'', zoom:{} };
 }
 
@@ -3255,7 +3248,7 @@ return {
   },
   encuadrar: function(){ encuadrar(); },
   paraCompartir: function(){   // copia de los datos del evento (sin preferencias de pantalla)
-    var o = {}; ['nombre','zona','tipo','hora','fase','monit','monitAntes','nota','sel','cor','asig','inter','manual','horaAuto','mega','zoom'].forEach(function(k){ o[k] = JSON.parse(JSON.stringify(S[k])); });
+    var o = {}; ['nombre','zona','tipo','hora','fase','monit','nota','sel','cor','asig','inter','manual','horaAuto','mega','zoom'].forEach(function(k){ o[k] = JSON.parse(JSON.stringify(S[k])); });
     return o;
   },
   cargarCompartido: function(x){   // reemplaza el evento por uno compartido (pasa por la misma limpieza que el guardado); devuelve el anterior
