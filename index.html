@@ -827,7 +827,6 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
         <span class="f" data-pista="Elige uno">Tipo de evento</span>
         <div class="dd"><button type="button" class="dd-btn" id="evTipoBtn" aria-haspopup="listbox" aria-expanded="false"></button><div class="dd-menu" id="evTipos" role="listbox" hidden></div></div>
         <div class="row">
-          <label class="f" hidden style="display:none">Encabezado<select id="evEncabezado"></select></label>
           <div class="f"><span class="lbl-row"><label for="evHora">Hora de actualización</label><button type="button" class="hora-modo" id="evHoraModo"></button></span><input type="time" id="evHora"></div>
         </div>
         <span class="f" data-pista="Elige una">Fase</span>
@@ -1971,7 +1970,7 @@ var LS_PLANES = 'ups_planes_evento';   // planes reutilizables: semáforos + cor
 var PLEGAR_DESDE = 6;
 var PLANES_VISIBLES = 4;                 // planes a la vista; el resto en "+N más"
 var PLANES_BUSCAR_DESDE = 8;            // con esta cantidad o más, aparece el buscador al ver todos                   // con esta cantidad de corredores o más, aparecen cerrados
-var ENCABEZADOS = ['Centro Nacional de Operaciones de El Salvador CNOES'];   // encabezado único (el selector queda oculto; eventos guardados con otro índice vuelven a 0)
+var ENCABEZADO = '🇸🇻 *Centro Nacional de Operaciones de El Salvador CNOES*';   // primera línea fija del reporte
 var TIPOS = [
   { b:'Concierto', e:'🎸' }, { b:'Partido', e:'⚽' }, { b:'Feria', e:'🎡' }, { b:'Maratón', e:'🏃' },
   { b:'Procesión', e:'✝️' }, { b:'Marcha', e:'🪧' }, { b:'Desfile', e:'🎉' }, { b:'Otro', e:'📍' },
@@ -2003,7 +2002,7 @@ var MAPA = null, CAPA = null, TILES = null, BASE_MAPA = 'calle', AREA = { activo
 var ZONA = leerZona('evento');   // zona del mapa ('' = todas)
 // Estado vacío de un evento.
 function nuevoEstado(){
-  return { nombre:'', zona:'', tipo:0, enc:0, hora:'', fase:0, monit:0, nota:'',
+  return { nombre:'', zona:'', tipo:0, hora:'', fase:0, monit:0, nota:'',
            sel:[], cor:[], asig:{}, inter:{}, manual:false, barra:true, detalle:false, horaAuto:true, mega:'', zoom:{} };
 }
 
@@ -2038,7 +2037,7 @@ function sanear(x){   // estado guardado de otra versión o dañado → solo cam
     if (Array.isArray(d) ? Array.isArray(v) : (esObjeto(d) ? esObjeto(v) : typeof v === typeof d)) n[k] = v;
   }
   function indice(v, lista){ return (v >= 0 && v < lista.length && v % 1 === 0) ? v : 0; }
-  n.tipo = indice(n.tipo, TIPOS); n.enc = indice(n.enc, ENCABEZADOS); n.fase = indice(n.fase, FASES); n.monit = indice(n.monit, MONITOREO);
+  n.tipo = indice(n.tipo, TIPOS); n.fase = indice(n.fase, FASES); n.monit = indice(n.monit, MONITOREO);
   n.sel = n.sel.filter(function(k, i, a){ return typeof k === 'string' && porKey(k) && a.indexOf(k) === i; });
   n.cor = n.cor.filter(function(c){ return esObjeto(c) && typeof c.id === 'string'; }).map(function(c){
     c.nombre = typeof c.nombre === 'string' ? c.nombre : 'Corredor'; c.color = typeof c.color === 'string' ? c.color : COLOR_OTRAS; return c; });
@@ -2246,7 +2245,7 @@ function barraTexto(n, tot){ var b = tot ? Math.round(n * 10 / tot) : 0; return 
 // Arma el texto del evento y la vista previa.
 function generar(){
   var t = TIPOS[S.tipo] || TIPOS[0], tot = S.sel.length, n = intervenidas(S.sel), lin = [];
-  lin.push('🇸🇻 *' + (ENCABEZADOS[S.enc] || ENCABEZADOS[0]) + '*');
+  lin.push(ENCABEZADO);
   var nom = limpiarWA(S.nombre) || 'Evento', zona = limpiarWA(S.zona);
   lin.push(t.e + ' *' + nom + '*' + (zona ? ' – ' + zona : '') + ' ' + t.e);   // el * debe ir pegado al texto o WhatsApp no pone negrita
   lin.push('⏱️ Fase: ' + (FASES[S.fase] || FASES[0]) + (S.hora ? ' · Actualización ' + fmtHora(S.hora) : ''));
@@ -3027,7 +3026,7 @@ function menuTipo(abrir){   // desplegable de tipo de evento
 // Pasa el estado a los campos del formulario.
 function campos(){
   $('evNombre').value = S.nombre; $('evZona').value = S.zona; $('evHora').value = S.hora; $('evNota').value = S.nota;
-  $('evEncabezado').value = String(S.enc); pintarHoraModo();
+  pintarHoraModo();
   $('evOptBarra').checked = S.barra; $('evOptDetalle').checked = S.detalle;
 }
 // Botón "Empezar otro evento", con Deshacer.
@@ -3067,15 +3066,15 @@ function formPlan(abrir){
   $('evPlanForm').hidden = !abrir;
   if (abrir){ $('evPlanNombre').value = PLAN_ACTIVO || S.zona.trim() || S.nombre.trim(); $('evPlanNombre').focus(); $('evPlanNombre').select(); }
 }
-// Guarda semáforos, corredores y datos del evento (título, zona, tipo, encabezado, mensaje final, nota, opciones, vista fijada). Mismo nombre = lo reemplaza.
+// Guarda semáforos, corredores y datos del evento (título, zona, tipo, mensaje final, nota, opciones, vista fijada). Mismo nombre = lo reemplaza.
 function guardarPlan(){
   if (!S.sel.length){ aviso('Primero elige semáforos para el plan.'); return; }
   var nom = $('evPlanNombre').value.trim() || S.zona.trim() || S.nombre.trim() || ('Plan ' + new Date().toLocaleDateString('es-SV'));
   var p = leerPlanes(), i = -1;
   p.forEach(function(x, j){ if (norm(x.nombre) === norm(nom)) i = j; });
   var plan = { nombre:nom, sel:S.sel.slice(), cor:JSON.parse(JSON.stringify(S.cor)), asig:JSON.parse(JSON.stringify(S.asig)), fecha:Date.now(), uso:Date.now(),
-    // datos del evento: título, zona, tipo, encabezado, mensaje final, nota, opciones del texto y vista fijada (la fase y la hora no: cada evento empieza en Ingreso y con la hora actual)
-    evento:{ nombre:S.nombre, zona:S.zona, tipo:S.tipo, enc:S.enc, monit:S.monit, nota:S.nota, barra:S.barra, detalle:S.detalle },
+    // datos del evento: título, zona, tipo, mensaje final, nota, opciones del texto y vista fijada (la fase y la hora no: cada evento empieza en Ingreso y con la hora actual)
+    evento:{ nombre:S.nombre, zona:S.zona, tipo:S.tipo, monit:S.monit, nota:S.nota, barra:S.barra, detalle:S.detalle },
     vista:FIJA ? { la:FIJA.centro.lat, lo:FIJA.centro.lng, z:FIJA.z } : null, zona:S.zona, tipo:S.tipo };
   var viejo = i >= 0 ? p[i] : null;
   if (i >= 0) p[i] = plan; else p.push(plan);
@@ -3099,7 +3098,6 @@ function cargarPlan(i){
   if (typeof ev.nombre === 'string') S.nombre = ev.nombre;
   if (typeof ev.zona === 'string') S.zona = ev.zona;
   if (indice(ev.tipo, TIPOS) !== null) S.tipo = ev.tipo;
-  if (indice(ev.enc, ENCABEZADOS) !== null) S.enc = ev.enc;
   if (indice(ev.monit, MONITOREO) !== null) S.monit = ev.monit;
   if (typeof ev.nota === 'string') S.nota = ev.nota;
   if (typeof ev.barra === 'boolean') S.barra = ev.barra;
@@ -3120,12 +3118,10 @@ function borrarPlan(i){
 /* ══ EVENTOS ══ */
 // Conecta botones y campos del evento (una sola vez).
 function eventos(){
-  $('evEncabezado').innerHTML = ENCABEZADOS.map(function(e, i){ return '<option value="' + i + '">' + esc(e) + '</option>'; }).join('');
   [['evNombre','nombre'],['evZona','zona'],['evNota','nota']].forEach(function(p){ $(p[0]).addEventListener('input', function(){ S[p[1]] = this.value; generar(); guardar(); }); });
   $('evHora').addEventListener('input', function(){ S.hora = this.value; S.horaAuto = false; pintarHoraModo(); generar(); guardar(); });
   $('evHoraModo').addEventListener('click', function(e){ e.preventDefault(); S.horaAuto = !S.horaAuto; pintarHoraModo(); tickHora(true); guardar(); if (S.horaAuto) aviso('⏱ La hora sigue al reloj.'); });
   setInterval(tickHora, 30000); tickHora();
-  $('evEncabezado').addEventListener('change', function(){ S.enc = parseInt(this.value, 10) || 0; generar(); guardar(); });
   [['evOptBarra','barra'],['evOptDetalle','detalle']].forEach(function(p){ $(p[0]).addEventListener('change', function(){ S[p[1]] = this.checked; generar(); guardar(); }); });
   document.addEventListener('click', function(e){
     var b;
@@ -3242,7 +3238,7 @@ return {
   },
   encuadrar: function(){ encuadrar(); },
   paraCompartir: function(){   // copia de los datos del evento (sin preferencias de pantalla)
-    var o = {}; ['nombre','zona','tipo','enc','hora','fase','monit','nota','sel','cor','asig','inter','manual','horaAuto','mega','zoom'].forEach(function(k){ o[k] = JSON.parse(JSON.stringify(S[k])); });
+    var o = {}; ['nombre','zona','tipo','hora','fase','monit','nota','sel','cor','asig','inter','manual','horaAuto','mega','zoom'].forEach(function(k){ o[k] = JSON.parse(JSON.stringify(S[k])); });
     return o;
   },
   cargarCompartido: function(x){   // reemplaza el evento por uno compartido (pasa por la misma limpieza que el guardado); devuelve el anterior
