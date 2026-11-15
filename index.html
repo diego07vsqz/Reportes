@@ -827,7 +827,7 @@ header.top{border-radius:20px;box-shadow:var(--sombra)}
         <span class="f" data-pista="Elige uno">Tipo de evento</span>
         <div class="dd"><button type="button" class="dd-btn" id="evTipoBtn" aria-haspopup="listbox" aria-expanded="false"></button><div class="dd-menu" id="evTipos" role="listbox" hidden></div></div>
         <div class="row">
-          <label class="f">Encabezado<select id="evEncabezado"></select></label>
+          <label class="f" hidden style="display:none">Encabezado<select id="evEncabezado"></select></label>
           <div class="f"><span class="lbl-row"><label for="evHora">Hora de actualización</label><button type="button" class="hora-modo" id="evHoraModo"></button></span><input type="time" id="evHora"></div>
         </div>
         <span class="f" data-pista="Elige una">Fase</span>
@@ -1725,7 +1725,8 @@ function generar(){
   var act = lineasTiempo(S.act), nue = lineasTiempo(S.nue);
   var notas = textoNotas();
   var lin = [];   // líneas del reporte
-  lin.push('🚦 *PLANEAMIENTO SEMAFÓRICO* 🚦');
+  lin.push('🇸🇻 *Centro Nacional de Operaciones de El Salvador CNOES*');
+  lin.push('🚦 *SEMÁFOROS* 🚦');
   lin.push('📅 Fecha: ' + fmtFecha($('fecha').value));
   lin.push('*' + (sems.length === 1 ? 'Intersección:' : 'Intersecciones:') + '*');
   sems.forEach(function(n, i){
@@ -1970,7 +1971,7 @@ var LS_PLANES = 'ups_planes_evento';   // planes reutilizables: semáforos + cor
 var PLEGAR_DESDE = 6;
 var PLANES_VISIBLES = 4;                 // planes a la vista; el resto en "+N más"
 var PLANES_BUSCAR_DESDE = 8;            // con esta cantidad o más, aparece el buscador al ver todos                   // con esta cantidad de corredores o más, aparecen cerrados
-var ENCABEZADOS = ['🇸🇻 VMT Dirección General de Tránsito', '🚦 Unidad de Planeamiento Semafórico – CCM', '🇸🇻 VMT – Centro de Control y Monitoreo'];
+var ENCABEZADOS = ['Centro Nacional de Operaciones de El Salvador CNOES'];   // encabezado único (el selector queda oculto; eventos guardados con otro índice vuelven a 0)
 var TIPOS = [
   { b:'Concierto', e:'🎸' }, { b:'Partido', e:'⚽' }, { b:'Feria', e:'🎡' }, { b:'Maratón', e:'🏃' },
   { b:'Procesión', e:'✝️' }, { b:'Marcha', e:'🪧' }, { b:'Desfile', e:'🎉' }, { b:'Otro', e:'📍' },
@@ -2245,7 +2246,7 @@ function barraTexto(n, tot){ var b = tot ? Math.round(n * 10 / tot) : 0; return 
 // Arma el texto del evento y la vista previa.
 function generar(){
   var t = TIPOS[S.tipo] || TIPOS[0], tot = S.sel.length, n = intervenidas(S.sel), lin = [];
-  lin.push('*' + (ENCABEZADOS[S.enc] || ENCABEZADOS[0]) + '*');
+  lin.push('🇸🇻 *' + (ENCABEZADOS[S.enc] || ENCABEZADOS[0]) + '*');
   var nom = limpiarWA(S.nombre) || 'Evento', zona = limpiarWA(S.zona);
   lin.push(t.e + ' *' + nom + '*' + (zona ? ' – ' + zona : '') + ' ' + t.e);   // el * debe ir pegado al texto o WhatsApp no pone negrita
   lin.push('⏱️ Fase: ' + (FASES[S.fase] || FASES[0]) + (S.hora ? ' · Actualización ' + fmtHora(S.hora) : ''));
@@ -3353,7 +3354,8 @@ function renderFallas(){
 function generar(){
   var s = sem(), notas = limpiarWA($('faNotas').value), lin = [];
   var fecha = fmtFecha($('faFecha').value), hora = fmtHora($('faHora').value);
-  lin.push('🚦 *PLANEAMIENTO SEMAFÓRICO* 🚦');
+  lin.push('🇸🇻 *Centro Nacional de Operaciones de El Salvador CNOES*');
+  lin.push('🚦 *SEMÁFOROS* 🚦');
   lin.push(S.fallas.length > 1 ? '⚠️ *REPORTE DE FALLAS*' : '⚠️ *REPORTE DE FALLA*');
   lin.push('📅 *Fecha:* ' + fecha + (fecha && hora ? ' · ' : '') + hora);
   lin.push('🚥 *Semáforo:* ' + (s && s.id && s.id !== 'NUEVO' ? s.id : (s ? 'sin código' : '')));
